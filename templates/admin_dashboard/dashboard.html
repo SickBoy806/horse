@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1 class="text-3xl font-bold text-blue-800 mb-6">Admin Dashboard - {{ branch|title }}</h1>
+
+<main class="main-content">
+  <h1 class="dashboard-title mb-4 text-xl font-semibold text-gray-700">Admin Dashboard - {{ branch }}</h1>
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+    <!-- Create User Card -->
+    <div class="dashboard-card bg-white p-6 rounded-2xl shadow-md border">
+      <span class="card-icon text-4xl mb-2 block">👤</span>
+      <h3 class="card-title text-lg font-semibold mb-1">Create User</h3>
+      <p class="card-description text-gray-600 mb-4">Add new users to your branch and assign roles.</p>
+      <a href="{% url 'create_user' branch=user.branch.lower %}" class="card-link text-blue-600 hover:underline font-medium">Create User</a>
+    </div>
+
+    <!-- Assign Task Card -->
+    <div class="dashboard-card bg-white p-6 rounded-2xl shadow-md border">
+      <span class="card-icon text-4xl mb-2 block">✅</span>
+      <h3 class="card-title text-lg font-semibold mb-1">Assign Task</h3>
+      <p class="card-description text-gray-600 mb-4">Assign tasks and activities to your team members.</p>
+      <a href="{% url 'assign_task' branch=user.branch.lower %}" class="card-link text-blue-600 hover:underline font-medium">Assign Task</a>
+    </div>
+
+    <!-- User List Card -->
+    <div class="dashboard-card bg-white p-6 rounded-2xl shadow-md border">
+      <span class="card-icon text-4xl mb-2 block">👥</span>
+      <h3 class="card-title text-lg font-semibold mb-1">User Management</h3>
+      <p class="card-description text-gray-600 mb-4">View and manage all users in your branch.</p>
+      <a href="{% url 'user_list' branch=user.branch.lower %}" class="card-link text-blue-600 hover:underline font-medium">Manage Users</a>
+    </div>
+
+    <!-- Approve Activities Card -->
+    <div class="dashboard-card bg-white p-6 rounded-2xl shadow-md border">
+      <span class="card-icon text-4xl mb-2 block">📋</span>
+      <h3 class="card-title text-lg font-semibold mb-1">Approve Activities</h3>
+      <p class="card-description text-gray-600 mb-4">Review and approve submitted activities and reports.</p>
+      <a href="{% url 'approve_activities' branch=user.branch.lower %}" class="card-link text-blue-600 hover:underline font-medium">Review Activities</a>
+    </div>
+
+    <!-- Animal List Card -->
+    <div class="dashboard-card bg-white p-6 rounded-2xl shadow-md border">
+      <span class="card-icon text-4xl mb-2 block">🐾</span>
+      <h3 class="card-title text-lg font-semibold mb-1">Animal Management</h3>
+      <p class="card-description text-gray-600 mb-4">View and manage animals in your branch.</p>
+      <a href="{% url 'animal_list' branch=user.branch.lower %}" class="card-link text-blue-600 hover:underline font-medium">View Animals</a>
+    </div>
+
+    <!-- Reports Card -->
+    <div class="dashboard-card bg-white p-6 rounded-2xl shadow-md border">
+      <span class="card-icon text-4xl mb-2 block">📊</span>
+      <h3 class="card-title text-lg font-semibold mb-1">Reports</h3>
+      <p class="card-description text-gray-600 mb-4">Generate and view detailed reports and analytics.</p>
+      <a href="{% url 'admin_reports' branch=user.branch.lower %}" class="card-link text-blue-600 hover:underline font-medium">View Reports</a>
+    </div>
+  </div>
+</main>
+{% endblock %}

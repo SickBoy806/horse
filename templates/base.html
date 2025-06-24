@@ -1,0 +1,52 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>TPF Animal Management System</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Tailwind CSS -->
+    <link href="{% static 'css/dist/styles.css' %}" rel="stylesheet">
+
+    <!-- GSAP CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            gsap.from(".dashboard-card", {
+                opacity: 0,
+                y: 30,
+                duration: 0.6,
+                stagger: 0.15,
+                ease: "power2.out"
+            });
+        });
+    </script>
+</head>
+<body class="bg-gray-100 text-gray-800 min-h-screen flex flex-col">
+
+    <!-- Top Navigation Bar -->
+    <nav class="bg-blue-800 text-white px-6 py-4 shadow-md">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-xl font-bold">🐾 TPF Animal System</h1>
+            <div>
+                {% if user.is_authenticated %}
+                    <span class="mr-4">Hi, {{ user.username }} ({{ user.role }})</span>
+                    <a href="{% url 'logout' %}" class="bg-red-500 hover:bg-red-600 px-4 py-2 rounded text-white font-semibold">Logout</a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <!-- Page Content -->
+    <main class="flex-grow container mx-auto px-6 py-8">
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-gray-300 text-center py-4">
+        &copy; {{ year|default:"2025" }} Tanzania Police Force - Animal Management System
+    </footer>
+</body>
+</html>

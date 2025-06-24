@@ -1,0 +1,29 @@
+{% extends "user_dashboard/base_user.html" %}
+{% block content %}
+<h2 class="text-2xl font-bold mb-4">Messages</h2>
+
+<!-- Compose Message -->
+<div class="bg-white p-4 rounded shadow mb-6">
+  <form method="POST">
+    {% csrf_token %}
+    <h3 class="text-lg font-semibold mb-2">Send New Message</h3>
+    {{ form.as_p }}
+    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Send</button>
+  </form>
+</div>
+
+<!-- Inbox -->
+<h3 class="text-lg font-semibold mb-4">Inbox</h3>
+<div class="space-y-4">
+  {% for msg in inbox %}
+    <div class="bg-white p-4 rounded shadow">
+      <p><strong>From:</strong> {{ msg.sender.get_full_name }} ({{ msg.sender.role|title }})</p>
+      <p><strong>Subject:</strong> {{ msg.subject }}</p>
+      <p class="text-sm text-gray-600">{{ msg.body }}</p>
+      <p class="text-xs text-gray-400 mt-1">Sent: {{ msg.sent_at|date:"Y-m-d H:i" }}</p>
+    </div>
+  {% empty %}
+    <p class="text-gray-600">No messages yet.</p>
+  {% endfor %}
+</div>
+{% endblock %}

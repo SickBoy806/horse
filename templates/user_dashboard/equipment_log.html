@@ -1,0 +1,23 @@
+{% extends "user_dashboard/base_user.html" %}
+{% block content %}
+<h2 class="text-2xl font-bold mb-4">Equipment Check-In / Check-Out</h2>
+
+<form method="POST" class="bg-white p-4 rounded shadow mb-6">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Submit</button>
+</form>
+
+<h3 class="text-lg font-semibold mb-4">Recent Equipment Logs</h3>
+<div class="space-y-3">
+  {% for log in logs %}
+    <div class="bg-white p-4 rounded shadow">
+      <p><strong>{{ log.get_equipment_display }}</strong> - {{ log.get_action_display }}</p>
+      {% if log.notes %}<p class="text-sm text-gray-600">Notes: {{ log.notes }}</p>{% endif %}
+      <p class="text-xs text-gray-400">Time: {{ log.timestamp|date:"Y-m-d H:i" }}</p>
+    </div>
+  {% empty %}
+    <p>No equipment logs found.</p>
+  {% endfor %}
+</div>
+{% endblock %}

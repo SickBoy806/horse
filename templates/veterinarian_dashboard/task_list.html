@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block content %}
+<h2 class="text-2xl font-bold mb-4">Assigned Tasks</h2>
+
+<table class="w-full table-auto bg-white rounded shadow">
+    <thead class="bg-gray-100">
+        <tr>
+            <th class="px-4 py-2">Animal</th>
+            <th class="px-4 py-2">Assigned To</th>
+            <th class="px-4 py-2">Due</th>
+            <th class="px-4 py-2">Status</th>
+            <th class="px-4 py-2">Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for task in tasks %}
+        <tr class="border-b">
+            <td class="px-4 py-2">{{ task.animal.name }}</td>
+            <td class="px-4 py-2">{{ task.assigned_to.username }}</td>
+            <td class="px-4 py-2">{{ task.due_date }}</td>
+            <td class="px-4 py-2">{{ task.status }}</td>
+            <td class="px-4 py-2">
+                <a href="{% url 'vet_task_detail' branch=branch task_id=task.id %}" class="text-blue-600 underline">View</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

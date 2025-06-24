@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>User Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background-color: #f1f5f9;
+    color: #1e293b; /* Darker text for better visibility */
+  }
+
+  /* Official glassmorphism container with better text contrast */
+  .glassmorphism {
+    background: rgba(255, 255, 255, 0.95); /* Increased opacity for better text visibility */
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(71, 85, 105, 0.1);
+    border-radius: 1rem;
+    box-shadow: 0 8px 32px rgba(51, 65, 85, 0.08);
+  }
+
+  /* Professional gradient background */
+  .gradient-bg {
+    background: linear-gradient(135deg, #1e293b 0%, #334155 35%, #475569 70%, #64748b 100%);
+    position: relative;
+  }
+
+  .gradient-bg::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background:
+      radial-gradient(circle at 20% 80%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, rgba(16, 185, 129, 0.1) 0%, transparent 50%),
+      radial-gradient(circle at 40% 40%, rgba(139, 92, 246, 0.05) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .content-wrapper {
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Enhanced card hover animation */
+  .card-hover {
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .card-hover::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.1), transparent);
+    transition: left 0.5s;
+  }
+
+  .card-hover:hover::before {
+    left: 100%;
+  }
+
+  .card-hover:hover {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  }
+
+  /* Professional navigation styling with better contrast */
+  .nav-item {
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 0.75rem;
+    color: #475569; /* Darker default color */
+  }
+
+  .nav-item::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 0%;
+    height: 100%;
+    background: linear-gradient(90deg, #3b82f6, #1d4ed8);
+    transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: -1;
+  }
+
+  .nav-item:hover::before {
+    width: 100%;
+  }
+
+  .nav-item:hover {
+    color: #ffffff !important; /* Force white on hover */
+    transform: translateX(8px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  }
+
+  /* Professional avatar glow */
+  .pulse-glow {
+    animation: professional-glow 3s ease-in-out infinite;
+  }
+
+  @keyframes professional-glow {
+    0%, 100% {
+      box-shadow: 0 0 20px rgba(59, 130, 246, 0.4);
+    }
+    50% {
+      box-shadow: 0 0 30px rgba(59, 130, 246, 0.6), 0 0 40px rgba(16, 185, 129, 0.2);
+    }
+  }
+
+  /* Subtle floating animation */
+  .floating {
+    animation: floating 8s ease-in-out infinite;
+  }
+
+  @keyframes floating {
+    0%, 100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-8px);
+    }
+  }
+
+  /* Professional notification pulse */
+  .notification-pulse {
+    animation: notification-pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes notification-pulse {
+    0%, 100% {
+      transform: scale(1);
+      box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+    }
+    50% {
+      transform: scale(1.05);
+      box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
+    }
+  }
+
+  /* Logo styling with better contrast */
+  .logo-gradient {
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 50%, #10b981 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    /* Fallback for better compatibility */
+    color: #3b82f6;
+  }
+
+  /* Accent line animation */
+  .accent-line {
+    position: relative;
+  }
+
+  .accent-line::after {
+    content: '';
+    position: absolute;
+    bottom: -4px;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background: linear-gradient(90deg, #3b82f6, #10b981);
+    transition: width 0.3s ease;
+  }
+
+  .accent-line:hover::after {
+    width: 100%;
+  }
+
+  /* Mobile responsive */
+  .mobile-toggle {
+    display: none;
+  }
+
+  @media (max-width: 768px) {
+    .sidebar {
+      display: none;
+    }
+    .mobile-toggle {
+      display: block;
+    }
+  }
+
+  /* Status indicators */
+  .status-indicator {
+    position: relative;
+  }
+
+  .status-indicator::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 8px;
+    height: 8px;
+    background: #10b981;
+    border-radius: 50%;
+    animation: status-blink 2s infinite;
+  }
+
+  @keyframes status-blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  /* Geometric background patterns */
+  .geometric-bg {
+    background-image:
+      radial-gradient(circle at 1px 1px, rgba(255,255,255,0.1) 1px, transparent 0);
+    background-size: 20px 20px;
+  }
+
+  /* Text visibility improvements */
+  .text-visible {
+    color: #1e293b !important;
+    text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
+  }
+
+  .text-light-visible {
+    color: #64748b !important;
+    text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
+  }
+
+  .text-white-visible {
+    color: #ffffff !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  }
+
+  /* Ensure content text is always visible */
+  .content-text {
+    color: #1e293b !important;
+    line-height: 1.6;
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+
+  .content-heading {
+    color: #0f172a !important;
+    font-weight: 600;
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+
+  /* Force visibility for all text elements */
+  body, p, h1, h2, h3, h4, h5, h6, span, div, a {
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+
+  /* Ensure glassmorphism containers are always visible */
+  .glassmorphism {
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+
+  /* Navigation visibility */
+  .nav-item {
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+</style>
+
+</head>
+<body class="gradient-bg min-h-screen geometric-bg">
+
+<div class="content-wrapper">
+  <!-- Mobile Toggle -->
+  <button id="toggleSidebar" class="mobile-toggle fixed top-4 left-4 z-50 p-3 bg-white/90 backdrop-blur-md rounded-xl text-slate-800 hover:bg-white transition-all duration-300 shadow-lg">
+    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+    </svg>
+  </button>
+
+  <div class="flex min-h-screen">
+    <!-- Sidebar -->
+    <aside id="sidebar" class="sidebar w-72 glassmorphism backdrop-blur-xl p-6 m-4 rounded-2xl shadow-2xl">
+      <div class="text-2xl font-bold mb-8 floating status-indicator">
+        <span class="logo-gradient">
+          🐾 TPF Animal System
+        </span>
+        <div class="text-sm font-normal text-slate-600 mt-1">Management Portal</div>
+      </div>
+
+      <nav class="space-y-2">
+        <a href="{% url 'user_dashboard' branch=branch %}" class="nav-item flex items-center space-x-3 px-4 py-3 relative">
+          <span class="text-xl">📊</span><span class="font-medium accent-line">Dashboard</span>
+        </a>
+        <a href="{% url 'user_tasks' branch=branch %}" class="nav-item flex items-center space-x-3 px-4 py-3 relative">
+          <span class="text-xl">✅</span><span class="font-medium accent-line">My Tasks</span>
+        </a>
+        <a href="{% url 'animal_logs' branch=branch %}" class="nav-item flex items-center space-x-3 px-4 py-3 relative">
+          <span class="text-xl">🐕</span><span class="font-medium accent-line">Animal Logs</span>
+        </a>
+        <a href="{% url 'report_activity' branch=branch %}" class="nav-item flex items-center space-x-3 px-4 py-3 relative">
+          <span class="text-xl">📝</span><span class="font-medium accent-line">Report Activity</span>
+        </a>
+        <a href="{% url 'user_messages' branch=branch %}" class="nav-item flex items-center space-x-3 px-4 py-3 relative">
+          <span class="text-xl">💬</span><span class="font-medium accent-line">Messages</span>
+        </a>
+        <a href="{% url 'notifications_view' branch=branch %}" class="nav-item flex items-center space-x-3 px-4 py-3 relative">
+          <span class="text-xl">🔔</span><span class="font-medium accent-line">Notifications</span>
+        </a>
+        <a href="{% url 'update_user_task' branch=branch task_id=1 %}" class="nav-item flex items-center space-x-3 px-4 py-3 relative">
+          <span class="text-xl">🔄</span><span class="font-medium accent-line">Update Task</span>
+        </a>
+        <a href="{% url 'assigned_animals' branch=branch %}" class="nav-item flex items-center space-x-3 px-4 py-3 relative">
+          <span class="text-xl">🐾</span><span class="font-medium accent-line">Assigned Animals</span>
+        </a>
+        <a href="{% url 'report_emergency' branch=branch %}" class="nav-item flex items-center space-x-3 px-4 py-3 relative">
+          <span class="text-xl">🚨</span><span class="font-medium accent-line">Report Emergency</span>
+        </a>
+        <a href="{% url 'equipment_log_view' branch=branch %}" class="nav-item flex items-center space-x-3 px-4 py-3 relative">
+          <span class="text-xl">🛠</span><span class="font-medium accent-line">Equipment Logs</span>
+        </a>
+        <a href="{% url 'support_request_view' branch=branch %}" class="nav-item flex items-center space-x-3 px-4 py-3 relative">
+          <span class="text-xl">🆘</span><span class="font-medium accent-line">Support Request</span>
+        </a>
+
+        <div class="h-px bg-gradient-to-r from-transparent via-slate-300 to-transparent my-6"></div>
+
+        <a href="{% url 'logout' %}" class="nav-item flex items-center space-x-3 px-4 py-3 text-red-600 hover:text-white relative">
+          <span class="text-xl">🚪</span><span class="font-medium accent-line">Logout</span>
+        </a>
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="flex-1 p-6">
+      <div class="glassmorphism backdrop-blur-xl rounded-2xl p-8 mb-6 shadow-2xl card-hover">
+        <div class="flex justify-between items-center">
+          <div>
+            <h1 class="text-4xl font-bold content-heading mb-3">
+              Welcome back,
+              <span class="logo-gradient">
+                {{ request.user.get_full_name }}
+              </span>
+            </h1>
+            <div class="flex items-center space-x-4">
+              <p class="content-text text-lg flex items-center">
+                <span class="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></span>
+                📍 Branch: <strong class="text-blue-600 ml-2">{{ request.user.branch|title }}</strong>
+              </p>
+              <div class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
+                Active Session
+              </div>
+            </div>
+          </div>
+          <div class="flex items-center space-x-6">
+            <div class="text-right">
+              <div class="text-sm content-text">System Status</div>
+              <div class="text-green-600 font-semibold flex items-center">
+                <span class="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
+                Online
+              </div>
+            </div>
+            <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-green-500 rounded-full flex items-center justify-center text-white font-bold text-xl pulse-glow shadow-xl">
+              {{ request.user.get_full_name.0|upper }}
+            </div>
+            <div class="relative">
+              <a href="{% url 'notifications_view' branch=branch %}" class="text-slate-600 hover:text-blue-600 transition-all duration-300 text-2xl p-3 rounded-full bg-white/80 hover:bg-white hover:shadow-lg relative backdrop-blur-sm">
+                🔔
+                {% if unread_notifications_count > 0 %}
+                <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs px-2 py-1 rounded-full notification-pulse shadow-lg font-semibold">
+                  {{ unread_notifications_count }}
+                </span>
+                {% endif %}
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="glassmorphism backdrop-blur-xl rounded-2xl p-8 shadow-2xl min-h-96 card-hover">
+        {% block content %}
+        <div class="text-center py-12">
+          <div class="text-6xl mb-4">🐾</div>
+          <h2 class="text-2xl font-semibold content-heading mb-4">TPF Animal Management System</h2>
+          <p class="content-text text-lg max-w-2xl mx-auto">
+            Professional animal care management platform designed for efficient tracking, reporting, and coordination of animal welfare activities.
+          </p>
+          <div class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="p-6 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl">
+              <div class="text-3xl mb-3">📊</div>
+              <h3 class="font-semibold content-heading">Analytics</h3>
+              <p class="content-text text-sm mt-2">Comprehensive reporting and data insights</p>
+            </div>
+            <div class="p-6 bg-gradient-to-br from-green-50 to-green-100 rounded-xl">
+              <div class="text-3xl mb-3">🔒</div>
+              <h3 class="font-semibold content-heading">Secure</h3>
+              <p class="content-text text-sm mt-2">Protected data with role-based access</p>
+            </div>
+            <div class="p-6 bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl">
+              <div class="text-3xl mb-3">⚡</div>
+              <h3 class="font-semibold content-heading">Efficient</h3>
+              <p class="content-text text-sm mt-2">Streamlined workflows and automation</p>
+            </div>
+          </div>
+        </div>
+        {% endblock %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Sidebar toggle on mobile
+const toggleSidebar = document.getElementById('toggleSidebar');
+const sidebar = document.getElementById('sidebar');
+toggleSidebar.addEventListener('click', () => {
+  sidebar.classList.toggle('hidden');
+});
+
+// Enhanced GSAP animations - Fixed to prevent invisibility
+if (typeof gsap !== 'undefined') {
+  // Set initial visibility
+  gsap.set("body", {opacity: 1});
+  gsap.set(".glassmorphism, .nav-item, .card-hover", {opacity: 1});
+
+  // Staggered entrance animation with opacity safeguards
+  gsap.timeline()
+    .from(".glassmorphism", {
+      duration: 1.2,
+      y: 60,
+      opacity: 0,
+      stagger: 0.15,
+      ease: "power3.out",
+      onComplete: function() {
+        gsap.set(this.targets(), {opacity: 1});
+      }
+    })
+    .from(".nav-item", {
+      duration: 0.8,
+      x: -30,
+      opacity: 0,
+      stagger: 0.05,
+      ease: "back.out(1.7)",
+      onComplete: function() {
+        gsap.set(this.targets(), {opacity: 1});
+      }
+    }, "-=0.8")
+    .from(".card-hover", {
+      duration: 1,
+      y: 40,
+      opacity: 0,
+      stagger: 0.1,
+      ease: "power2.out",
+      onComplete: function() {
+        gsap.set(this.targets(), {opacity: 1});
+      }
+    }, "-=0.6");
+
+  // Hover enhancement for cards - safer animation
+  document.querySelectorAll('.card-hover').forEach(card => {
+    card.addEventListener('mouseenter', () => {
+      gsap.to(card, {duration: 0.3, scale: 1.02, ease: "power2.out"});
+    });
+    card.addEventListener('mouseleave', () => {
+      gsap.to(card, {duration: 0.3, scale: 1, ease: "power2.out"});
+    });
+  });
+} else {
+  // Fallback if GSAP doesn't load
+  document.body.style.opacity = '1';
+  document.querySelectorAll('.glassmorphism, .nav-item, .card-hover').forEach(el => {
+    el.style.opacity = '1';
+  });
+}
+
+// Add smooth scrolling and page transitions
+document.addEventListener('DOMContentLoaded', () => {
+  // Ensure content is always visible
+  document.body.style.opacity = '1';
+
+  // Fallback visibility enforcement
+  setTimeout(() => {
+    document.body.style.opacity = '1';
+    document.querySelectorAll('.glassmorphism, .nav-item, .card-hover, .content-text, .content-heading').forEach(el => {
+      el.style.opacity = '1';
+      el.style.visibility = 'visible';
+    });
+  }, 100);
+
+  // Remove beforeunload opacity change that was causing issues
+  // window.addEventListener('beforeunload', () => {
+  //   document.body.style.opacity = '0.7';
+  // });
+});
+</script>
+
+</body>
+</html>

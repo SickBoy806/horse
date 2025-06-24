@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block content %}
+<h2 class="text-2xl font-bold mb-4">Assign Task - {{ branch|title }}</h2>
+
+<form method="POST" class="bg-white p-6 shadow-md rounded space-y-4">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded shadow">Assign Task</button>
+</form>
+{% endblock %}

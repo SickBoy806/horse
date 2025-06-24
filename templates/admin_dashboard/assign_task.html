@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="p-6 bg-white rounded-xl shadow-lg mt-6">
+    <h1 class="text-2xl font-bold mb-4">Assign Task</h1>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button class="bg-green-600 text-white px-4 py-2 rounded" type="submit">Assign Task</button>
+    </form>
+</div>
+{% endblock %}

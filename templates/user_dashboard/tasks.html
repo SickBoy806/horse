@@ -1,0 +1,37 @@
+{% extends "user_dashboard/base_user.html" %}
+{% block content %}
+<h2 class="text-2xl font-bold mb-4">My Tasks</h2>
+
+<div class="space-y-4">
+  {% for task in tasks %}
+    <div class="bg-white p-4 rounded shadow border-l-4 {% if task.priority == 'urgent' %}border-red-500{% elif task.priority == 'normal' %}border-yellow-400{% else %}border-gray-300{% endif %}">
+      <div class="flex justify-between items-center">
+        <div>
+          <h3 class="text-xl font-semibold">{{ task.title }}</h3>
+          <p class="text-sm text-gray-500">{{ task.description }}</p>
+          <p class="text-sm text-gray-700 mt-1">
+            Priority: <strong>{{ task.priority|title }}</strong> | Status: <strong class="text-blue-600">{{ task.status }}</strong> |
+            Due: {{ task.due_date }}
+          </p>
+        </div>
+        {% if task.status != "completed" %}
+          <form method="POST" action="{% url 'update_user_task' branch=branch task_id=task.id %}">
+            {% csrf_token %}
+            <select name="status" class="border rounded px-2 py-1 text-sm">
+              {% if task.status == "pending" %}
+                <option value="in_progress">Start Task</option>
+              {% endif %}
+              {% if task.status == "in_progress" %}
+                <option value="completed">Mark as Completed</option>
+              {% endif %}
+            </select>
+            <button type="submit" class="bg-blue-600 text-white px-2 py-1 rounded text-sm ml-2">Update</button>
+          </form>
+        {% endif %}
+      </div>
+    </div>
+  {% empty %}
+    <p class="text-gray-600">You don’t have any tasks assigned.</p>
+  {% endfor %}
+</div>
+{% endblock %}

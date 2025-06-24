@@ -1,0 +1,26 @@
+{% extends "user_dashboard/base_user.html" %}
+{% block content %}
+<h2 class="text-2xl font-bold mb-4">Animal Interaction Logs</h2>
+
+<!-- Log Form -->
+<div class="bg-white p-4 rounded shadow mb-6">
+  <form method="POST">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Submit Log</button>
+  </form>
+</div>
+
+<!-- Previous Logs -->
+<div class="space-y-4">
+  {% for log in logs %}
+    <div class="bg-white p-4 rounded shadow">
+      <strong>{{ log.animal.name }}</strong> - {{ log.get_activity_type_display }}<br>
+      <p class="text-sm text-gray-600">{{ log.notes }}</p>
+      <p class="text-xs text-gray-400 mt-1">Date: {{ log.date }}</p>
+    </div>
+  {% empty %}
+    <p class="text-gray-600">No logs submitted yet.</p>
+  {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,36 @@
+{% extends "user_dashboard/base_user.html" %}
+{% block content %}
+<h2 class="text-2xl font-bold mb-4">Emergency Incident Reporting</h2>
+
+<!-- Form -->
+<div class="bg-white p-4 rounded shadow mb-6">
+  <form method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="bg-red-600 text-white px-4 py-2 rounded">Submit Emergency</button>
+  </form>
+</div>
+
+<!-- Incident History -->
+<h3 class="text-lg font-semibold mb-4">Reported Incidents</h3>
+<div class="space-y-3">
+  {% for incident in incidents %}
+    <div class="bg-white p-4 rounded shadow">
+      <p><strong>Animal:</strong> {{ incident.animal.name }}</p>
+      <p><strong>Type:</strong> {{ incident.get_incident_type_display }}</p>
+      <p><strong>Description:</strong> {{ incident.description }}</p>
+      {% if incident.photo %}
+        <img src="{{ incident.photo.url }}" class="mt-2 h-40 rounded object-cover" />
+      {% endif %}
+      <p class="text-sm text-gray-400 mt-1">Date: {{ incident.date_reported|date:"Y-m-d H:i" }}</p>
+      {% if incident.resolved %}
+        <span class="text-green-600 font-medium">Resolved</span>
+      {% else %}
+        <span class="text-yellow-500 font-medium">Pending</span>
+      {% endif %}
+    </div>
+  {% empty %}
+    <p class="text-gray-600">No emergency incidents reported yet.</p>
+  {% endfor %}
+</div>
+{% endblock %}

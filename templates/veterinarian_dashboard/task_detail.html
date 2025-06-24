@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+<h2 class="text-2xl font-bold mb-4">Task: {{ task.title }}</h2>
+
+<div class="bg-white p-6 shadow rounded mb-4">
+    <p><strong>Animal:</strong> {{ task.animal.name }}</p>
+    <p><strong>Assigned To:</strong> {{ task.assigned_to.username }}</p>
+    <p><strong>Status:</strong> {{ task.status }}</p>
+    <p><strong>Description:</strong> {{ task.description }}</p>
+    <p><strong>Due Date:</strong> {{ task.due_date }}</p>
+</div>
+
+<form method="POST" class="flex gap-4">
+    {% csrf_token %}
+    {% if task.status == 'completed' %}
+        <button name="action" value="approve" class="bg-green-600 px-4 py-2 text-white rounded shadow">Approve</button>
+        <button name="action" value="reject" class="bg-red-600 px-4 py-2 text-white rounded shadow">Reject</button>
+    {% endif %}
+</form>
+{% endblock %}

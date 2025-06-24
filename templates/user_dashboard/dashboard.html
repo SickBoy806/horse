@@ -1,0 +1,52 @@
+{% extends "user_dashboard/base_user.html" %}
+
+{% block content %}
+<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+
+  <!-- Today's Tasks -->
+  <div class="bg-white p-4 shadow rounded" id="tasks-card" data-count="{{ tasks|length }}">
+    <h2 class="text-lg font-semibold mb-2">Today's Tasks</h2>
+    {% for task in tasks %}
+      <div class="border-b py-2">
+        <strong>{{ task.title }}</strong><br>
+        <span class="text-sm text-gray-600">{{ task.status }}</span>
+      </div>
+    {% empty %}
+      <p class="text-gray-500">No tasks today.</p>
+    {% endfor %}
+  </div>
+
+  <!-- Assigned Animals -->
+  <div class="bg-white p-4 shadow rounded" id="animals-card" data-count="{{ animals|length }}">
+    <h2 class="text-lg font-semibold mb-2">Assigned Animals</h2>
+    {% for animal in animals %}
+      <p>{{ animal.name }} ({{ animal.species }})</p>
+    {% empty %}
+      <p class="text-gray-500">No animals assigned.</p>
+    {% endfor %}
+  </div>
+
+  <!-- Notifications -->
+  <div class="bg-white p-4 shadow rounded" id="notifications-card" data-count="{{ notifications|length }}">
+    <h2 class="text-lg font-semibold mb-2">Notifications</h2>
+    {% for note in notifications %}
+      <p class="text-sm text-gray-700">{{ note.message }}</p>
+    {% empty %}
+      <p>No new notifications.</p>
+    {% endfor %}
+  </div>
+</div>
+
+<script>
+  // Animate counter widgets
+  document.querySelectorAll("[data-count]").forEach(el => {
+    const count = parseInt(el.getAttribute("data-count"));
+    gsap.fromTo(el.querySelector('h2'), { innerText: 0 }, {
+      innerText: count,
+      duration: 1.5,
+      snap: { innerText: 1 },
+      ease: "power1.out"
+    });
+  });
+</script>
+{% endblock %}

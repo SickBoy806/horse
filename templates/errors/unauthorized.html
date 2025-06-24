@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="p-6 bg-red-100 text-red-800 rounded-xl mt-6">
+    <h1 class="text-2xl font-bold mb-2">Unauthorized Access</h1>
+    <p>You do not have permission to access this branch's dashboard.</p>
+    <a href="{% url 'login' %}" class="text-blue-600 underline mt-4 inline-block">Return to login</a>
+</div>
+{% endblock %}
