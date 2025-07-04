@@ -1,0 +1,15 @@
+{% extends "veterinarian_dashboard/base_dashboard.html" %}
+
+{% block page_title %}Help & Support - {{ branch|title }}{% endblock %}
+
+{% block dashboard_content %}
+<h2 class="text-2xl font-bold mb-6 text-gray-700">Help & Support</h2>
+
+<p class="text-gray-600">If you're experiencing issues or need assistance, please contact the admin or submit a support ticket.</p>
+
+<ul class="mt-4 list-disc pl-6 text-gray-600">
+    <li>Email: support@animalhealth.org</li>
+    <li>Phone: +255-700-123-456</li>
+    <li>Or use the in-app support system.</li>
+</ul>
+{% endblock %}

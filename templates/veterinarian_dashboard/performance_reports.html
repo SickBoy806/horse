@@ -1,0 +1,25 @@
+{% extends "veterinarian_dashboard/base_dashboard.html" %}
+
+{% block page_title %}Performance Reports - {{ branch|title }}{% endblock %}
+
+{% block dashboard_content %}
+  <h1 class="text-3xl font-bold mb-6">Performance Reports for {{ branch|title }}</h1>
+
+  <div class="space-y-4">
+    <div>
+      <strong>Total Patients:</strong> {{ reports.total_patients }}
+    </div>
+    <div>
+      <strong>Tasks Completed:</strong> {{ reports.tasks_completed }}
+    </div>
+    <div>
+      <strong>Tasks Pending:</strong> {{ reports.tasks_pending }}
+    </div>
+    <div>
+      <strong>Average Response Time:</strong> {{ reports.average_response_time }}
+    </div>
+  </div>
+
+  <!-- You can add charts, graphs or detailed reports here later -->
+{% endblock %}
+

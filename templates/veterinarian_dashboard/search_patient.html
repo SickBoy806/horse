@@ -1,0 +1,31 @@
+{% extends "veterinarian_dashboard/base_dashboard.html" %}
+
+{% block page_title %}Search Patients - {{ branch|title }}{% endblock %}
+
+{% block dashboard_content %}
+<h1 class="text-3xl font-bold mb-6">Search Patients - {{ branch|title }}</h1>
+
+<form method="get" action="">
+    <input type="text" name="q" placeholder="Search patients by name or species" value="{{ request.GET.q }}" 
+           class="border p-2 rounded w-full md:w-1/2 mb-4" />
+    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Search</button>
+</form>
+
+{% if patients %}
+    <ul class="divide-y divide-gray-200 mt-4">
+        {% for patient in patients %}
+        <li class="py-3 flex justify-between">
+            <div>
+                <strong>{{ patient.name }}</strong> ({{ patient.species }}) - Age: {{ patient.age }}
+            </div>
+            <div>
+                <a href="{% url 'patient_detail' branch=branch patient_id=patient.id %}" class="text-blue-600 hover:underline">View</a>
+            </div>
+        </li>
+        {% endfor %}
+    </ul>
+{% elif request.GET.q %}
+    <p class="mt-4 text-gray-600">No patients found matching your query.</p>
+{% endif %}
+
+{% endblock %}

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>SuperAdmin Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+</head>
+<body class="bg-gray-100 text-gray-900">
+
+  <!-- Layout Container -->
+  <div class="min-h-screen flex">
+
+    <!-- Sidebar Navigation -->
+    <aside class="w-64 bg-white shadow-md px-4 py-6 hidden md:block">
+      <h2 class="text-2xl font-bold mb-8 text-blue-600">TPF SuperAdmin</h2>
+      <nav class="space-y-3">
+        <a href="{% url 'superadmin_dashboard' %}" class="block px-4 py-2 rounded hover:bg-gray-200">Dashboard</a>
+        <a href="{% url 'superadmin_manage_branches' %}" class="block px-4 py-2 rounded hover:bg-gray-200">Manage Branches</a>
+        <a href="{% url 'superadmin_manage_users' %}" class="block px-4 py-2 rounded hover:bg-gray-200">Users & Roles</a>
+        <a href="{% url 'superadmin_view_logs' %}" class="block px-4 py-2 rounded hover:bg-gray-200">System Logs</a>
+        <a href="{% url 'superadmin_analytics' %}" class="block px-4 py-2 rounded hover:bg-gray-200">Analytics</a>
+        <a href="{% url 'superadmin_tickets' %}" class="block px-4 py-2 rounded hover:bg-gray-200">Support Tickets</a>
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="flex-1 flex flex-col">
+
+      <!-- Top Navbar -->
+      <header class="bg-white shadow flex items-center justify-between px-6 py-4">
+        <h1 class="text-xl font-bold">SuperAdmin Dashboard</h1>
+        <div class="flex items-center space-x-4">
+
+          <!-- Notification Bell -->
+    <div class="relative">
+      <button id="notifBtn" class="relative text-gray-700 hover:text-blue-600 focus:outline-none">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 00-9.33-4.702M5 11v3.159c0 .538-.214 1.055-.595 1.436L3 17h5m7 0v1a3 3 0 11-6 0v-1m6 0H9" />
+        </svg>
+        {% if unread_notifications_count > 0 %}
+          <span class="absolute -top-1 -right-1 text-xs bg-red-600 text-white rounded-full px-1">{{ unread_notifications_count }}</span>
+        {% endif %}
+      </button>
+
+      <!-- Dropdown -->
+      <div id="notifDropdown" class="hidden absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg z-50">
+        <div class="py-2 px-4 border-b font-semibold">Notifications</div>
+        {% if notifications %}
+          <ul class="max-h-64 overflow-y-auto">
+            {% for notif in notifications %}
+              <li class="px-4 py-2 text-sm border-b hover:bg-gray-100">
+                {{ notif.message }}
+                <div class="text-xs text-gray-400">{{ notif.created_at|timesince }} ago</div>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <div class="px-4 py-3 text-gray-500 text-sm">No new notifications.</div>
+        {% endif %}
+      </div>
+    </div>
+
+          <span class="text-sm font-medium">{{ request.user.get_full_name }}</span>
+          <span class="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">SuperAdmin</span>
+          <a href="{% url 'logout' %}" class="text-red-600 hover:underline">Logout</a>
+        </div>
+      </header>
+
+      <!-- Page Content -->
+      <main class="p-6">
+        {% block content %}
+        <!-- Dynamic SuperAdmin content goes here -->
+        {% endblock %}
+      </main>
+
+    </div>
+  </div>
+
+  <!-- GSAP animation hook -->
+  <script>
+    gsap.from(".card", {
+      opacity: 0,
+      y: 30,
+      duration: 0.8,
+      stagger: 0.2,
+      ease: "power3.out"
+    });
+  </script>
+
+</body>
+</html>
+

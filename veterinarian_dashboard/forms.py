@@ -19,3 +19,10 @@ class VetTaskForm(forms.ModelForm):
             'description': forms.Textarea(attrs={'rows': 3}),
             'due_date': forms.DateInput(attrs={'type': 'date'}),
         }
+
+from .models import Patient
+
+class PatientForm(forms.ModelForm):
+    class Meta:
+        model = Patient
+        fields = ['name', 'species', 'breed', 'age']

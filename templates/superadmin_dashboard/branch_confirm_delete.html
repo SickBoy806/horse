@@ -1,0 +1,16 @@
+{% extends "superadmin_dashboard/base_dashboard.html" %}
+
+{% block content %}
+<div class="p-6 max-w-xl mx-auto bg-white rounded shadow text-center">
+  <h2 class="text-2xl font-bold mb-4 text-red-600">Delete Branch</h2>
+  <p class="mb-6">Are you sure you want to delete the branch <strong>{{ branch.name }}</strong>?</p>
+
+  <form method="post">
+    {% csrf_token %}
+    <div class="flex justify-center space-x-4">
+      <a href="{% url 'superadmin_manage_branches' %}" class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">Cancel</a>
+      <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">Delete</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

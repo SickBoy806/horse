@@ -1,17 +1,32 @@
-{% extends "base.html" %}
+{% extends "admin_dashboard/base_admin.html" %}
 {% block content %}
-<h2 class="text-2xl font-bold text-gray-800 mb-4">🔧 Manage Users - {{ branch }}</h2>
 
-{% if users %}
-    <ul class="space-y-2">
-        {% for user in users %}
-            <li class="p-4 bg-white rounded shadow flex justify-between items-center">
-                <span>{{ user.username }} ({{ user.role }})</span>
-                <a href="#" class="text-sm text-blue-600 hover:underline">Edit</a>
-            </li>
-        {% endfor %}
-    </ul>
-{% else %}
-    <p>No users found for this branch.</p>
-{% endif %}
+<h2 class="text-2xl font-bold mb-4">Manage Users</h2>
+<a href="{% url 'admin_user_add' branch=branch %}" class="bg-blue-600 text-white px-4 py-2 rounded mb-4 inline-block">+ Add New User</a>
+
+<table class="w-full bg-white rounded shadow">
+  <thead class="bg-gray-100 text-left text-sm font-semibold">
+    <tr>
+      <th class="p-3">Name</th>
+      <th class="p-3">Username</th>
+      <th class="p-3">Role</th>
+      <th class="p-3">Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for user in users %}
+      <tr class="border-t">
+        <td class="p-3">{{ user.full_name }}</td>
+        <td class="p-3">{{ user.username }}</td>
+        <td class="p-3 capitalize">{{ user.role }}</td>
+        <td class="p-3 space-x-2">
+          <a href="{% url 'admin_user_edit' branch=branch user_id=user.id %}" class="text-blue-500 hover:underline">Edit</a>
+          <a href="{% url 'admin_user_delete' branch=branch user_id=user.id %}" class="text-red-500 hover:underline">Delete</a>
+        </td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="4" class="p-3 text-center">No users found.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
 {% endblock %}

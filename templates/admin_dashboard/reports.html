@@ -1,5 +1,15 @@
-{% extends "base.html" %}
+% extends "admin_dashboard/base_admin.html" %}
 {% block content %}
-<h2 class="text-2xl font-bold text-red-700 mb-4">📊 Reports - {{ branch }}</h2>
-<p>Reporting tools and logs will be displayed here.</p>
+<div class="p-6">
+  <h2 class="text-2xl font-bold mb-4">Reports - {{ branch }}</h2>
+  {% for report in reports %}
+    <div class="bg-white p-4 shadow rounded mb-2">
+      <p><strong>User:</strong> {{ report.user }}</p>
+      <p><strong>Date:</strong> {{ report.date }}</p>
+      <p><strong>Report:</strong> {{ report.content }}</p>
+    </div>
+  {% empty %}
+    <p>No reports available.</p>
+  {% endfor %}
+</div>
 {% endblock %}

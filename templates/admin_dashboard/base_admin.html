@@ -1,0 +1,204 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <style>
+    .glass-effect {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .nav-link {
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .nav-link::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.1), transparent);
+      transition: left 0.5s;
+    }
+
+    .nav-link:hover::before {
+      left: 100%;
+    }
+
+    .nav-link:hover {
+      transform: translateX(5px);
+      background: rgba(59, 130, 246, 0.05);
+      border-left: 3px solid #3b82f6;
+    }
+
+    .card-hover {
+      transition: all 0.3s ease;
+      opacity: 1 !important;
+      visibility: visible !important;
+    }
+
+    .card-hover:hover {
+      transform: translateY(-5px) scale(1.02);
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    }
+
+    .gradient-bg {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .quick-action-btn {
+      transition: all 0.3s ease;
+      background: linear-gradient(45deg, #3b82f6, #1d4ed8);
+    }
+
+    .quick-action-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(59, 130, 246, 0.3);
+    }
+
+    .logout-btn {
+      transition: all 0.3s ease;
+      background: linear-gradient(45deg, #ef4444, #dc2626);
+    }
+
+    .logout-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 5px 15px rgba(239, 68, 68, 0.3);
+    }
+
+    .sidebar-brand {
+      background: linear-gradient(45deg, #1f2937, #374151);
+      color: white;
+      border-radius: 12px;
+      padding: 12px;
+      text-align: center;
+      margin-bottom: 24px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .sidebar-brand::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
+      transform: rotate(45deg);
+      animation: shine 3s infinite;
+    }
+
+    @keyframes shine {
+      0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+      100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+    }
+
+    .floating-animation {
+      animation: float 3s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-10px); }
+    }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-gray-50 to-gray-100 text-gray-900 min-h-screen">
+
+  <div class="min-h-screen flex">
+    <!-- Enhanced Sidebar Navigation -->
+    <aside class="w-72 glass-effect shadow-2xl p-6 hidden md:block relative">
+      <div class="sidebar-brand floating-animation">
+        <i class="fas fa-crown text-2xl mb-2"></i>
+        <h2 class="text-xl font-bold">Admin Panel</h2>
+        <div class="text-xs opacity-75 mt-1">Management Hub</div>
+      </div>
+
+      <!-- Navigation Links -->
+      <nav class="space-y-2 mb-8">
+        <a href="{% url 'admin_dashboard' branch=branch %}" class="nav-link flex items-center px-4 py-3 rounded-lg text-gray-700 hover:text-blue-600">
+          <i class="fas fa-tachometer-alt w-5 mr-3"></i>
+          Dashboard
+        </a>
+        <a href="{% url 'admin_user_list' branch=branch %}" class="nav-link flex items-center px-4 py-3 rounded-lg text-gray-700 hover:text-blue-600">
+          <i class="fas fa-users w-5 mr-3"></i>
+          Manage Users
+        </a>
+        <a href="{% url 'admin_task_list' branch=branch %}" class="nav-link flex items-center px-4 py-3 rounded-lg text-gray-700 hover:text-blue-600">
+          <i class="fas fa-tasks w-5 mr-3"></i>
+          Tasks
+        </a>
+        <a href="{% url 'admin_reports' branch=branch %}" class="nav-link flex items-center px-4 py-3 rounded-lg text-gray-700 hover:text-blue-600">
+          <i class="fas fa-chart-bar w-5 mr-3"></i>
+          Reports
+        </a>
+        <a href="{% url 'animal_list' branch=branch %}" class="nav-link flex items-center px-4 py-3 rounded-lg text-gray-700 hover:text-blue-600">
+          <i class="fas fa-paw w-5 mr-3"></i>
+          Animals
+        </a>
+        <a href="{% url 'admin_support' branch=branch %}" class="nav-link flex items-center px-4 py-3 rounded-lg text-gray-700 hover:text-blue-600">
+          <i class="fas fa-life-ring w-5 mr-3"></i>
+          Support
+        </a>
+        <a href="{% url 'admin_care_logs' branch=branch %}" class="nav-link flex items-center px-4 py-3 rounded-lg text-gray-700 hover:text-blue-600">
+          <i class="fas fa-heart w-5 mr-3"></i>
+          Care Logs
+        </a>
+        <a href="{% url 'admin_incident_logs' branch=branch %}" class="nav-link flex items-center px-4 py-3 rounded-lg text-gray-700 hover:text-blue-600">
+          <i class="fas fa-exclamation-triangle w-5 mr-3"></i>
+          Incident Logs
+        </a>
+      </nav>
+
+
+
+      <!-- System Status -->
+      <div class="glass-effect rounded-xl p-4 border border-gray-200">
+        <h3 class="text-sm font-semibold text-gray-600 mb-3 flex items-center">
+          <i class="fas fa-server text-green-500 mr-2"></i>
+          System Status
+        </h3>
+        <div class="space-y-2 text-xs">
+          <div class="flex justify-between items-center">
+            <span class="text-gray-600">Server</span>
+            <span class="flex items-center text-green-600">
+              <i class="fas fa-circle text-xs mr-1"></i>
+              Online
+            </span>
+          </div>
+          <div class="flex justify-between items-center">
+            <span class="text-gray-600">Database</span>
+            <span class="flex items-center text-green-600">
+              <i class="fas fa-circle text-xs mr-1"></i>
+              Active
+            </span>
+          </div>
+          <div class="flex justify-between items-center">
+            <span class="text-gray-600">Backup</span>
+            <span class="flex items-center text-blue-600">
+              <i class="fas fa-circle text-xs mr-1"></i>
+              Running
+            </span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 bg-transparent">
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+
+</body>
+</html>

@@ -1,58 +1,335 @@
-{% extends 'base.html' %}
+{% extends "admin_dashboard/base_admin.html" %}
 {% block content %}
-<h1 class="text-3xl font-bold text-blue-800 mb-6">Admin Dashboard - {{ branch|title }}</h1>
 
-<main class="main-content">
-  <h1 class="dashboard-title mb-4 text-xl font-semibold text-gray-700">Admin Dashboard - {{ branch }}</h1>
-
-  <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-    <!-- Create User Card -->
-    <div class="dashboard-card bg-white p-6 rounded-2xl shadow-md border">
-      <span class="card-icon text-4xl mb-2 block">👤</span>
-      <h3 class="card-title text-lg font-semibold mb-1">Create User</h3>
-      <p class="card-description text-gray-600 mb-4">Add new users to your branch and assign roles.</p>
-      <a href="{% url 'create_user' branch=user.branch.lower %}" class="card-link text-blue-600 hover:underline font-medium">Create User</a>
+<div class="p-8">
+  <!-- Header Section -->
+  <div class="flex justify-between items-center mb-8">
+    <div>
+      <h1 class="text-4xl font-bold text-gray-800 mb-2">Admin Dashboard</h1>
+      <div class="flex items-center space-x-4">
+        <p class="text-lg text-gray-600">Branch: <span class="text-blue-600 font-semibold px-3 py-1 bg-blue-50 rounded-full">{{ branch|title }}</span></p>
+        <div class="flex items-center text-sm text-gray-500">
+          <i class="fas fa-clock mr-1"></i>
+          <span id="current-time"></span>
+        </div>
+      </div>
     </div>
 
-    <!-- Assign Task Card -->
-    <div class="dashboard-card bg-white p-6 rounded-2xl shadow-md border">
-      <span class="card-icon text-4xl mb-2 block">✅</span>
-      <h3 class="card-title text-lg font-semibold mb-1">Assign Task</h3>
-      <p class="card-description text-gray-600 mb-4">Assign tasks and activities to your team members.</p>
-      <a href="{% url 'assign_task' branch=user.branch.lower %}" class="card-link text-blue-600 hover:underline font-medium">Assign Task</a>
-    </div>
-
-    <!-- User List Card -->
-    <div class="dashboard-card bg-white p-6 rounded-2xl shadow-md border">
-      <span class="card-icon text-4xl mb-2 block">👥</span>
-      <h3 class="card-title text-lg font-semibold mb-1">User Management</h3>
-      <p class="card-description text-gray-600 mb-4">View and manage all users in your branch.</p>
-      <a href="{% url 'user_list' branch=user.branch.lower %}" class="card-link text-blue-600 hover:underline font-medium">Manage Users</a>
-    </div>
-
-    <!-- Approve Activities Card -->
-    <div class="dashboard-card bg-white p-6 rounded-2xl shadow-md border">
-      <span class="card-icon text-4xl mb-2 block">📋</span>
-      <h3 class="card-title text-lg font-semibold mb-1">Approve Activities</h3>
-      <p class="card-description text-gray-600 mb-4">Review and approve submitted activities and reports.</p>
-      <a href="{% url 'approve_activities' branch=user.branch.lower %}" class="card-link text-blue-600 hover:underline font-medium">Review Activities</a>
-    </div>
-
-    <!-- Animal List Card -->
-    <div class="dashboard-card bg-white p-6 rounded-2xl shadow-md border">
-      <span class="card-icon text-4xl mb-2 block">🐾</span>
-      <h3 class="card-title text-lg font-semibold mb-1">Animal Management</h3>
-      <p class="card-description text-gray-600 mb-4">View and manage animals in your branch.</p>
-      <a href="{% url 'animal_list' branch=user.branch.lower %}" class="card-link text-blue-600 hover:underline font-medium">View Animals</a>
-    </div>
-
-    <!-- Reports Card -->
-    <div class="dashboard-card bg-white p-6 rounded-2xl shadow-md border">
-      <span class="card-icon text-4xl mb-2 block">📊</span>
-      <h3 class="card-title text-lg font-semibold mb-1">Reports</h3>
-      <p class="card-description text-gray-600 mb-4">Generate and view detailed reports and analytics.</p>
-      <a href="{% url 'admin_reports' branch=user.branch.lower %}" class="card-link text-blue-600 hover:underline font-medium">View Reports</a>
+    <!-- User Profile & Logout -->
+    <div class="flex items-center space-x-4">
+      <div class="text-right">
+        <div class="text-sm font-medium text-gray-900">{{ user.get_full_name|default:user.username }}</div>
+        <div class="text-xs text-gray-500">Administrator</div>
+      </div>
+      <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold">
+        {{ user.first_name.0|default:user.username.0|upper }}
+      </div>
+      <button onclick="logout()" class="logout-btn text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center">
+        <i class="fas fa-sign-out-alt mr-2"></i>
+        Logout
+      </button>
     </div>
   </div>
-</main>
+
+  <!-- Quick Actions Section -->
+  <div class="bg-white rounded-2xl shadow-lg p-6 mb-8">
+    <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+      <i class="fas fa-bolt text-yellow-500 mr-2"></i>
+      Quick Actions
+    </h3>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <button class="quick-action-btn text-white py-3 px-4 rounded-lg font-medium hover:shadow-lg transition-all duration-300 flex items-center justify-center">
+        <i class="fas fa-plus mr-2"></i>
+        Add User
+      </button>
+      <button class="quick-action-btn text-white py-3 px-4 rounded-lg font-medium hover:shadow-lg transition-all duration-300 flex items-center justify-center">
+        <i class="fas fa-clipboard-check mr-2"></i>
+        New Task
+      </button>
+      <button class="quick-action-btn text-white py-3 px-4 rounded-lg font-medium hover:shadow-lg transition-all duration-300 flex items-center justify-center">
+        <i class="fas fa-file-alt mr-2"></i>
+        Generate Report
+      </button>
+      <button class="quick-action-btn text-white py-3 px-4 rounded-lg font-medium hover:shadow-lg transition-all duration-300 flex items-center justify-center">
+        <i class="fas fa-cog mr-2"></i>
+        Settings
+      </button>
+    </div>
+  </div>
+
+  <!-- Enhanced Dashboard Cards -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6 mb-8" id="admin-cards">
+
+    <div class="bg-white p-6 rounded-2xl shadow-lg border-l-4 border-blue-500 card card-hover relative overflow-hidden">
+      <div class="absolute top-0 right-0 w-20 h-20 bg-blue-50 rounded-full -mr-10 -mt-10"></div>
+      <div class="relative">
+        <div class="flex items-center justify-between mb-2">
+          <h2 class="text-sm text-gray-500 font-medium">Total Users</h2>
+          <i class="fas fa-users text-blue-500 text-xl"></i>
+        </div>
+        <p class="text-3xl font-bold text-blue-600">{{ total_users }}</p>
+        <div class="text-xs text-green-600 mt-1">
+          <i class="fas fa-arrow-up mr-1"></i>
+          +5% from last month
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white p-6 rounded-2xl shadow-lg border-l-4 border-yellow-500 card card-hover relative overflow-hidden">
+      <div class="absolute top-0 right-0 w-20 h-20 bg-yellow-50 rounded-full -mr-10 -mt-10"></div>
+      <div class="relative">
+        <div class="flex items-center justify-between mb-2">
+          <h2 class="text-sm text-gray-500 font-medium">Pending Tasks</h2>
+          <i class="fas fa-clock text-yellow-500 text-xl"></i>
+        </div>
+        <p class="text-3xl font-bold text-yellow-600">{{ pending_tasks }}</p>
+        <div class="text-xs text-red-600 mt-1">
+          <i class="fas fa-exclamation-circle mr-1"></i>
+          Requires attention
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white p-6 rounded-2xl shadow-lg border-l-4 border-green-500 card card-hover relative overflow-hidden">
+      <div class="absolute top-0 right-0 w-20 h-20 bg-green-50 rounded-full -mr-10 -mt-10"></div>
+      <div class="relative">
+        <div class="flex items-center justify-between mb-2">
+          <h2 class="text-sm text-gray-500 font-medium">Animals</h2>
+          <i class="fas fa-paw text-green-500 text-xl"></i>
+        </div>
+        <p class="text-3xl font-bold text-green-600">{{ total_animals }}</p>
+        <div class="text-xs text-green-600 mt-1">
+          <i class="fas fa-heart mr-1"></i>
+          All healthy
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white p-6 rounded-2xl shadow-lg border-l-4 border-indigo-500 card card-hover relative overflow-hidden">
+      <div class="absolute top-0 right-0 w-20 h-20 bg-indigo-50 rounded-full -mr-10 -mt-10"></div>
+      <div class="relative">
+        <div class="flex items-center justify-between mb-2">
+          <h2 class="text-sm text-gray-500 font-medium">Open Tickets</h2>
+          <i class="fas fa-ticket-alt text-indigo-500 text-xl"></i>
+        </div>
+        <p class="text-3xl font-bold text-indigo-600">{{ open_tickets }}</p>
+        <div class="text-xs text-blue-600 mt-1">
+          <i class="fas fa-clock mr-1"></i>
+          Avg. 2.5hrs response
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white p-6 rounded-2xl shadow-lg border-l-4 border-gray-600 card card-hover relative overflow-hidden">
+      <div class="absolute top-0 right-0 w-20 h-20 bg-gray-50 rounded-full -mr-10 -mt-10"></div>
+      <div class="relative">
+        <div class="flex items-center justify-between mb-2">
+          <h2 class="text-sm text-gray-500 font-medium">Closed Tickets</h2>
+          <i class="fas fa-check-circle text-gray-600 text-xl"></i>
+        </div>
+        <p class="text-3xl font-bold text-gray-700">{{ closed_tickets }}</p>
+        <div class="text-xs text-green-600 mt-1">
+          <i class="fas fa-check mr-1"></i>
+          95% satisfaction
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white p-6 rounded-2xl shadow-lg border-l-4 border-red-500 card card-hover relative overflow-hidden">
+      <div class="absolute top-0 right-0 w-20 h-20 bg-red-50 rounded-full -mr-10 -mt-10"></div>
+      <div class="relative">
+        <div class="flex items-center justify-between mb-2">
+          <h2 class="text-sm text-gray-500 font-medium">Daily Reports</h2>
+          <i class="fas fa-file-alt text-red-500 text-xl"></i>
+        </div>
+        <p class="text-3xl font-bold text-red-600">{{ reports_today }}</p>
+        <div class="text-xs text-gray-500 mt-1">
+          <i class="fas fa-calendar-day mr-1"></i>
+          Today's submissions
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Additional Dashboard Features -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- Recent Activity -->
+    <div class="bg-white rounded-2xl shadow-lg p-6">
+      <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+        <i class="fas fa-activity text-blue-500 mr-2"></i>
+        Recent Activity
+      </h3>
+      <div class="space-y-3">
+        <div class="flex items-center p-3 bg-gray-50 rounded-lg">
+          <div class="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
+          <div class="flex-1">
+            <div class="text-sm font-medium">New user registered</div>
+            <div class="text-xs text-gray-500">2 minutes ago</div>
+          </div>
+        </div>
+        <div class="flex items-center p-3 bg-gray-50 rounded-lg">
+          <div class="w-2 h-2 bg-yellow-500 rounded-full mr-3"></div>
+          <div class="flex-1">
+            <div class="text-sm font-medium">Task assigned to team</div>
+            <div class="text-xs text-gray-500">15 minutes ago</div>
+          </div>
+        </div>
+        <div class="flex items-center p-3 bg-gray-50 rounded-lg">
+          <div class="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
+          <div class="flex-1">
+            <div class="text-sm font-medium">Report generated</div>
+            <div class="text-xs text-gray-500">1 hour ago</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="bg-white rounded-2xl shadow-lg p-6">
+      <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+        <i class="fas fa-chart-pie text-purple-500 mr-2"></i>
+        Quick Stats
+      </h3>
+      <div class="space-y-4">
+        <div class="flex justify-between items-center">
+          <span class="text-gray-600">System Uptime</span>
+          <span class="text-green-600 font-semibold">99.9%</span>
+        </div>
+        <div class="flex justify-between items-center">
+          <span class="text-gray-600">Active Sessions</span>
+          <span class="text-blue-600 font-semibold">127</span>
+        </div>
+        <div class="flex justify-between items-center">
+          <span class="text-gray-600">Data Usage</span>
+          <span class="text-orange-600 font-semibold">2.4 GB</span>
+        </div>
+        <div class="flex justify-between items-center">
+          <span class="text-gray-600">Response Time</span>
+          <span class="text-purple-600 font-semibold">45ms</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Enhanced Scripts -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script>
+  // Wait for DOM to be fully loaded
+  document.addEventListener('DOMContentLoaded', function() {
+    // Ensure all elements are visible initially
+    const cards = document.querySelectorAll('.card');
+    cards.forEach(card => {
+      card.style.opacity = '1';
+      card.style.visibility = 'visible';
+    });
+
+    // Enhanced card animations with better timing
+    gsap.fromTo(".card",
+      {
+        y: 30,
+        opacity: 0,
+        scale: 0.95
+      },
+      {
+        duration: 0.8,
+        y: 0,
+        opacity: 1,
+        scale: 1,
+        stagger: 0.1,
+        ease: "power2.out",
+        delay: 0.2
+      }
+    );
+
+    // Animate header with better timing
+    gsap.fromTo("h1",
+      {
+        y: 20,
+        opacity: 0
+      },
+      {
+        duration: 0.6,
+        y: 0,
+        opacity: 1,
+        ease: "power2.out"
+      }
+    );
+
+    // Animate quick actions
+    gsap.fromTo(".quick-action-btn",
+      {
+        y: 20,
+        opacity: 0
+      },
+      {
+        duration: 0.6,
+        y: 0,
+        opacity: 1,
+        stagger: 0.1,
+        ease: "power2.out",
+        delay: 0.3
+      }
+    );
+  });
+
+  // Update current time
+  function updateTime() {
+    const now = new Date();
+    const timeString = now.toLocaleTimeString('en-US', {
+      hour12: true,
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+    document.getElementById('current-time').textContent = timeString;
+  }
+
+  updateTime();
+  setInterval(updateTime, 1000);
+
+  // Logout functionality
+  function logout() {
+    if (confirm('Are you sure you want to logout?')) {
+      // Add your logout logic here
+      // For Django, this would typically be:
+      window.location.href = "{% url 'logout' %}";
+
+      // Or you could use a form submission:
+      // const form = document.createElement('form');
+      // form.method = 'POST';
+      // form.action = "{% url 'logout' %}";
+      // const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+      // if (csrfToken) form.appendChild(csrfToken.cloneNode());
+      // document.body.appendChild(form);
+      // form.submit();
+    }
+  }
+
+  // Add hover effects to navigation
+  document.querySelectorAll('.nav-link').forEach(link => {
+    link.addEventListener('mouseenter', function() {
+      this.style.transform = 'translateX(8px)';
+    });
+
+    link.addEventListener('mouseleave', function() {
+      this.style.transform = 'translateX(0)';
+    });
+  });
+
+  // Quick action buttons functionality
+  document.querySelectorAll('.quick-action-btn').forEach(button => {
+    button.addEventListener('click', function() {
+      const action = this.textContent.trim();
+      // Add your quick action logic here based on the button clicked
+      console.log(`Quick action: ${action}`);
+
+      // Example: You could redirect to specific pages or open modals
+      // if (action.includes('Add User')) {
+      //   window.location.href = "{% url 'admin_user_add' branch=branch %}";
+      // }
+    });
+  });
+</script>
+
 {% endblock %}

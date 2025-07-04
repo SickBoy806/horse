@@ -1,0 +1,87 @@
+{% extends "superadmin_dashboard/base_dashboard.html" %}
+
+{% block content %}
+  <div class="p-6">
+    <h1 class="text-2xl font-bold mb-4">Analytics Overview</h1>
+
+    <!-- Chart Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+      <div class="bg-white p-4 rounded-lg shadow">
+        <h2 class="text-lg font-semibold mb-2">Users by Role</h2>
+        <canvas id="roleChart"></canvas>
+      </div>
+      <div class="bg-white p-4 rounded-lg shadow">
+        <h2 class="text-lg font-semibold mb-2">Task Status Overview</h2>
+        <canvas id="taskChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Summary Table -->
+    <div class="bg-white p-4 rounded-lg shadow mb-6">
+      <h2 class="text-lg font-semibold mb-4">Branch Summary</h2>
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-4 py-2 text-left">Branch</th>
+            <th class="px-4 py-2 text-left">Users</th>
+            <th class="px-4 py-2 text-left">Tasks</th>
+            <th class="px-4 py-2 text-left">Reports Today</th>
+            <th class="px-4 py-2 text-left">Active Animals</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for b in branch_summaries %}
+          <tr>
+            <td class="px-4 py-2">{{ b.branch }}</td>
+            <td class="px-4 py-2">{{ b.user_count }}</td>
+            <td class="px-4 py-2">{{ b.task_count }}</td>
+            <td class="px-4 py-2">{{ b.reports_today }}</td>
+            <td class="px-4 py-2">{{ b.animal_count }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+  <!-- Top Users -->
+<div class="bg-white p-4 rounded-lg shadow">
+  <h2 class="text-lg font-semibold mb-4">Top Active Users</h2>
+  <ul class="list-disc pl-6 text-gray-700">
+    {% for u in top_users %}
+    <li>{{ u.user_first_name }} ({{ u.userbranch_name }}) – {{ u.count }} reports</li>
+    {% empty %}
+    <li>No activity yet.</li>
+    {% endfor %}
+  </ul>
+</div>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    const roleCtx = document.getElementById("roleChart");
+    new Chart(roleCtx, {
+      type: "pie",
+      data: {
+        labels: {{ role_labels|safe }},
+        datasets: [{
+          label: "User Roles",
+          data: {{ role_counts|safe }},
+          backgroundColor: ["#3b82f6", "#facc15", "#10b981", "#ef4444"]
+        }]
+      }
+    });
+
+    const taskCtx = document.getElementById("taskChart");
+    new Chart(taskCtx, {
+      type: "bar",
+      data: {
+        labels: ["Pending", "In Progress", "Completed"],
+        datasets: [{
+          label: "Tasks",
+          data: {{ task_status_data|safe }},
+          backgroundColor: ["#f59e0b", "#3b82f6", "#10b981"]
+        }]
+      }
+    });
+  </script>
+{% endblock %}

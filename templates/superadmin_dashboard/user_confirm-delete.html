@@ -1,0 +1,13 @@
+{% extends "superadmin_dashboard/base_dashboard.html" %}
+
+{% block content %}
+<div class="p-6 max-w-md mx-auto bg-white shadow rounded-lg">
+  <h1 class="text-2xl font-bold mb-4">Delete User</h1>
+  <p>Are you sure you want to delete user <strong>{{ user.username }}</strong>?</p>
+  <form method="post" class="mt-4">
+    {% csrf_token %}
+    <button type="submit" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">Yes, Delete</button>
+    <a href="{% url 'superadmin_manage_users' %}" class="ml-4 text-gray-700 hover:underline">Cancel</a>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,46 @@
+{% extends "superadmin_dashboard/base_dashboard.html" %}
+
+{% block content %}
+<div class="p-6">
+  <div class="flex justify-between items-center mb-6">
+    <h2 class="text-2xl font-bold">Manage Branches</h2>
+    <a href="{% url 'superadmin_add_branch' %}" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+      + Add Branch
+    </a>
+  </div>
+
+  <div class="bg-white shadow rounded-lg overflow-x-auto">
+    <table class="min-w-full divide-y divide-gray-200 text-sm">
+      <thead class="bg-gray-50">
+        <tr>
+          <th class="text-left px-4 py-2">Name</th>
+          <th class="text-left px-4 py-2">Location</th>
+          <th class="text-left px-4 py-2">Status</th>
+          <th class="text-left px-4 py-2">Actions</th>
+        </tr>
+      </thead>
+      <tbody class="bg-white divide-y divide-gray-100">
+        {% for branch in branches %}
+        <tr>
+          <td class="px-4 py-2 font-medium">{{ branch.name }}</td>
+          <td class="px-4 py-2">{{ branch.location|default:"—" }}</td>
+          <td class="px-4 py-2">
+            {% if branch.is_active %}
+              <span class="text-green-600 font-semibold">Active</span>
+            {% else %}
+              <span class="text-red-600 font-semibold">Inactive</span>
+            {% endif %}
+          </td>
+          <td class="px-4 py-2 space-x-2">
+            <a href="{% url 'superadmin_edit_branch' branch.id %}" class="text-blue-600 hover:underline">Edit</a>
+            <a href="{% url 'superadmin_delete_branch' branch.id %}" class="text-red-600 hover:underline">Delete</a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="4" class="px-4 py-4 text-center text-gray-500">No branches found.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

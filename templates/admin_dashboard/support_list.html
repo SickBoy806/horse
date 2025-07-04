@@ -1,0 +1,13 @@
+{% extends "admin_dashboard/base_admin.html" %}
+{% block content %}
+<h1 class="text-2xl font-bold mb-4">Support Tickets - {{ branch }}</h1>
+<ul>
+  {% for ticket in tickets %}
+    <li class="bg-white p-4 shadow rounded mb-2">
+      <a href="{% url 'admin_support_detail' branch=branch ticket_id=ticket.id %}">
+        <strong>{{ ticket.subject }}</strong> — {{ ticket.status|title }}
+      </a>
+    </li>
+  {% endfor %}
+</ul>
+{% endblock %}

@@ -1,0 +1,16 @@
+{% extends "admin_dashboard/base_admin.html" %}
+{% block content %}
+<div class="p-6">
+  <h2 class="text-2xl font-bold mb-4">Incident Logs - {{ branch }}</h2>
+  {% for incident in incidents %}
+    <div class="bg-red-100 p-4 mb-2 rounded shadow">
+      <p><strong>Animal:</strong> {{ incident.animal.name }}</p>
+      <p><strong>Reported By:</strong> {{ incident.reported_by }}</p>
+      <p><strong>Description:</strong> {{ incident.description }}</p>
+      <p><strong>Date:</strong> {{ incident.date_reported }}</p>
+    </div>
+  {% empty %}
+    <p>No incident logs found.</p>
+  {% endfor %}
+</div>
+{% endblock %}

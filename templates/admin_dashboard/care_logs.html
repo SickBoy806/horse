@@ -1,0 +1,15 @@
+{% extends "admin_dashboard/base_admin.html" %}
+{% block content %}
+<h2 class="text-2xl font-bold mb-4">Animal Care Logs</h2>
+
+<div class="space-y-4">
+  {% for log in logs %}
+    <div class="bg-white p-4 shadow rounded">
+      <p><strong>{{ log.animal.name }}</strong> | {{ log.user.full_name }} | {{ log.date|date:"Y-m-d H:i" }}</p>
+      <p class="mt-1 text-gray-700">{{ log.details }}</p>
+    </div>
+  {% empty %}
+    <p>No care logs found.</p>
+  {% endfor %}
+</div>
+{% endblock %}

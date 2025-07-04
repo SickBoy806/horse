@@ -1,0 +1,14 @@
+{% extends "admin_dashboard/base_admin.html" %}
+{% block content %}
+
+<h2 class="text-xl font-bold mb-4 text-red-600">Confirm Delete</h2>
+<p class="mb-4">Are you sure you want to delete user <strong>{{ user.full_name }}</strong> ({{ user.username }})?</p>
+
+<form method="post">
+  {% csrf_token %}
+  <button type="submit" class="bg-red-600 text-white px-4 py-2 rounded">Confirm Delete</button>
+  <a href="{% url 'admin_user_list' branch=branch %}" class="ml-4 text-gray-700 underline">Cancel</a>
+</form>
+
+{% endblock %}
+{% endblock %}

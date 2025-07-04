@@ -1,0 +1,24 @@
+{% extends "admin_dashboard/base_admin.html" %}
+{% block content %}
+<h2 class="text-xl font-bold mb-4">{{ ticket.subject }}</h2>
+<p>{{ ticket.message }}</p>
+
+<h3 class="mt-6 font-semibold">Replies</h3>
+<ul class="space-y-2 mt-2">
+  {% for reply in replies %}
+    <li class="p-2 bg-gray-100 rounded">
+      <strong>{{ reply.user.get_full_name }}</strong>: {{ reply.message }}
+    </li>
+  {% endfor %}
+</ul>
+
+<form method="post" class="mt-6">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Reply</button>
+</form>
+
+{% if ticket.status != "closed" %}
+  <a href="{% url 'admin_support_close' branch=branch ticket_id=ticket.id %}" class="inline-block mt-4 text-red-600">Close Ticket</a>
+{% endif %}
+{% endblock %}

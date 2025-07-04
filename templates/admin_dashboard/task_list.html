@@ -1,0 +1,18 @@
+{% extends "admin_dashboard/base_admin.html" %}
+{% block content %}
+<h2 class="text-2xl font-bold mb-4">Assigned Tasks</h2>
+<a href="{% url 'admin_task_assign' branch=branch %}" class="mb-4 inline-block bg-green-600 text-white px-4 py-2 rounded">+ Assign Task</a>
+
+<div class="grid gap-4">
+  {% for task in tasks %}
+    <div class="bg-white shadow rounded p-4">
+      <h3 class="text-lg font-semibold text-blue-700">{{ task.title }}</h3>
+      <p class="text-sm text-gray-600">To: {{ task.assigned_to.full_name }} | Priority: {{ task.priority|title }}</p>
+      <p class="text-sm text-gray-500">Due: {{ task.deadline|date:"Y-m-d H:i" }}</p>
+      <a href="{% url 'admin_task_detail' branch=branch task_id=task.id %}" class="text-blue-500 text-sm mt-2 inline-block">View Details</a>
+    </div>
+  {% empty %}
+    <p>No tasks assigned yet.</p>
+  {% endfor %}
+</div>
+{% endblock %}

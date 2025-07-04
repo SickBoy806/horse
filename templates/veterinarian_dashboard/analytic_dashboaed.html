@@ -1,0 +1,20 @@
+{% extends "veterinarian_dashboard/base_dashboard.html" %}
+
+{% block page_title %}Analytics Dashboard - {{ branch|title }}{% endblock %}
+
+{% block dashboard_content %}
+<h1 class="text-3xl font-bold mb-6">Analytics Dashboard - {{ branch|title }}</h1>
+
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div class="bg-white p-6 rounded shadow">
+        <h2 class="text-xl font-semibold mb-4">Patient Statistics</h2>
+        <p>Total Patients: {{ total_patients }}</p>
+        <p>Active Cases: {{ active_cases }}</p>
+    </div>
+    <div class="bg-white p-6 rounded shadow">
+        <h2 class="text-xl font-semibold mb-4">Tasks Overview</h2>
+        <p>Pending Tasks: {{ pending_tasks }}</p>
+        <p>Completed Tasks: {{ completed_tasks }}</p>
+    </div>
+</div>
+{% endblock %}

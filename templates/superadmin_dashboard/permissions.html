@@ -1,0 +1,91 @@
+{% extends "superadmin_dashboard/base_dashboard.html" %}
+{% load static %}
+{% block content %}
+<div class="p-6 bg-gray-100 min-h-screen">
+  <h1 class="text-2xl font-bold mb-6">User Permissions Panel</h1>
+
+  <!-- Flash Messages -->
+  {% if messages %}
+    <div class="mb-4">
+      {% for message in messages %}
+        <div class="bg-green-100 text-green-800 p-3 rounded shadow mb-2">
+          {{ message }}
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <!-- Filters -->
+  <form method="get" class="mb-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
+    <select name="branch" class="px-4 py-2 rounded border-gray-300 shadow">
+      <option value="">All Branches</option>
+      {% for b in branches %}
+        <option value="{{ b }}" {% if branch_filter == b %}selected{% endif %}>{{ b }}</option>
+      {% endfor %}
+    </select>
+
+    <select name="role" class="px-4 py-2 rounded border-gray-300 shadow">
+      <option value="">All Roles</option>
+      <option value="user" {% if role_filter == 'user' %}selected{% endif %}>User</option>
+      <option value="veterinarian" {% if role_filter == 'veterinarian' %}selected{% endif %}>Veterinarian</option>
+      <option value="admin" {% if role_filter == 'admin' %}selected{% endif %}>Admin</option>
+    </select>
+
+    <select name="status" class="px-4 py-2 rounded border-gray-300 shadow">
+      <option value="">All Status</option>
+      <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active</option>
+      <option value="locked" {% if status_filter == 'locked' %}selected{% endif %}>Locked</option>
+    </select>
+
+    <button type="submit" class="sm:col-span-3 bg-blue-600 text-white px-6 py-2 mt-2 rounded hover:bg-blue-700">Filter</button>
+  </form>
+
+  <!-- User Table -->
+  <div class="overflow-x-auto bg-white rounded shadow">
+    <table class="min-w-full text-left text-sm">
+      <thead class="bg-gray-100 border-b">
+        <tr>
+          <th class="px-4 py-3 font-semibold">Name</th>
+          <th class="px-4 py-3 font-semibold">Email</th>
+          <th class="px-4 py-3 font-semibold">Role</th>
+          <th class="px-4 py-3 font-semibold">Branch</th>
+          <th class="px-4 py-3 font-semibold">Status</th>
+          <th class="px-4 py-3 font-semibold">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for user in users %}
+          <tr class="border-b hover:bg-gray-50">
+            <td class="px-4 py-3">{{ user.get_full_name }}</td>
+            <td class="px-4 py-3">{{ user.email }}</td>
+            <td class="px-4 py-3">{{ user.role|title }}</td>
+            <td class="px-4 py-3">{{ user.branch }}</td>
+            <td class="px-4 py-3">
+              {% if user.is_active %}
+                <span class="text-green-600 font-semibold">Active</span>
+              {% else %}
+                <span class="text-red-600 font-semibold">Locked</span>
+              {% endif %}
+            </td>
+            <td class="px-4 py-3 space-x-2">
+              {% if user.role != 'veterinarian' %}
+                <a href="{% url 'promote_to_vet' user.id %}" class="text-blue-600 hover:underline">Promote</a>
+              {% endif %}
+              {% if user.is_active %}
+                <a href="{% url 'lock_account' user.id %}" class="text-red-600 hover:underline">Lock</a>
+              {% else %}
+                <a href="{% url 'unlock_account' user.id %}" class="text-green-600 hover:underline">Unlock</a>
+              {% endif %}
+              <a href="#" class="text-yellow-600 hover:underline">Reset Password</a>
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="6" class="text-center py-4 text-gray-500">No users found for the selected filters.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

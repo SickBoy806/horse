@@ -1,0 +1,12 @@
+{% extends "veterinarian_dashboard/base_dashboard.html" %}
+
+{% block dashboard_content %}
+<h2>Patients - {{ branch|title }}</h2>
+<ul>
+  {% for patient in patients %}
+    <li>{{ patient.name }} - {{ patient.species }} - {{ patient.breed }}</li>
+  {% empty %}
+    <li>No patients found.</li>
+  {% endfor %}
+</ul>
+{% endblock %}

@@ -1,0 +1,41 @@
+{% extends "superadmin_dashboard/base_dashboard.html" %}
+
+{% block content %}
+<div class="p-6">
+  <div class="flex justify-between items-center mb-4">
+    <h1 class="text-2xl font-bold">Support Tickets</h1>
+    <div class="space-x-2">
+      <a href="{% url 'superadmin_tickets' %}" class="px-4 py-1 rounded bg-gray-200 text-gray-800 text-sm font-medium {% if not status_filter %}bg-blue-200 text-blue-900{% endif %}">All</a>
+      <a href="?status=open" class="px-4 py-1 rounded bg-gray-200 text-gray-800 text-sm font-medium {% if status_filter == 'open' %}bg-green-200 text-green-900{% endif %}">Open</a>
+      <a href="?status=closed" class="px-4 py-1 rounded bg-gray-200 text-gray-800 text-sm font-medium {% if status_filter == 'closed' %}bg-gray-400 text-white{% endif %}">Closed</a>
+    </div>
+  </div>
+
+  {% for branch, tickets in branch_groups.items %}
+    <div class="mb-6 bg-white rounded-lg shadow p-4">
+      <h2 class="text-xl font-semibold text-blue-700 mb-3">{{ branch }}</h2>
+      {% if tickets %}
+        <ul class="divide-y divide-gray-200">
+          {% for ticket in tickets %}
+            <li class="py-3 flex justify-between items-center">
+              <div>
+                <p class="font-medium">{{ ticket.subject }}</p>
+                <p class="text-sm text-gray-500">By {{ ticket.created_by.get_full_name }} • {{ ticket.created_at|date:"M d, Y H:i" }}</p>
+              </div>
+              <span class="text-xs rounded-full px-3 py-1 font-semibold
+                {% if ticket.status == 'open' %}bg-green-100 text-green-800
+                {% else %}bg-gray-300 text-gray-700{% endif %}">
+                {{ ticket.status|title }}
+              </span>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="text-sm text-gray-500">No tickets for this branch.</p>
+      {% endif %}
+    </div>
+  {% empty %}
+    <p class="text-center text-gray-500">No tickets found.</p>
+  {% endfor %}
+</div>
+{% endblock %}
