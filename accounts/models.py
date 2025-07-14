@@ -1,16 +1,15 @@
-from django.db import models
-
-# Create your models here.
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
+# Define the fixed branches
 BRANCHES = [
-    ('HQ', 'HQ'),
     ('Dodoma', 'Dodoma'),
     ('Iringa', 'Iringa'),
-    ('TPS_Moshi', 'TPS Moshi'),
+    ('HQ', 'HQ'),
+    ('Tps_Moshi', 'Tps Moshi'),
 ]
 
+# Define roles as you need
 ROLES = [
     ('superadmin', 'Super Admin'),
     ('admin', 'Admin'),
@@ -20,5 +19,9 @@ ROLES = [
 ]
 
 class CustomUser(AbstractUser):
-    role = models.CharField(max_length=20, choices=ROLES)
-    branch = models.CharField(max_length=20, choices=BRANCHES)
+    email = models.EmailField(unique=True)
+    role = models.CharField(max_length=30, choices=ROLES)
+    branch = models.CharField(max_length=30, choices=BRANCHES)
+
+    def __str__(self):
+        return self.username

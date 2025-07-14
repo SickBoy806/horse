@@ -26,6 +26,7 @@ INSTALLED_APPS = [
     # Tailwind CSS
     'tailwind',
     'theme',
+    'widget_tweaks',
 
     # Custom apps
     'accounts',
@@ -121,3 +122,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Custom user model
 AUTH_USER_MODEL = 'accounts.CustomUser'
 LOGIN_URL = '/login/'
+
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+# <-- this is your image folder

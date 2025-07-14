@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% load widget_tweaks %}
+{% block content %}
+<div class="p-6 bg-gray-100 min-h-screen">
+  <h2 class="text-2xl font-bold mb-4">Add New Animal</h2>
+
+  <!-- Flash Message -->
+ {% if messages %}
+  {% for message in messages %}
+    <div class="mb-4 p-4 text-white rounded
+        {% if message.tags == 'success' %}bg-green-600
+        {% elif message.tags == 'error' %}bg-red-600
+        {% else %}bg-blue-600{% endif %}">
+      {{ message }}
+    </div>
+  {% endfor %}
+{% endif %}
+
+  <form method="POST" enctype="multipart/form-data" class="bg-white shadow-md rounded p-6 space-y-4">
+    {% csrf_token %}
+
+    <div>
+      <label class="block font-semibold mb-1">Name:</label>
+      {{ form.name|add_class:"w-full border px-4 py-2 rounded" }}
+    </div>
+
+    <div>
+      <label class="block font-semibold mb-1">Species:</label>
+      {{ form.species|add_class:"w-full border px-4 py-2 rounded" }}
+    </div>
+
+    <div>
+      <label class="block font-semibold mb-1">Age:</label>
+      {{ form.age|add_class:"w-full border px-4 py-2 rounded" }}
+    </div>
+    <div>
+    <label class="block font-semibold mb-1">Force Number:</label>
+    {{ form.force_number|add_class:"w-full border px-4 py-2 rounded" }}
+    </div>
+    <div>
+      <label class="block font-semibold mb-1">Owner Name:</label>
+      {{ form.owner_name|add_class:"w-full border px-4 py-2 rounded" }}
+    </div>
+
+    <div>
+      <label class="block font-semibold mb-1">Animal Photo:</label>
+      {{ form.photo|add_class:"w-full border px-4 py-2 rounded" }}
+      <div class="mt-2">
+        <img id="preview" src="#" class="hidden w-32 h-32 object-cover rounded" alt="Preview">
+      </div>
+    </div>
+
+    <div class="text-right">
+      <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700">Add Animal</button>
+    </div>
+  </form>
+</div>
+
+<script>
+  const photoInput = document.querySelector('input[type="file"]');
+  const preview = document.getElementById('preview');
+
+  if (photoInput) {
+    photoInput.addEventListener('change', function() {
+      const file = this.files[0];
+      if (file) {
+        preview.src = URL.createObjectURL(file);
+        preview.classList.remove("hidden");
+      }
+    });
+  }
+</script>
+{% endblock %}

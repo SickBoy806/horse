@@ -323,6 +323,12 @@
                     <span class="font-semibold">Settings</span>
                 </a>
 
+                <a href="{% url 'animal_list' %}" class="block px-4 py-2 rounded hover:bg-gray-200">🐾 View Animals</a>
+
+                  {% if request.user.role == 'admin' or request.user.role == 'veterinarian' %}
+                    <a href="{% url 'add_animal' %}" class="block px-4 py-2 rounded hover:bg-gray-200">Add Animal</a>
+                  {% endif %}
+
                 <!-- Help & Support -->
                 <a href="{% url 'help_support' branch=branch %}" class="sidebar-item flex items-center px-4 py-3 text-gray-700 hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 rounded-xl transition-all duration-300 group">
                     <div class="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center mr-3 group-hover:bg-yellow-200 transition-colors">

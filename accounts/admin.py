@@ -1,16 +1,17 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import CustomUser
 from django import forms
 
+from .models import CustomUser
+
+
 class CustomUserCreationForm(forms.ModelForm):
-    """A form for creating new users. Includes all required fields plus password."""
     password1 = forms.CharField(label='Password', widget=forms.PasswordInput)
     password2 = forms.CharField(label='Password confirmation', widget=forms.PasswordInput)
 
     class Meta:
         model = CustomUser
-        fields = ('username', 'email', 'role', 'branch')
+        fields = ('username', 'email', 'role', 'branch')  # changed here
 
     def clean_password2(self):
         password1 = self.cleaned_data.get("password1")
@@ -26,14 +27,15 @@ class CustomUserCreationForm(forms.ModelForm):
             user.save()
         return user
 
+
 class CustomUserAdmin(UserAdmin):
     add_form = CustomUserCreationForm
     model = CustomUser
-    list_display = ('username', 'email', 'role', 'branch', 'is_staff', 'is_active')
-    list_filter = ('role', 'branch', 'is_staff')
+    list_display = ('username', 'email', 'role', 'branch', 'is_staff', 'is_active')  # changed here
+    list_filter = ('role', 'branch', 'is_staff')  # changed here
 
     fieldsets = (
-        (None, {'fields': ('username', 'email', 'password', 'role', 'branch')}),
+        (None, {'fields': ('username', 'email', 'password', 'role', 'branch')}),  # changed here
         ('Permissions', {'fields': ('is_staff', 'is_active', 'groups', 'user_permissions')}),
     )
 
@@ -41,9 +43,10 @@ class CustomUserAdmin(UserAdmin):
         (None, {
             'classes': ('wide',),
             'fields': ('username', 'email', 'role', 'branch', 'password1', 'password2', 'is_staff', 'is_active')}
-        ),
+         ),
     )
     search_fields = ('username', 'email')
     ordering = ('username',)
+
 
 admin.site.register(CustomUser, CustomUserAdmin)

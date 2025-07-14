@@ -1,6 +1,9 @@
 from django.db import models
 from accounts.models import CustomUser
 from django.conf import settings
+from django.shortcuts import render, get_object_or_404
+from django.contrib.auth.decorators import login_required
+
 
 class Branch(models.Model):
     name = models.CharField(max_length=100, unique=True)
@@ -30,9 +33,12 @@ class Animal(models.Model):
     name = models.CharField(max_length=100)
     species = models.CharField(max_length=100)
     age = models.PositiveIntegerField()
+    force_number = models.CharField(max_length=255, default='some_default_value')
     owner_name = models.CharField(max_length=255)
-    branch = models.CharField(max_length=100)
-    photo = models.ImageField(upload_to='animal_photos/', null=True, blank=True)
+    photo = models.ImageField(upload_to='', null=True, blank=True)
+
+
+    branch = models.ForeignKey('core.Branch', on_delete=models.SET_NULL, null=True, blank=True)
 
     assigned_users = models.ManyToManyField(CustomUser, blank=True, related_name='core_assigned_animals')
 
@@ -119,3 +125,46 @@ class Report(models.Model):
 
     def __str__(self):
         return self.title
+
+@login_required
+def animal_list(request):
+    if request.user.role not in ['admin', 'veterinarian', 'superadmin', 'user']:
+        return render(request, 'errors/unauthorized.html', status=403)
+
+    branch = request.user.branch
+
+    animals = Animal.objects.filter(
+        assigned_users__branch=branch
+    ).distinct().order_by('-id')
+
+    search = request.GET.get("q")
+    if search:
+        animals = animals.filter(
+            Q(name__icontains=search) | Q(species__icontains=search)
+        )
+
+    paginator = Paginator(animals, 10)
+    page = request.GET.get("page")
+    paginated_animals = paginator.get_page(page)
+
+    return render(request, 'core/animal_list.html', {
+        'animals': paginated_animals,
+        'search': search,
+    })
+
+
+
+@login_required
+def view_animal_detail(request, animal_id):
+    animal = get_object_or_404(Animal, id=animal_id)
+
+    # ✅ Check if user belongs to branch via assigned_users
+    if request.user.role != 'superadmin' and not animal.assigned_users.filter(branch=request.user.branch).exists():
+        return render(request, 'errors/unauthorized.html', status=403)
+
+    assigned_users = animal.assigned_users.all()
+
+    return render(request, 'core/view_animal_detail.html', {
+        'animal': animal,
+        'assigned_users': assigned_users,
+    })
