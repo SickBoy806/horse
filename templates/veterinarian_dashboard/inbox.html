@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="max-w-4xl mx-auto p-6 bg-white rounded shadow">
+  <h1 class="text-3xl font-semibold mb-6">Inbox</h1>
+
+  {% if messages %}
+  <ul class="divide-y divide-gray-200">
+    {% for message in messages %}
+    <li class="py-4 hover:bg-gray-50">
+      <a href="{% url 'message_detail' message.id %}" class="flex justify-between items-center">
+        <div>
+          <p class="font-medium text-blue-600">{{ message.subject }}</p>
+          <p class="text-sm text-gray-600">From: {{ message.sender }}</p>
+        </div>
+        <div class="text-sm text-gray-400">
+          {{ message.timestamp|date:"M d, Y H:i" }}
+        </div>
+      </a>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="text-gray-500">No messages found.</p>
+  {% endif %}
+</div>
+{% endblock %}

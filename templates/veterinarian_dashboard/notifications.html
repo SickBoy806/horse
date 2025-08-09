@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <div class="p-6">
+    <h2 class="text-2xl font-bold mb-4">Notifications for {{ branch.name }}</h2>
+
+    {% if notifications %}
+      <ul class="space-y-4">
+        {% for notification in notifications %}
+          <li class="bg-white p-4 shadow rounded">
+            <p class="font-medium">{{ notification.title }}</p>
+            <p class="text-gray-600 text-sm">{{ notification.message }}</p>
+            <p class="text-xs text-gray-400">Received: {{ notification.created_at }}</p>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="text-gray-500">No notifications available.</p>
+    {% endif %}
+  </div>
+{% endblock %}

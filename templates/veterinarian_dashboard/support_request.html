@@ -1,0 +1,18 @@
+<h2 class="text-xl font-bold mb-4">Submit Support Request</h2>
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded">Submit</button>
+</form>
+
+<h3 class="mt-8 text-lg font-semibold">My Previous Requests</h3>
+<ul>
+    {% for ticket in my_tickets %}
+        <li class="mb-2 border p-2 rounded">
+            <strong>{{ ticket.title }}</strong> - {{ ticket.created_at|date:"Y-m-d H:i" }}<br>
+            {{ ticket.description }}
+        </li>
+    {% empty %}
+        <li>No support tickets submitted yet.</li>
+    {% endfor %}
+</ul>

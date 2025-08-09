@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% load widget_tweaks %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto bg-white p-6 rounded shadow">
+  <h2 class="text-2xl font-bold mb-4">Send Message</h2>
+
+  <form method="post">
+    {% csrf_token %}
+    <div class="space-y-4">
+      <div>
+        <label class="block text-gray-700">To:</label>
+        {{ form.receiver|add_class:"w-full p-2 border rounded" }}
+      </div>
+      <div>
+        <label class="block text-gray-700">Subject:</label>
+        {{ form.subject|add_class:"w-full p-2 border rounded" }}
+      </div>
+      <div>
+        <label class="block text-gray-700">Content:</label>
+        {{ form.content|add_class:"w-full p-2 border rounded" }}
+      </div>
+    </div>
+
+    <div class="mt-6">
+      <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+        Send
+      </button>
+    </div>
+  </form>
+</div>
+{% endblock %}

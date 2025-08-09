@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% load widget_tweaks %}
+{% block content %}
+<div class="max-w-2xl mx-auto bg-white p-6 rounded shadow">
+  <h2 class="text-2xl font-bold mb-6">Reply to: {{ original_message.subject }}</h2>
+
+  <form method="post" class="space-y-4">
+    {% csrf_token %}
+    <div>
+      <label class="block text-gray-700 mb-1" for="id_receiver">To:</label>
+      {{ form.receiver|add_class:"w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400" }}
+      {{ form.receiver.errors }}
+    </div>
+
+    <div>
+      <label class="block text-gray-700 mb-1" for="id_subject">Subject:</label>
+      {{ form.subject|add_class:"w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400" }}
+      {{ form.subject.errors }}
+    </div>
+
+    <div>
+      <label class="block text-gray-700 mb-1" for="id_content">Content:</label>
+      {{ form.content|add_class:"w-full border border-gray-300 rounded px-3 py-2 h-32 focus:outline-none focus:ring-2 focus:ring-blue-400" }}
+      {{ form.content.errors }}
+    </div>
+
+    <button type="submit" class="bg-blue-600 text-white px-5 py-2 rounded hover:bg-blue-700">
+      Send Reply
+    </button>
+  </form>
+
+  <a href="{% url 'inbox' branch %}" class="inline-block mt-4 text-blue-600 hover:underline">
+    ← Back to Inbox
+  </a>
+</div>
+{% endblock %}

@@ -1,23 +1,70 @@
 {% extends "user_dashboard/base_user.html" %}
+{% load static %}
 {% block content %}
 <h2 class="text-2xl font-bold mb-4">Support Requests</h2>
 
-<form method="POST" class="bg-white p-4 rounded shadow mb-6">
+<!-- Success/Error Messages -->
+<div id="message-box" class="hidden p-3 rounded mb-4"></div>
+
+<!-- Form -->
+<form id="support-form" method="POST" class="bg-white p-4 rounded shadow mb-6" action="{% url 'submit_support_ticket' %}">
   {% csrf_token %}
   {{ form.as_p }}
   <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Send Request</button>
 </form>
 
+<!-- Request List -->
 <h3 class="text-lg font-semibold mb-4">Your Previous Requests</h3>
-<div class="space-y-3">
+<div id="requests-list" class="space-y-3">
   {% for req in requests %}
     <div class="bg-white p-4 rounded shadow">
       <p><strong>{{ req.subject }}</strong></p>
-      <p class="text-sm text-gray-600">{{ req.message }}</p>
+      <p class="text-sm text-gray-600">{{ req.description }}</p>
       <p class="text-xs text-gray-500 mt-1">Status: {{ req.get_status_display }} | {{ req.created_at|date:"Y-m-d H:i" }}</p>
     </div>
   {% empty %}
     <p>No support requests submitted yet.</p>
   {% endfor %}
 </div>
+
+<script>
+document.getElementById("support-form").addEventListener("submit", function(e) {
+  e.preventDefault();
+  const form = e.target;
+  const messageBox = document.getElementById("message-box");
+
+  const formData = new FormData(form);
+  fetch(form.action, {
+    method: "POST",
+    headers: { "X-CSRFToken": formData.get("csrfmiddlewaretoken") },
+    body: formData
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.success) {
+      // show message
+      messageBox.textContent = "Support ticket submitted successfully.";
+      messageBox.className = "block p-3 rounded mb-4 bg-green-100 text-green-800";
+
+      // reset form
+      form.reset();
+
+      // append new ticket (optimistically)
+      const ticket = document.createElement("div");
+      ticket.className = "bg-white p-4 rounded shadow";
+      ticket.innerHTML = `
+        <p><strong>${formData.get("subject")}</strong></p>
+        <p class="text-sm text-gray-600">${formData.get("description")}</p>
+        <p class="text-xs text-gray-500 mt-1">Status: Open | just now</p>
+      `;
+      document.getElementById("requests-list").prepend(ticket);
+    } else {
+      // show error
+      const errors = Object.values(data.errors).flat().join(", ");
+      messageBox.textContent = "Error: " + errors;
+      messageBox.className = "block p-3 rounded mb-4 bg-red-100 text-red-800";
+    }
+  });
+});
+</script>
 {% endblock %}

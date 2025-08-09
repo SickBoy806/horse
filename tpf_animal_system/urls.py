@@ -19,6 +19,8 @@ from django.urls import path, include
 from accounts.views import user_login, user_logout
 from django.conf import settings
 from django.conf.urls.static import static
+from core.views import dashboard_redirect
+import os
 
 
 urlpatterns = [
@@ -36,7 +38,8 @@ urlpatterns = [
     path('dashboard/user/', include('user_dashboard.urls')),
     path('accounts/', include('accounts.urls')),
     path('core', include('core.urls')),
+    path('dashboard/', dashboard_redirect, name='dashboard'),
 ]
 
 if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    urlpatterns += static(settings.STATIC_URL, document_root=os.path.join(settings.BASE_DIR, 'horse', 'core', 'static'))

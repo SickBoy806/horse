@@ -6,9 +6,7 @@ from django.utils import timezone
 from django.contrib.auth.hashers import make_password
 from django.contrib import messages
 from accounts.models import CustomUser
-from core.models import Task, SupportTicket, Branch, SystemLog, Notification
-from veterinarian_dashboard.models import Animal
-from user_dashboard.models import DailyActivityReport
+from core.models import VetTask, SupportTicket, Branch, SystemLog, Notification, Animal, DailyActivityReport
 from .forms import BranchForm, CustomUserForm
 from datetime import date
 
@@ -36,9 +34,9 @@ def superadmin_dashboard(request):
     role_counts = [entry['count'] for entry in role_data]
 
     task_status_data = [
-        Task.objects.filter(status='pending').count(),
-        Task.objects.filter(status='in_progress').count(),
-        Task.objects.filter(status='completed').count(),
+        VetTask.objects.filter(status='pending').count(),
+        VetTask.objects.filter(status='in_progress').count(),
+        VetTask.objects.filter(status='completed').count(),
     ]
 
     branch_names = CustomUser.objects.values_list('branch', flat=True).distinct()
@@ -51,7 +49,7 @@ def superadmin_dashboard(request):
         summary = {
             'branch': branch_name,
             'user_count': CustomUser.objects.filter(branch=branch_name).exclude(role='superadmin').count(),
-            'task_count': Task.objects.filter(branch=branch_obj).count(),
+            'task_count': VetTask.objects.filter(branch=branch_obj).count(),
             'reports_today': DailyActivityReport.objects.filter(branch=branch_obj, date=timezone.now().date()).count(),
             'animal_count': Animal.objects.filter(branch=branch_obj).count()
         }
@@ -88,7 +86,7 @@ def superadmin_manage_users(request):
         return render(request, 'errors/unauthorized.html', status=403)
 
     users = CustomUser.objects.all().order_by('branch', 'role', 'username')
-    return render(request, 'superadmin_dashboard/user_list.html', {'users': users})
+    return render(request, 'superadmin_dashboard/admin_user_list.html', {'users': users})
 
 
 @login_required
@@ -152,7 +150,7 @@ def superadmin_analytics(request):
     role_labels = [r['role'].capitalize() for r in role_data]
     role_counts = [r['count'] for r in role_data]
 
-    task_status_qs = Task.objects.values('status').annotate(count=Count('id'))
+    task_status_qs = VetTask.objects.values('status').annotate(count=Count('id'))
     task_status_map = {'Pending': 0, 'In Progress': 0, 'Completed': 0}
     for entry in task_status_qs:
         label = entry['status'].replace('_', ' ').title()
@@ -166,7 +164,7 @@ def superadmin_analytics(request):
     all_branches = Branch.objects.filter(is_active=True)
     for branch in all_branches:
         user_count = CustomUser.objects.filter(branch=branch.name).count()
-        task_count = Task.objects.filter(branch=branch).count()
+        task_count = VetTask.objects.filter(branch=branch).count()
         reports = DailyActivityReport.objects.filter(branch=branch, date=today).count()
         animals = Animal.objects.filter(branch=branch, is_active=True).count()
 

@@ -21,7 +21,7 @@ ROLES = [
 class CustomUser(AbstractUser):
     email = models.EmailField(unique=True)
     role = models.CharField(max_length=30, choices=ROLES)
-    branch = models.CharField(max_length=30, choices=BRANCHES)
+    branch = models.ForeignKey('core.Branch', on_delete=models.SET_NULL, null=True, blank=True)
 
     def __str__(self):
         return self.username

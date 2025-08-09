@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -274,8 +275,8 @@
     visibility: visible !important;
   }
 </style>
-
 </head>
+
 <body class="gradient-bg min-h-screen geometric-bg">
 
 <div class="content-wrapper">
@@ -289,13 +290,27 @@
   <div class="flex min-h-screen">
     <!-- Sidebar -->
     <aside id="sidebar" class="sidebar w-72 glassmorphism backdrop-blur-xl p-6 m-4 rounded-2xl shadow-2xl">
-      <div class="text-2xl font-bold mb-8 floating status-indicator">
-        <span class="logo-gradient">
-          🐾 TPF Animal System
-        </span>
-        <div class="text-sm font-normal text-slate-600 mt-1">Management Portal</div>
-      </div>
+      <!-- Logo Section -->
+      <!-- Replace your current logo section with this -->
+<div class="text-2xl font-bold mb-8 floating status-indicator flex items-center space-x-3">
+  <!-- Image with fallback -->
+  <img src="{% static 'images/tanzania-police-logo.png' %}"
+       alt="TPF Logo"
+       class="w-14 h-14 object-contain"
+       onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
 
+  <!-- Fallback logo when image fails -->
+  <div class="w-14 h-14 bg-gradient-to-br from-blue-600 to-blue-800 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-lg" style="display:none;">
+    🚔
+  </div>
+
+  <div>
+    <span class="logo-gradient">TPF Animal System</span>
+    <div class="text-sm font-normal text-slate-600 mt-1">Management Portal</div>
+  </div>
+</div>
+
+      <!-- Navigation Menu -->
       <nav class="space-y-2">
         <a href="{% url 'user_dashboard' branch=branch %}" class="nav-item flex items-center space-x-3 px-4 py-3 relative">
           <span class="text-xl">📊</span><span class="font-medium accent-line">Dashboard</span>
@@ -330,14 +345,14 @@
         <a href="{% url 'support_request_view' branch=branch %}" class="nav-item flex items-center space-x-3 px-4 py-3 relative">
           <span class="text-xl">🆘</span><span class="font-medium accent-line">Support Request</span>
         </a>
-
-        <a href="{% url 'animal_list' %}" class="block px-4 py-2 rounded hover:bg-gray-200">🐾 View Animals</a>
-          {% if request.user.role == 'admin' or request.user.role == 'veterinarian' %}
+        <a href="{% url 'animal_list' %}" class="nav-item flex items-center space-x-3 px-4 py-3 relative">
+          <span class="text-xl">🐾</span><span class="font-medium accent-line">View Animals</span>
         </a>
-          {% endif %}
 
+        <!-- Divider -->
         <div class="h-px bg-gradient-to-r from-transparent via-slate-300 to-transparent my-6"></div>
 
+        <!-- Logout -->
         <a href="{% url 'logout' %}" class="nav-item flex items-center space-x-3 px-4 py-3 text-red-600 hover:text-white relative">
           <span class="text-xl">🚪</span><span class="font-medium accent-line">Logout</span>
         </a>
@@ -346,14 +361,13 @@
 
     <!-- Main Content -->
     <div class="flex-1 p-6">
+      <!-- Welcome Header -->
       <div class="glassmorphism backdrop-blur-xl rounded-2xl p-8 mb-6 shadow-2xl card-hover">
         <div class="flex justify-between items-center">
           <div>
             <h1 class="text-4xl font-bold content-heading mb-3">
               Welcome back,
-              <span class="logo-gradient">
-                {{ request.user.get_full_name }}
-              </span>
+              <span class="logo-gradient">{{ request.user.get_full_name }}</span>
             </h1>
             <div class="flex items-center space-x-4">
               <p class="content-text text-lg flex items-center">
@@ -390,6 +404,7 @@
         </div>
       </div>
 
+      <!-- Main Content Area -->
       <div class="glassmorphism backdrop-blur-xl rounded-2xl p-8 shadow-2xl min-h-96 card-hover">
         {% block content %}
         <div class="text-center py-12">

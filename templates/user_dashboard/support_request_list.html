@@ -1,0 +1,23 @@
+{% extends "user_dashboard/base_user.html" %}
+
+{% block content %}
+<h2 class="text-2xl font-bold mb-4">Support Requests for Branch: {{ branch }}</h2>
+
+{% if requests %}
+  <ul class="space-y-4">
+    {% for request in requests %}
+      <li class="bg-white p-4 rounded shadow">
+        <h3 class="font-semibold">{{ request.subject }}</h3>
+        <p>Status: {{ request.status }}</p>
+        <p>Priority: {{ request.priority }}</p>
+        <p>Created by: {{ request.created_by.get_full_name }}</p>
+        <p>Assigned to: {{ request.assigned_to.get_full_name }}</p>
+        <p>Created at: {{ request.created_at|date:"Y-m-d H:i" }}</p>
+      </li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <p>No support requests found.</p>
+{% endif %}
+
+{% endblock %}

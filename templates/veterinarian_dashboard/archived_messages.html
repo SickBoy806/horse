@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Archived Messages</h1>
+<ul>
+  {% for msg in messages %}
+    <li>{{ msg.subject }} - {{ msg.timestamp }}</li>
+  {% empty %}
+    <li>No archived messages.</li>
+  {% endfor %}
+</ul>
+{% endblock %}

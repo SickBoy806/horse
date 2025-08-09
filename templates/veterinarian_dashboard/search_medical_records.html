@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <div class="container mx-auto p-4">
+    <h2 class="text-2xl font-bold mb-4">Search Medical Records</h2>
+
+    <form method="get" class="mb-4">
+      <input type="text" name="query" placeholder="Search..." class="border px-2 py-1 rounded w-1/2">
+      <button type="submit" class="bg-blue-500 text-white px-4 py-1 rounded">Search</button>
+    </form>
+
+    {% if records %}
+      <ul>
+        {% for record in records %}
+          <li class="border-b py-2">
+            <strong>{{ record.animal.name }}</strong> - {{ record.date_recorded }} - {{ record.description|truncatewords:10 }}
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p>No records found.</p>
+    {% endif %}
+  </div>
+{% endblock %}

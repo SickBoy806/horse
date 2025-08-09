@@ -27,4 +27,5 @@ urlpatterns = [
     path('<str:branch>/report-emergency/', report_emergency, name='report_emergency'),
     path('<str:branch>/equipment-log/', equipment_log_view, name='equipment_log_view'),
     path('<str:branch>/support-request/', support_request_view, name='support_request_view'),
+    path('dashboard/user/<str:branch>/support-request/', support_request_view, name='user_support_requests'),
 ]

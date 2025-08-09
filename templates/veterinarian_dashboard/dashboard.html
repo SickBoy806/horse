@@ -1,160 +1,55 @@
 {% extends "veterinarian_dashboard/base_dashboard.html" %}
 
-
-{% block dashboard_active %}active bg-blue-50 border-r-2 border-blue-500 rounded-l-lg{% endblock %}
-
-{% block page_title %}Veterinarian Dashboard{% endblock %}
-
 {% block dashboard_content %}
-<!-- Enhanced Hero Section -->
-<div class="hero-section mb-8 relative overflow-hidden">
-    <div class="absolute inset-0 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 opacity-5"></div>
-    <div class="relative flex items-center justify-between">
-        <div class="flex-1">
-            <div class="flex items-center space-x-3 mb-3">
-                <div class="flex items-center space-x-2">
-                    <div class="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
-                    <div class="w-1.5 h-1.5 bg-emerald-300 rounded-full animate-pulse" style="animation-delay: 0.2s"></div>
-                    <div class="w-1 h-1 bg-emerald-200 rounded-full animate-pulse" style="animation-delay: 0.4s"></div>
+<div class="container mx-auto px-4 py-6">
+    <!-- Hero Section -->
+    <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+        <div class="flex items-center justify-between">
+            <div class="flex-1">
+                <div class="flex items-center space-x-3 mb-2">
+                    <div class="flex items-center space-x-2">
+                        <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+                        <span class="text-sm font-medium text-green-600">Online</span>
+                    </div>
                 </div>
-                <span class="text-sm font-medium text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full">Online</span>
-            </div>
-            <h1 class="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent mb-2">
-                Veterinarian Dashboard
-            </h1>
-            <div class="flex items-center space-x-4 mb-3">
-                <div class="flex items-center space-x-2">
-                    <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
-                    </svg>
-                    <p class="text-base text-gray-700">Branch: <strong class="text-blue-600 font-semibold">{{ branch|title }}</strong></p>
+                <h1 class="text-2xl font-semibold text-gray-900 mb-1">Welcome back, Dr. {{ request.user.get_full_name }}</h1>
+                <div class="flex items-center space-x-2 text-sm text-gray-600">
+                    <span>Branch: <strong class="text-blue-600">{{ branch|title }}</strong></span>
                 </div>
-                <div class="w-1 h-4 bg-gray-300 rounded-full"></div>
-                <div class="flex items-center space-x-2 text-gray-600">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
-                    <span class="text-sm" id="current-time"></span>
-                </div>
-            </div>
-            <p class="text-gray-600 leading-relaxed max-w-2xl">
-                Streamline your veterinary practice with intelligent task management, comprehensive health records, and seamless team coordination.
-            </p>
-        </div>
-        <div class="hidden lg:block">
-            <div class="relative">
-                <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg transform rotate-3 hover:rotate-0 transition-transform duration-300">
-                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
-                </div>
-                <div class="absolute -top-1 -right-1 w-4 h-4 bg-emerald-400 rounded-full border-2 border-white animate-bounce"></div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Enhanced Stats Cards -->
-<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-    {% include "partials/stats_card.html" with id="total-tasks" label="Total Tasks" count=total_tasks|default:0 color="blue" icon="clipboard" percent=100 %}
-    {% include "partials/stats_card.html" with id="pending-tasks" label="Pending" count=pending_tasks|default:0 color="yellow" icon="clock" percent=0 %}
-    {% include "partials/stats_card.html" with id="approved-tasks" label="Approved" count=approved_tasks|default:0 color="green" icon="check" percent=0 %}
-    {% include "partials/stats_card.html" with id="rejected-tasks" label="Rejected" count=rejected_tasks|default:0 color="red" icon="x" percent=0 %}
-</div>
-
-<!-- Enhanced Quick Actions -->
-<div class="mb-8">
-    <div class="flex items-center justify-between mb-6">
-        <div>
-            <h3 class="text-xl font-bold text-gray-900 mb-1">Quick Actions</h3>
-            <p class="text-gray-600 text-sm">Access frequently used tools and functions</p>
-        </div>
-        <div class="hidden sm:block">
-            <div class="flex items-center space-x-2 text-sm text-gray-500">
-                <div class="w-2 h-2 bg-blue-400 rounded-full"></div>
-                <span>Click any card to get started</span>
             </div>
         </div>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 animate-card">
-        <a href="{% url 'add_medical_record' branch=branch %}" class="group quick-action-card bg-white border border-gray-200 hover:border-blue-300 p-6 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 relative overflow-hidden">
-            <div class="absolute inset-0 bg-gradient-to-br from-blue-50 to-indigo-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            <div class="relative">
-                <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center mb-4 group-hover:scale-105 transition-transform duration-300 shadow-md">
-                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path d="M12 6v6m0 0v6m0-6h6m-6 0H6" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
-                    </svg>
-                </div>
-                <h4 class="font-bold text-lg text-gray-900 mb-2 group-hover:text-blue-700 transition-colors">Add Medical Record</h4>
-                <p class="text-gray-600 text-sm leading-relaxed mb-3">Create comprehensive patient records with detailed medical history and treatment plans.</p>
-                <div class="flex items-center text-blue-600 font-medium text-sm group-hover:translate-x-1 transition-transform duration-300">
-                    <span>Get started</span>
-                    <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                    </svg>
-                </div>
+    <!-- Stats Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        {% for stat in stats %}
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <div class="text-center">
+                <div class="text-3xl font-bold text-gray-900 mb-2">{{ stat.value|default:0 }}</div>
+                <div class="text-sm text-gray-600">{{ stat.label }}</div>
             </div>
-        </a>
+        </div>
+        {% endfor %}
+    </div>
 
-        <a href="{% url 'assign_task' branch=branch %}" class="group quick-action-card bg-white border border-gray-200 hover:border-indigo-300 p-6 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 relative overflow-hidden">
-            <div class="absolute inset-0 bg-gradient-to-br from-indigo-50 to-purple-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            <div class="relative">
-                <div class="w-12 h-12 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-lg flex items-center justify-center mb-4 group-hover:scale-105 transition-transform duration-300 shadow-md">
-                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
-                    </svg>
+    <!-- Quick Actions -->
+    <div class="mb-8">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {% for action in quick_actions %}
+            <a href="{{ action.url }}" class="group bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 p-4">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-{{ action.color }}-100 rounded-lg flex items-center justify-center group-hover:bg-{{ action.color }}-200">
+                        {{ action.icon|safe }}
+                    </div>
+                    <div class="flex-1">
+                        <h4 class="font-medium text-gray-900 group-hover:text-{{ action.color }}-600">{{ action.title }}</h4>
+                        <p class="text-sm text-gray-500">{{ action.description }}</p>
+                    </div>
                 </div>
-                                <h4 class="font-bold text-lg text-gray-900 mb-2 group-hover:text-indigo-700 transition-colors">Assign Task</h4>
-                <p class="text-gray-600 text-sm leading-relaxed mb-3">Distribute responsibilities to your team effectively with a simple assignment interface.</p>
-                <div class="flex items-center text-indigo-600 font-medium text-sm group-hover:translate-x-1 transition-transform duration-300">
-                    <span>Assign now</span>
-                    <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                    </svg>
-                </div>
-            </div>
-        </a>
-                        <!-- Fourth Quick Action Card: Generate Report -->
-        <a href="{% url 'report_activity' branch=branch %}" class="group quick-action-card bg-white border border-gray-200 hover:border-rose-300 p-6 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 relative overflow-hidden">
-            <div class="absolute inset-0 bg-gradient-to-br from-rose-50 to-red-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            <div class="relative">
-                <div class="w-12 h-12 bg-gradient-to-br from-rose-500 to-red-500 rounded-lg flex items-center justify-center mb-4 group-hover:scale-105 transition-transform duration-300 shadow-md">
-                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h3.28a1 1 0 01.948.684L9.618 6H20a1 1 0 011 1v2a1 1 0 01-1 1h-1l-1 9a1 1 0 01-1 .9H7a1 1 0 01-1-.9L5 10H4a1 1 0 01-1-1V5a1 1 0 010-.01V4zm5.5 13h9m-9-3h9m-9-3h9"/>
-                    </svg>
-                </div>
-                <h4 class="font-bold text-lg text-gray-900 mb-2 group-hover:text-rose-700 transition-colors">Generate Report</h4>
-                <p class="text-gray-600 text-sm leading-relaxed mb-3">Quickly generate activity or patient reports for insights, audits, or documentation.</p>
-                <div class="flex items-center text-rose-600 font-medium text-sm group-hover:translate-x-1 transition-transform duration-300">
-                    <span>Generate now</span>
-                    <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                    </svg>
-                </div>
-            </div>
-        </a>
-
-        <!-- Third Quick Action Card (Customize as needed) -->
-        <a href="{% url 'vet_task_list' branch=branch %}" class="group quick-action-card bg-white border border-gray-200 hover:border-purple-300 p-6 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 relative overflow-hidden">
-            <div class="absolute inset-0 bg-gradient-to-br from-purple-50 to-pink-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            <div class="relative">
-                <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center mb-4 group-hover:scale-105 transition-transform duration-300 shadow-md">
-                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path d="M4 6h16M4 12h16M4 18h16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
-                    </svg>
-                </div>
-                <h4 class="font-bold text-lg text-gray-900 mb-2 group-hover:text-purple-700 transition-colors">View Task List</h4>
-                <p class="text-gray-600 text-sm leading-relaxed mb-3">Track all assigned tasks, monitor statuses, and review past assignments.</p>
-                <div class="flex items-center text-purple-600 font-medium text-sm group-hover:translate-x-1 transition-transform duration-300">
-                    <span>View tasks</span>
-                    <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                    </svg>
-                </div>
-            </div>
-        </a>
+            </a>
+            {% endfor %}
+        </div>
     </div>
 </div>
 {% endblock %}

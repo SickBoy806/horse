@@ -1,12 +1,8 @@
 from django import forms
-from .models import AnimalLog
-from .models import DailyActivityReport
-from .models import UserMessage
-from .models import EmergencyIncident
-from .models import EquipmentLog
-from .models import SupportRequest
-
-
+from core.models import (
+    AnimalLog, DailyActivityReport, Message, 
+    EmergencyIncident, EquipmentLog, SupportTicket
+)
 
 
 class AnimalLogForm(forms.ModelForm):
@@ -19,6 +15,7 @@ class AnimalLogForm(forms.ModelForm):
             'activity_type': forms.Select(attrs={'class': 'w-full border rounded px-3 py-2'}),
         }
 
+
 class DailyActivityReportForm(forms.ModelForm):
     class Meta:
         model = DailyActivityReport
@@ -29,39 +26,49 @@ class DailyActivityReportForm(forms.ModelForm):
             'hours_worked': forms.NumberInput(attrs={'step': 0.5, 'class': 'w-full border rounded px-3 py-2'}),
         }
 
+
 class UserMessageForm(forms.ModelForm):
     class Meta:
-        model = UserMessage
-        fields = ['receiver', 'subject', 'body']
+        model = Message
+        fields = ['receiver', 'subject', 'content']  # Changed 'body' to 'content'
         widgets = {
             'receiver': forms.Select(attrs={'class': 'w-full border rounded px-3 py-2'}),
             'subject': forms.TextInput(attrs={'class': 'w-full border rounded px-3 py-2'}),
-            'body': forms.Textarea(attrs={'rows': 4, 'class': 'w-full border rounded px-3 py-2'}),
+            'content': forms.Textarea(attrs={'rows': 4, 'class': 'w-full border rounded px-3 py-2'}),
         }
+
 
 class EmergencyIncidentForm(forms.ModelForm):
     class Meta:
         model = EmergencyIncident
-        fields = ['animal', 'incident_type', 'description', 'photo']
+        fields = ['animal', 'incident_type', 'severity', 'description', 'photo', 'location']
         widgets = {
             'description': forms.Textarea(attrs={'rows': 4, 'class': 'w-full border rounded px-3 py-2'}),
             'animal': forms.Select(attrs={'class': 'w-full border rounded px-3 py-2'}),
             'incident_type': forms.Select(attrs={'class': 'w-full border rounded px-3 py-2'}),
+            'severity': forms.Select(attrs={'class': 'w-full border rounded px-3 py-2'}),
+            'location': forms.TextInput(attrs={'class': 'w-full border rounded px-3 py-2'}),
             'photo': forms.ClearableFileInput(attrs={'class': 'w-full'}),
         }
+
 
 class EquipmentLogForm(forms.ModelForm):
     class Meta:
         model = EquipmentLog
         fields = ['equipment', 'action', 'notes']
         widgets = {
-            'notes': forms.Textarea(attrs={'rows': 2, 'class': 'w-full border rounded'}),
+            'equipment': forms.Select(attrs={'class': 'w-full border rounded px-3 py-2'}),
+            'action': forms.Select(attrs={'class': 'w-full border rounded px-3 py-2'}),
+            'notes': forms.Textarea(attrs={'rows': 2, 'class': 'w-full border rounded px-3 py-2'}),
         }
+
 
 class SupportRequestForm(forms.ModelForm):
     class Meta:
-        model = SupportRequest
-        fields = ['subject', 'message']
+        model = SupportTicket
+        fields = ['subject', 'description', 'priority']  # Changed 'message' to 'description'
         widgets = {
-            'message': forms.Textarea(attrs={'rows': 4, 'class': 'w-full border rounded'}),
+            'subject': forms.TextInput(attrs={'class': 'w-full border rounded px-3 py-2'}),
+            'description': forms.Textarea(attrs={'rows': 4, 'class': 'w-full border rounded px-3 py-2'}),
+            'priority': forms.Select(attrs={'class': 'w-full border rounded px-3 py-2'}),
         }

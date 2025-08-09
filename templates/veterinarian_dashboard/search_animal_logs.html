@@ -1,0 +1,25 @@
+{% extends "veterinarian_dashboard/base_dashboard.html" %}
+{% block content %}
+<div class="p-6 bg-white shadow rounded">
+  <h2 class="text-2xl font-bold mb-4">Search Animal Logs</h2>
+
+  <form method="get" class="mb-6 flex gap-2">
+    <input type="text" name="q" placeholder="Search logs..." value="{{ query }}" class="px-4 py-2 border rounded w-full" />
+    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Search</button>
+  </form>
+
+  {% if logs %}
+    <ul class="divide-y">
+      {% for log in logs %}
+        <li class="py-4">
+          <div class="font-semibold">{{ log.animal.name }}</div>
+          <div class="text-sm text-gray-600">{{ log.created_at|date:"Y-m-d H:i" }} by {{ log.created_by }}</div>
+          <p class="mt-1">{{ log.description }}</p>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p>No logs found.</p>
+  {% endif %}
+</div>
+{% endblock %}

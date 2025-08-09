@@ -54,6 +54,10 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+MIDDLEWARE += [
+    'horse.middleware.message_handling.MessageErrorMiddleware',
+]
+
 ROOT_URLCONF = 'tpf_animal_system.urls'
 
 TEMPLATES = [
@@ -110,9 +114,15 @@ USE_TZ = True
 
 
 # Static files
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
+
+# and your static files are collected into STATICFILES_DIRS or STATIC_ROOT
+
 
 STATICFILES_DIRS = [
+    # This matches your actual directory structure: horse/horse/core/static/
+    os.path.join(BASE_DIR, 'horse', 'core', 'static'),
+    # Add theme static files if they exist
     os.path.join(BASE_DIR, 'theme', 'static'),
 ]
 
@@ -127,3 +137,6 @@ LOGIN_URL = '/login/'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # <-- this is your image folder
+
+# Message configuration
+MESSAGE_STORAGE = 'django.contrib.messages.storage.session.SessionStorage'

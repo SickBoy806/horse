@@ -2,6 +2,12 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from django.contrib import messages
+from core.models import Branch
+from core.utils import normalize_branch_name
+from django.db.models import Q
+
+
+
 
 from veterinarian_dashboard.models import VetTask, Animal
 from core.models import Notification
@@ -26,18 +32,28 @@ from .forms import (
 
 @login_required
 def user_dashboard(request, branch):
-    if request.user.role.lower() != 'user' or request.user.branch.lower() != branch.lower():
+    # Ensure user role and branch match
+    if request.user.role.lower() != 'user' or request.user.branch.name.lower() != branch.lower():
         return render(request, 'errors/unauthorized.html', status=403)
 
+    # Fetch latest 5 tasks assigned to user
     tasks = VetTask.objects.filter(assigned_to=request.user).order_by('-date_assigned')[:5]
+
+    # Fetch latest 5 animals assigned to user
     animals = Animal.objects.filter(assigned_users=request.user)[:5]
-    notifications = Notification.objects.filter(user=request.user, is_read=False)[:5]
+
+    # Fetch latest 5 unread notifications
+    notifications = UserNotification.objects.filter(user=request.user, is_read=False)[:5]
+
+    # Count unread notifications
+    unread_notifications_count = notifications.count()
 
     return render(request, 'user_dashboard/dashboard.html', {
-        'branch': branch,
+        'branch': branch.lower(),
         'tasks': tasks,
         'animals': animals,
         'notifications': notifications,
+        'unread_notifications_count': unread_notifications_count,
     })
 
 
@@ -66,7 +82,7 @@ def update_task_status(request, branch, task_id):
 
 @login_required
 def animal_logs(request, branch):
-    if request.user.role != 'user' or request.user.branch.lower() != branch.lower():
+    if request.user.role.lower() != 'user' or request.user.branch.name.lower() != branch.lower():
         return render(request, 'errors/unauthorized.html', status=403)
 
     logs = AnimalLog.objects.filter(user=request.user).order_by('-date')
@@ -86,7 +102,7 @@ def animal_logs(request, branch):
 
 @login_required
 def report_activity(request, branch):
-    if request.user.role != 'user' or request.user.branch.lower() != branch.lower():
+    if request.user.role.lower() != 'user' or request.user.branch.name.lower() != branch.lower():
         return render(request, 'errors/unauthorized.html', status=403)
 
     reports = DailyActivityReport.objects.filter(user=request.user).order_by('-date')
@@ -107,10 +123,10 @@ def report_activity(request, branch):
 
 @login_required
 def user_messages(request, branch):
-    if request.user.role != 'user' or request.user.branch.lower() != branch.lower():
+    if request.user.role.lower() != 'user' or request.user.branch.name.lower() != branch.lower():
         return render(request, 'errors/unauthorized.html', status=403)
 
-    inbox = UserMessage.objects.filter(receiver=request.user).order_by('-sent_at')
+    inbox = UserMessage.objects.filter(receiver=request.user).order_by('-timestamp')
     form = UserMessageForm(request.POST or None)
     if request.method == 'POST' and form.is_valid():
         message = form.save(commit=False)
@@ -147,22 +163,27 @@ def api_unread_notifications_count(request):
     count = request.user.notifications.filter(is_read=False).count()
     return JsonResponse({'count': count})
 
-
 @login_required
 def assigned_animals(request, branch):
-    if request.user.branch.lower() != branch.lower() or request.user.role != 'user':
+    # Check user role and branch access
+    if request.user.role.lower() != 'user' or request.user.branch.name.lower() != branch.lower():
         return render(request, 'errors/unauthorized.html', status=403)
 
-    animals = Animal.objects.filter(assigned_users=request.user, branch=branch)
+    # Get the Branch instance by name (case-insensitive)
+    branch_obj = get_object_or_404(Branch, name__iexact=branch)
+
+    # Filter animals by assigned_users and branch instance
+    animals = Animal.objects.filter(assigned_users=request.user, branch=branch_obj)
+
     return render(request, 'user_dashboard/assigned_animals.html', {
         'animals': animals,
-        'branch': branch
+        'branch': branch_obj
     })
 
 
 @login_required
 def report_emergency(request, branch):
-    if request.user.role != 'user' or request.user.branch.lower() != branch.lower():
+    if request.user.role.lower() != 'user' or normalize_branch_name(request.user.branch.name) != normalize_branch_name(branch):
         return render(request, 'errors/unauthorized.html', status=403)
 
     form = EmergencyIncidentForm(request.POST or None, request.FILES or None)
@@ -185,7 +206,7 @@ def report_emergency(request, branch):
 
 @login_required
 def equipment_log_view(request, branch):
-    if request.user.role != 'user' or request.user.branch.lower() != branch.lower():
+    if request.user.role.lower() != 'user' or normalize_branch_name(request.user.branch.name) != normalize_branch_name(branch):
         return render(request, 'errors/unauthorized.html', status=403)
 
     form = EquipmentLogForm(request.POST or None)
@@ -203,21 +224,27 @@ def equipment_log_view(request, branch):
     })
 
 
+
 @login_required
 def support_request_view(request, branch):
-    if request.user.role != 'user' or request.user.branch.lower() != branch.lower():
-        return render(request, 'errors/unauthorized.html', status=403)
+    user = request.user
+    branch_name = branch  # URL param branch (string)
 
-    form = SupportRequestForm(request.POST or None)
-    if request.method == 'POST' and form.is_valid():
-        support = form.save(commit=False)
-        support.user = request.user
-        support.save()
-        return redirect('support_request_view', branch=branch)
+    if user.role == 'superadmin':
+        requests = SupportRequest.objects.all()
+    elif user.role == 'admin':
+        # Admin sees all requests in their branch
+        requests = SupportRequest.objects.filter(branch=user.branch)
+    else:
+        # Normal user sees requests created by or assigned to them in their branch
+        requests = SupportRequest.objects.filter(
+            Q(created_by=user) | Q(assigned_to=user),
+            branch=user.branch
+        )
 
-    requests = SupportRequest.objects.filter(user=request.user).order_by('-created_at')
-    return render(request, 'user_dashboard/support_requests.html', {
-        'form': form,
+    requests = requests.order_by('-created_at')
+
+    return render(request, 'user_dashboard/support_request_list.html', {
         'requests': requests,
-        'branch': branch
+        'branch': branch_name,  # pass it as 'branch' to match template usage
     })

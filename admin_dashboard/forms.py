@@ -1,12 +1,6 @@
 from django import forms
 from accounts.models import CustomUser
-from core.models import Task
-from .models import VetTask, MedicalRecord  # ✅ FIXED
-from core.models import SupportTicket
-from core.models import SupportTicket, TicketReply
-
- # or correct import path if it's in another app
-
+from core.models import VetTask, MedicalRecord, SupportTicket, TicketReply
 
 
 class CustomUserForm(forms.ModelForm):
@@ -24,42 +18,68 @@ class CustomUserForm(forms.ModelForm):
             user.save()
         return user
 
+
 class AssignTaskForm(forms.ModelForm):
     class Meta:
-        model = Task
-        fields = ['title', 'description', 'assigned_to']
+        model = VetTask
+        fields = ['title', 'description', 'animal', 'assigned_to', 'priority', 'due_date']
+        widgets = {
+            'description': forms.Textarea(attrs={'rows': 3}),
+            'due_date': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        branch = kwargs.pop('branch', None)
+        super().__init__(*args, **kwargs)
+        if branch:
+            self.fields['assigned_to'].queryset = CustomUser.objects.filter(
+                branch=branch, 
+                role__in=['user', 'veterinarian', 'staff']
+            )
+
 
 class MedicalRecordForm(forms.ModelForm):
     class Meta:
         model = MedicalRecord
-        fields = ['animal', 'diagnosis', 'treatment', 'document']
-        # widgets = {
-        #     'diagnosis': forms.Textarea(attrs={'rows': 3}),
-        #     'treatment': forms.Textarea(attrs={'rows': 3}),
-        # }
+        fields = ['animal', 'report_type', 'diagnosis', 'treatment', 'document']
+        widgets = {
+            'diagnosis': forms.Textarea(attrs={'rows': 3}),
+            'treatment': forms.Textarea(attrs={'rows': 3}),
+        }
+
 
 class VetTaskForm(forms.ModelForm):
     class Meta:
         model = VetTask
-        fields = ['title', 'description', 'assigned_to', 'priority', 'deadline']
+        fields = ['title', 'description', 'animal', 'assigned_to', 'priority', 'due_date']
         widgets = {
             'description': forms.Textarea(attrs={'rows': 3}),
-            'deadline': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
+            'due_date': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
         }
 
-    def _init_(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         branch = kwargs.pop('branch', None)
-        super()._init_(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         if branch:
-            self.fields['assigned_to'].queryset = CustomUser.objects.filter(branch=branch, role__in=['user', 'veterinarian'])
+            self.fields['assigned_to'].queryset = CustomUser.objects.filter(
+                branch=branch, 
+                role__in=['user', 'veterinarian', 'staff']
+            )
+
 
 class SupportTicketForm(forms.ModelForm):
     class Meta:
-        model = SupportTicket  # <-- Make sure this model exists and is imported
-        fields = ['subject', 'description']  # Adjust as needed
+        model = SupportTicket
+        fields = ['subject', 'description', 'priority']
+        widgets = {
+            'description': forms.Textarea(attrs={'rows': 4}),
+        }
+
 
 class TicketReplyForm(forms.ModelForm):
     class Meta:
-        model = TicketReply  # <-- Make sure this model exists and is imported
+        model = TicketReply
         fields = ['message']
-
+        widgets = {
+            'message': forms.Textarea(attrs={'rows': 3}),
+        }

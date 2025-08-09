@@ -1,21 +1,18 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse, HttpResponseForbidden
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
-from .forms import CustomUserForm as CreateUserForm, AssignTaskForm
-from accounts.models import CustomUser
-from core.models import Task
-from veterinarian_dashboard.models import Animal
-from admin_dashboard.models import VetTask  # 🛠️ Fix 1
-from user_dashboard.models import DailyActivityReport  # 🛠️ Fix 2
-from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.hashers import make_password
-from .forms import CustomUserForm
-from user_dashboard.models import DailyActivityReport, AnimalLog
-from core.models import SupportTicket, TicketReply
-from .forms import SupportTicketForm, TicketReplyForm
-from user_dashboard.models import EmergencyIncident
-from core.models import SupportTicket  # ✅ import
+from django.contrib import messages
+
+from .forms import CustomUserForm, AssignTaskForm, VetTaskForm, SupportTicketForm, TicketReplyForm
+from accounts.models import CustomUser
+from core.models import (
+    VetTask, Animal, DailyActivityReport, AnimalLog, 
+    SupportTicket, TicketReply, EmergencyIncident, Branch, Message
+)
+from core.utils import log_action, create_notification, can_access_branch
+
 
 
 
@@ -50,11 +47,13 @@ def is_admin(user):
 # 📊 Admin Dashboard
 @login_required
 def admin_dashboard(request, branch):
-    if request.user.branch.lower() != branch.lower():
+    if request.user.branch.name.lower() != branch.lower():
+
         return render(request, 'errors/unauthorized.html', status=403)
 
     context = {
-        'branch': request.user.branch.title()
+        'branch': request.user.branch.name.title()
+
     }
     return render(request, 'admin_dashboard/dashboard.html', context)
 
@@ -139,13 +138,18 @@ def animal_list(request, branch):
 
 # List users
 def admin_user_list(request, branch):
-    if request.user.role != 'admin' or request.user.branch.lower() != branch.lower():
+    if request.user.role != 'admin' or request.user.branch.name.lower() != branch.lower():
         return render(request, 'errors/unauthorized.html', status=403)
 
-    users = CustomUser.objects.filter(branch__iexact=branch)
-    print("Users found:", users.count())
-    return render(request, 'admin_dashboard/user_list.html', {'users': users, 'branch': branch})
+    branch_obj = Branch.objects.filter(name__iexact=branch).first()
+    if not branch_obj:
+        return render(request, 'errors/not_found.html', status=404)
 
+    users = CustomUser.objects.filter(branch=branch_obj)
+    return render(request, 'admin_dashboard/admin_user_list.html', {
+        'users': users,
+        'branch': branch,
+    })
 
 # Add user
 def user_add(request, branch):

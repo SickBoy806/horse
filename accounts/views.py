@@ -14,7 +14,8 @@ def user_login(request):
         if user:
             login(request, user)
             role = user.role
-            branch = user.branch.lower()
+            branch = user.branch.name.lower()
+
 
             # Redirect to respective dashboard
             if role == 'superadmin':
