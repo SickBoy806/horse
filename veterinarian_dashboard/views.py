@@ -52,6 +52,38 @@ def vet_dashboard(request, branch):
 
 
 @login_required
+def veterinarian_dashboard_data(request, branch):
+    branch_obj = get_object_or_404(Branch, name__iexact=branch)
+
+    total_animals = Animal.objects.filter(branch=branch_obj).count()
+    total_tasks = VetTask.objects.filter(branch=branch_obj).count()
+    total_medical_records = MedicalRecord.objects.filter(animal__branch=branch_obj).count()
+    total_notifications = Notification.objects.filter(user__branch=branch_obj).count()
+
+    recent_messages = Message.objects.filter(
+        receiver=request.user,
+        receiver__branch=branch_obj
+    ).order_by("-timestamp")[:5]
+
+    data = {
+        "total_animals": total_animals,
+        "total_tasks": total_tasks,
+        "total_medical_records": total_medical_records,
+        "total_notifications": total_notifications,
+        "recent_messages": [
+            {
+                "subject": msg.subject or "No Subject",
+                "sender": msg.sender.get_full_name() or msg.sender.username,
+                "timestamp": msg.timestamp.strftime("%b %d"),
+            }
+            for msg in recent_messages
+        ]
+    }
+
+    return JsonResponse(data)
+
+
+@login_required
 def unread_message_count(request, branch):
     branch_obj = get_object_or_404(Branch, name__iexact=branch)
     count = Message.objects.filter(

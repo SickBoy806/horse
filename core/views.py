@@ -422,6 +422,22 @@ def reply_message(request, message_id):
     return render(request, 'core/reply_message.html', context)
 
 
+@login_required
+def sent_messages(request):
+    messages = Message.objects.filter(sender=request.user, status='sent').order_by('-created_at')
+    return render(request, 'messages/sent.html', {'messages': messages})
+
+@login_required
+def archived_messages(request):
+    messages = Message.objects.filter(recipient=request.user, status='archived').order_by('-created_at')
+    return render(request, 'messages/archived.html', {'messages': messages})
+
+@login_required
+def deleted_messages(request):
+    messages = Message.objects.filter(recipient=request.user, status='deleted').order_by('-created_at')
+    return render(request, 'messages/deleted.html', {'messages': messages})
+
+
 # ------------------------------
 # API Views
 # ------------------------------

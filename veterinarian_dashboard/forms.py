@@ -88,12 +88,58 @@ class VetTaskForm(forms.ModelForm):
 
 # Create a simple Patient form using Animal model
 class PatientForm(forms.ModelForm):
+    SPECIES_CHOICES = [
+        ('Dog', 'Dog'),
+        ('Horse', 'Horse'),
+    ]
+
+    DOG_BREEDS = [
+        ('labrador', 'Labrador Retriever'),
+        ('germanshepherd', 'German Shepherd'),
+        ('bulldog', 'Bulldog'),
+        # add more dog breeds here
+    ]
+
+    HORSE_BREEDS = [
+        ('arabian', 'Arabian'),
+        ('thoroughbred', 'Thoroughbred'),
+        ('quarterhorse', 'Quarter Horse'),
+        # add more horse breeds here
+    ]
+
+    BREED_CHOICES = DOG_BREEDS + HORSE_BREEDS
+
+    species = forms.ChoiceField(choices=SPECIES_CHOICES, widget=forms.Select(attrs={'class': 'form-select'}))
+    breed = forms.ChoiceField(choices=BREED_CHOICES, widget=forms.Select(attrs={'class': 'form-select'}))
+    date_of_birth = forms.DateField(widget=forms.DateInput(attrs={'type': 'date', 'class': 'form-input'}))
+
+    age = forms.IntegerField(required=False, widget=forms.NumberInput(attrs={'class': 'form-input', 'min': '0'}))
+
+    gender = forms.ChoiceField(
+        choices=[
+            ('M', 'Male'),
+            ('F', 'Female'),
+            ('O', 'Other'),
+        ],
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
+
+    owner_phone = forms.CharField(max_length=20, required=False, widget=forms.TextInput(attrs={'class': 'form-input'}))
+    owner_email = forms.EmailField(required=False, widget=forms.EmailInput(attrs={'class': 'form-input'}))
+    weight = forms.DecimalField(max_digits=5, decimal_places=2, required=False,
+                                widget=forms.NumberInput(attrs={'class': 'form-input', 'step': '0.01'}))
+    medical_history = forms.CharField(required=False,
+                                      widget=forms.Textarea(attrs={'class': 'form-textarea', 'rows': 4}))
+
     class Meta:
         model = Animal
-        fields = ['name', 'species', 'breed', 'age', 'date_of_birth', 'owner_name']
+        fields = [
+            'name', 'species', 'breed', 'age', 'date_of_birth', 'owner_name',
+            'gender', 'owner_phone', 'owner_email', 'weight', 'medical_history',
+        ]
         widgets = {
-            'date_of_birth': forms.DateInput(attrs={'type': 'date'}),
-            'age': forms.NumberInput(attrs={'step': '0.01'}),
+            'name': forms.TextInput(attrs={'class': 'form-input'}),
+            'owner_name': forms.TextInput(attrs={'class': 'form-input'}),
         }
 
 

@@ -1,12 +1,210 @@
-<!-- templates/veterinarian_dashboard/add_patient.html -->
-
 {% extends "veterinarian_dashboard/base_dashboard.html" %}
 
+{% block page_title %}Add Patient - Veterinarian Dashboard{% endblock %}
+
 {% block dashboard_content %}
-  <h1 class="text-2xl font-bold mb-4">Add Patient - {{ branch|title }}</h1>
-  <form method="post" class="max-w-md">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit" class="btn btn-primary">Add Patient</button>
-  </form>
+<div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+    <h2 class="text-xl font-semibold text-gray-900 mb-6">Add Patient - {{ branch|title }}</h2>
+
+    <form method="post" class="space-y-4">
+        {% csrf_token %}
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <label for="{{ form.name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                    Pet Name:
+                </label>
+                {{ form.name }}
+                {% if form.name.errors %}
+                    <div class="text-red-600 text-xs mt-1">
+                        {{ form.name.errors.0 }}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div>
+                <label for="{{ form.species.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                    Species:
+                </label>
+                {{ form.species }}
+                {% if form.species.errors %}
+                    <div class="text-red-600 text-xs mt-1">
+                        {{ form.species.errors.0 }}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div>
+                <label for="{{ form.breed.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                    Breed:
+                </label>
+                {{ form.breed }}
+                {% if form.breed.errors %}
+                    <div class="text-red-600 text-xs mt-1">
+                        {{ form.breed.errors.0 }}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div>
+                <label for="{{ form.age.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                    Age:
+                </label>
+                {{ form.age }}
+                {% if form.age.errors %}
+                    <div class="text-red-600 text-xs mt-1">
+                        {{ form.age.errors.0 }}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div>
+                <label for="{{ form.gender.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                    Gender:
+                </label>
+                {{ form.gender }}
+                {% if form.gender.errors %}
+                    <div class="text-red-600 text-xs mt-1">
+                        {{ form.gender.errors.0 }}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div>
+                <label for="{{ form.weight.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                    Weight (kg):
+                </label>
+                {{ form.weight }}
+                {% if form.weight.errors %}
+                    <div class="text-red-600 text-xs mt-1">
+                        {{ form.weight.errors.0 }}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <label for="{{ form.owner_name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                    Owner Name:
+                </label>
+                {{ form.owner_name }}
+                {% if form.owner_name.errors %}
+                    <div class="text-red-600 text-xs mt-1">
+                        {{ form.owner_name.errors.0 }}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div>
+                <label for="{{ form.owner_phone.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                    Owner Phone:
+                </label>
+                {{ form.owner_phone }}
+                {% if form.owner_phone.errors %}
+                    <div class="text-red-600 text-xs mt-1">
+                        {{ form.owner_phone.errors.0 }}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div>
+            <label for="{{ form.owner_email.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                Owner Email:
+            </label>
+            {{ form.owner_email }}
+            {% if form.owner_email.errors %}
+                <div class="text-red-600 text-xs mt-1">
+                    {{ form.owner_email.errors.0 }}
+                </div>
+            {% endif %}
+        </div>
+
+        <div>
+            <label for="{{ form.medical_history.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                Medical History:
+            </label>
+            {{ form.medical_history }}
+            {% if form.medical_history.errors %}
+                <div class="text-red-600 text-xs mt-1">
+                    {{ form.medical_history.errors.0 }}
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="pt-4 border-t border-gray-200">
+            <div class="flex space-x-3">
+                <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors text-sm font-medium">
+                    Add Patient
+                </button>
+                <a href="{% url 'patient_list' branch=branch %}" class="bg-gray-500 text-white px-6 py-2 rounded hover:bg-gray-600 transition-colors text-sm font-medium">
+                    Cancel
+                </a>
+            </div>
+        </div>
+    </form>
+</div>
+
+<style>
+/* Form styling to match the clean professional look */
+input, select, textarea {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    font-size: 0.875rem;
+    background: white;
+    transition: border-color 0.2s ease;
+}
+
+input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.1);
+}
+
+textarea {
+    resize: vertical;
+    min-height: 80px;
+    font-family: inherit;
+}
+
+/* Error state styling */
+input.error, select.error, textarea.error {
+    border-color: #ef4444;
+}
+
+/* Select dropdown styling */
+select {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23666' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 8px center;
+    background-repeat: no-repeat;
+    background-size: 16px;
+    padding-right: 32px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .grid.grid-cols-1.md\:grid-cols-2 {
+        grid-template-columns: 1fr;
+    }
+
+    .flex.space-x-3 {
+        flex-direction: column;
+        space-x: 0;
+        gap: 0.75rem;
+    }
+}
+
+/* Button hover effects */
+.bg-blue-600:hover {
+    background-color: #1d4ed8;
+}
+
+.bg-gray-500:hover {
+    background-color: #374151;
+}
+</style>
 {% endblock %}

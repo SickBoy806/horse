@@ -1,56 +1,114 @@
 {% extends "admin_dashboard/base_admin.html" %}
 {% block content %}
 
-<div class="p-8">
+<div class="p-6">
   <!-- Header Section -->
-  <div class="flex justify-between items-center mb-8">
-    <div>
-      <h1 class="text-4xl font-bold text-gray-800 mb-2">Admin Dashboard</h1>
-      <div class="flex items-center space-x-4">
-        <p class="text-lg text-gray-600">Branch: <span class="text-blue-600 font-semibold px-3 py-1 bg-blue-50 rounded-full">{{ branch|title }}</span></p>
-        <div class="flex items-center text-sm text-gray-500">
-          <i class="fas fa-clock mr-1"></i>
-          <span id="current-time"></span>
+  <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+    <div class="flex justify-between items-center">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900 mb-2">Welcome back,</h1>
+        <div class="flex items-center space-x-4">
+          <div class="flex items-center text-sm text-gray-600">
+            <span class="status-indicator status-online"></span>
+            <span>Branch: <span class="text-blue-600 font-semibold px-2 py-1 bg-blue-50 rounded-full text-xs">{{ branch|title }}</span></span>
+          </div>
+          <div class="flex items-center text-sm text-gray-600">
+            <span class="status-indicator status-active"></span>
+            <span class="font-medium">Active Session</span>
+          </div>
+          <div class="flex items-center text-xs text-gray-500">
+            <i class="fas fa-clock mr-1"></i>
+            <span id="current-time"></span>
+          </div>
         </div>
       </div>
+
+      <!-- User Profile & Controls -->
+      <div class="flex items-center space-x-4">
+        <div class="text-right">
+          <div class="text-sm font-medium text-gray-900">{{ user.get_full_name|default:user.username }}</div>
+          <div class="text-xs text-gray-500">Administrator</div>
+        </div>
+        <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
+          {{ user.first_name.0|default:user.username.0|upper }}
+        </div>
+        <div class="flex items-center space-x-2">
+          <span class="status-indicator status-online"></span>
+          <span class="text-sm text-green-600 font-medium">System Status</span>
+        </div>
+        <button onclick="logout()" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm font-medium flex items-center transition-colors">
+          <i class="fas fa-sign-out-alt mr-1"></i>
+          Logout
+        </button>
+        <button class="p-2 text-gray-400 hover:text-gray-600 transition-colors">
+          <i class="fas fa-bell"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Stats Cards (Like User Dashboard) -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+    <!-- Tasks Card -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 text-center">
+      <div class="text-3xl font-bold text-gray-900 mb-2">{{ pending_tasks|default:"0" }}</div>
+      <div class="text-gray-600 mb-1">
+        {% if pending_tasks > 0 %}
+          Pending tasks require attention.
+        {% else %}
+          No tasks today.
+        {% endif %}
+      </div>
+      <div class="text-xs text-gray-400">Tasks</div>
     </div>
 
-    <!-- User Profile & Logout -->
-    <div class="flex items-center space-x-4">
-      <div class="text-right">
-        <div class="text-sm font-medium text-gray-900">{{ user.get_full_name|default:user.username }}</div>
-        <div class="text-xs text-gray-500">Administrator</div>
+    <!-- Animals Card -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 text-center">
+      <div class="text-3xl font-bold text-gray-900 mb-2">{{ total_animals|default:"0" }}</div>
+      <div class="text-gray-600 mb-1">
+        {% if total_animals > 0 %}
+          Animals under care.
+        {% else %}
+          No animals assigned.
+        {% endif %}
       </div>
-      <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold">
-        {{ user.first_name.0|default:user.username.0|upper }}
+      <div class="text-xs text-gray-400">Animals</div>
+    </div>
+
+    <!-- Notifications Card -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 text-center">
+      <div class="text-3xl font-bold text-gray-900 mb-2">{{ open_tickets|default:"0" }}</div>
+      <div class="text-gray-600 mb-1">
+        {% if open_tickets > 0 %}
+          Open support tickets.
+        {% else %}
+          No new notifications.
+        {% endif %}
       </div>
-      <button onclick="logout()" class="logout-btn text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center">
-        <i class="fas fa-sign-out-alt mr-2"></i>
-        Logout
-      </button>
+      <div class="text-xs text-gray-400">Notifications</div>
     </div>
   </div>
 
   <!-- Quick Actions Section -->
-  <div class="bg-white rounded-2xl shadow-lg p-6 mb-8">
+  <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
     <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
       <i class="fas fa-bolt text-yellow-500 mr-2"></i>
       Quick Actions
     </h3>
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      <button class="quick-action-btn text-white py-3 px-4 rounded-lg font-medium hover:shadow-lg transition-all duration-300 flex items-center justify-center">
+      <button class="bg-blue-500 hover:bg-blue-600 text-white py-3 px-4 rounded-lg font-medium transition-colors duration-200 flex items-center justify-center">
         <i class="fas fa-plus mr-2"></i>
         Add User
       </button>
-      <button class="quick-action-btn text-white py-3 px-4 rounded-lg font-medium hover:shadow-lg transition-all duration-300 flex items-center justify-center">
+      <button class="bg-blue-500 hover:bg-blue-600 text-white py-3 px-4 rounded-lg font-medium transition-colors duration-200 flex items-center justify-center">
         <i class="fas fa-clipboard-check mr-2"></i>
         New Task
       </button>
-      <button class="quick-action-btn text-white py-3 px-4 rounded-lg font-medium hover:shadow-lg transition-all duration-300 flex items-center justify-center">
+      <button class="bg-blue-500 hover:bg-blue-600 text-white py-3 px-4 rounded-lg font-medium transition-colors duration-200 flex items-center justify-center">
         <i class="fas fa-file-alt mr-2"></i>
         Generate Report
       </button>
-      <button class="quick-action-btn text-white py-3 px-4 rounded-lg font-medium hover:shadow-lg transition-all duration-300 flex items-center justify-center">
+      <button class="bg-blue-500 hover:bg-blue-600 text-white py-3 px-4 rounded-lg font-medium transition-colors duration-200 flex items-center justify-center">
         <i class="fas fa-cog mr-2"></i>
         Settings
       </button>
@@ -60,94 +118,106 @@
   <!-- Enhanced Dashboard Cards -->
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6 mb-8" id="admin-cards">
 
-    <div class="bg-white p-6 rounded-2xl shadow-lg border-l-4 border-blue-500 card card-hover relative overflow-hidden">
-      <div class="absolute top-0 right-0 w-20 h-20 bg-blue-50 rounded-full -mr-10 -mt-10"></div>
-      <div class="relative">
-        <div class="flex items-center justify-between mb-2">
-          <h2 class="text-sm text-gray-500 font-medium">Total Users</h2>
-          <i class="fas fa-users text-blue-500 text-xl"></i>
+    <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 card card-hover">
+      <div class="flex items-center justify-between mb-4">
+        <div class="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center">
+          <i class="fas fa-users text-blue-600 text-xl"></i>
         </div>
-        <p class="text-3xl font-bold text-blue-600">{{ total_users }}</p>
-        <div class="text-xs text-green-600 mt-1">
-          <i class="fas fa-arrow-up mr-1"></i>
-          +5% from last month
-        </div>
-      </div>
-    </div>
-
-    <div class="bg-white p-6 rounded-2xl shadow-lg border-l-4 border-yellow-500 card card-hover relative overflow-hidden">
-      <div class="absolute top-0 right-0 w-20 h-20 bg-yellow-50 rounded-full -mr-10 -mt-10"></div>
-      <div class="relative">
-        <div class="flex items-center justify-between mb-2">
-          <h2 class="text-sm text-gray-500 font-medium">Pending Tasks</h2>
-          <i class="fas fa-clock text-yellow-500 text-xl"></i>
-        </div>
-        <p class="text-3xl font-bold text-yellow-600">{{ pending_tasks }}</p>
-        <div class="text-xs text-red-600 mt-1">
-          <i class="fas fa-exclamation-circle mr-1"></i>
-          Requires attention
+        <div class="text-right">
+          <div class="text-2xl font-bold text-gray-900">{{ total_users }}</div>
+          <div class="text-xs text-green-600 flex items-center justify-end">
+            <i class="fas fa-arrow-up mr-1"></i>
+            +5%
+          </div>
         </div>
       </div>
+      <div class="text-sm font-medium text-gray-600">Total Users</div>
+      <div class="text-xs text-gray-500 mt-1">from last month</div>
     </div>
 
-    <div class="bg-white p-6 rounded-2xl shadow-lg border-l-4 border-green-500 card card-hover relative overflow-hidden">
-      <div class="absolute top-0 right-0 w-20 h-20 bg-green-50 rounded-full -mr-10 -mt-10"></div>
-      <div class="relative">
-        <div class="flex items-center justify-between mb-2">
-          <h2 class="text-sm text-gray-500 font-medium">Animals</h2>
-          <i class="fas fa-paw text-green-500 text-xl"></i>
+    <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 card card-hover">
+      <div class="flex items-center justify-between mb-4">
+        <div class="w-12 h-12 bg-yellow-50 rounded-lg flex items-center justify-center">
+          <i class="fas fa-clock text-yellow-600 text-xl"></i>
         </div>
-        <p class="text-3xl font-bold text-green-600">{{ total_animals }}</p>
-        <div class="text-xs text-green-600 mt-1">
-          <i class="fas fa-heart mr-1"></i>
-          All healthy
+        <div class="text-right">
+          <div class="text-2xl font-bold text-gray-900">{{ pending_tasks }}</div>
+          <div class="text-xs text-red-600 flex items-center justify-end">
+            <i class="fas fa-exclamation-circle mr-1"></i>
+            Urgent
+          </div>
         </div>
       </div>
+      <div class="text-sm font-medium text-gray-600">Pending Tasks</div>
+      <div class="text-xs text-gray-500 mt-1">Requires attention</div>
     </div>
 
-    <div class="bg-white p-6 rounded-2xl shadow-lg border-l-4 border-indigo-500 card card-hover relative overflow-hidden">
-      <div class="absolute top-0 right-0 w-20 h-20 bg-indigo-50 rounded-full -mr-10 -mt-10"></div>
-      <div class="relative">
-        <div class="flex items-center justify-between mb-2">
-          <h2 class="text-sm text-gray-500 font-medium">Open Tickets</h2>
-          <i class="fas fa-ticket-alt text-indigo-500 text-xl"></i>
+    <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 card card-hover">
+      <div class="flex items-center justify-between mb-4">
+        <div class="w-12 h-12 bg-green-50 rounded-lg flex items-center justify-center">
+          <i class="fas fa-paw text-green-600 text-xl"></i>
         </div>
-        <p class="text-3xl font-bold text-indigo-600">{{ open_tickets }}</p>
-        <div class="text-xs text-blue-600 mt-1">
-          <i class="fas fa-clock mr-1"></i>
-          Avg. 2.5hrs response
+        <div class="text-right">
+          <div class="text-2xl font-bold text-gray-900">{{ total_animals }}</div>
+          <div class="text-xs text-green-600 flex items-center justify-end">
+            <i class="fas fa-heart mr-1"></i>
+            Healthy
+          </div>
         </div>
       </div>
+      <div class="text-sm font-medium text-gray-600">Animals</div>
+      <div class="text-xs text-gray-500 mt-1">All healthy</div>
     </div>
 
-    <div class="bg-white p-6 rounded-2xl shadow-lg border-l-4 border-gray-600 card card-hover relative overflow-hidden">
-      <div class="absolute top-0 right-0 w-20 h-20 bg-gray-50 rounded-full -mr-10 -mt-10"></div>
-      <div class="relative">
-        <div class="flex items-center justify-between mb-2">
-          <h2 class="text-sm text-gray-500 font-medium">Closed Tickets</h2>
+    <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 card card-hover">
+      <div class="flex items-center justify-between mb-4">
+        <div class="w-12 h-12 bg-indigo-50 rounded-lg flex items-center justify-center">
+          <i class="fas fa-ticket-alt text-indigo-600 text-xl"></i>
+        </div>
+        <div class="text-right">
+          <div class="text-2xl font-bold text-gray-900">{{ open_tickets }}</div>
+          <div class="text-xs text-blue-600 flex items-center justify-end">
+            <i class="fas fa-clock mr-1"></i>
+            2.5hrs
+          </div>
+        </div>
+      </div>
+      <div class="text-sm font-medium text-gray-600">Open Tickets</div>
+      <div class="text-xs text-gray-500 mt-1">Avg response time</div>
+    </div>
+
+    <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 card card-hover">
+      <div class="flex items-center justify-between mb-4">
+        <div class="w-12 h-12 bg-gray-50 rounded-lg flex items-center justify-center">
           <i class="fas fa-check-circle text-gray-600 text-xl"></i>
         </div>
-        <p class="text-3xl font-bold text-gray-700">{{ closed_tickets }}</p>
-        <div class="text-xs text-green-600 mt-1">
-          <i class="fas fa-check mr-1"></i>
-          95% satisfaction
+        <div class="text-right">
+          <div class="text-2xl font-bold text-gray-900">{{ closed_tickets }}</div>
+          <div class="text-xs text-green-600 flex items-center justify-end">
+            <i class="fas fa-check mr-1"></i>
+            95%
+          </div>
         </div>
       </div>
+      <div class="text-sm font-medium text-gray-600">Closed Tickets</div>
+      <div class="text-xs text-gray-500 mt-1">satisfaction rate</div>
     </div>
 
-    <div class="bg-white p-6 rounded-2xl shadow-lg border-l-4 border-red-500 card card-hover relative overflow-hidden">
-      <div class="absolute top-0 right-0 w-20 h-20 bg-red-50 rounded-full -mr-10 -mt-10"></div>
-      <div class="relative">
-        <div class="flex items-center justify-between mb-2">
-          <h2 class="text-sm text-gray-500 font-medium">Daily Reports</h2>
-          <i class="fas fa-file-alt text-red-500 text-xl"></i>
+    <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 card card-hover">
+      <div class="flex items-center justify-between mb-4">
+        <div class="w-12 h-12 bg-red-50 rounded-lg flex items-center justify-center">
+          <i class="fas fa-file-alt text-red-600 text-xl"></i>
         </div>
-        <p class="text-3xl font-bold text-red-600">{{ reports_today }}</p>
-        <div class="text-xs text-gray-500 mt-1">
-          <i class="fas fa-calendar-day mr-1"></i>
-          Today's submissions
+        <div class="text-right">
+          <div class="text-2xl font-bold text-gray-900">{{ reports_today }}</div>
+          <div class="text-xs text-gray-500 flex items-center justify-end">
+            <i class="fas fa-calendar-day mr-1"></i>
+            Today
+          </div>
         </div>
       </div>
+      <div class="text-sm font-medium text-gray-600">Daily Reports</div>
+      <div class="text-xs text-gray-500 mt-1">Today's submissions</div>
     </div>
 
   </div>
@@ -155,7 +225,7 @@
   <!-- Additional Dashboard Features -->
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
     <!-- Recent Activity -->
-    <div class="bg-white rounded-2xl shadow-lg p-6">
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
       <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
         <i class="fas fa-activity text-blue-500 mr-2"></i>
         Recent Activity
@@ -186,7 +256,7 @@
     </div>
 
     <!-- Quick Stats -->
-    <div class="bg-white rounded-2xl shadow-lg p-6">
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
       <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
         <i class="fas fa-chart-pie text-purple-500 mr-2"></i>
         Quick Stats
@@ -258,7 +328,7 @@
     );
 
     // Animate quick actions
-    gsap.fromTo(".quick-action-btn",
+    gsap.fromTo("button",
       {
         y: 20,
         opacity: 0
@@ -282,7 +352,10 @@
       hour: '2-digit',
       minute: '2-digit'
     });
-    document.getElementById('current-time').textContent = timeString;
+    const timeElement = document.getElementById('current-time');
+    if (timeElement) {
+      timeElement.textContent = timeString;
+    }
   }
 
   updateTime();
@@ -309,7 +382,7 @@
   // Add hover effects to navigation
   document.querySelectorAll('.nav-link').forEach(link => {
     link.addEventListener('mouseenter', function() {
-      this.style.transform = 'translateX(8px)';
+      this.style.transform = 'translateX(4px)';
     });
 
     link.addEventListener('mouseleave', function() {
@@ -318,18 +391,55 @@
   });
 
   // Quick action buttons functionality
-  document.querySelectorAll('.quick-action-btn').forEach(button => {
-    button.addEventListener('click', function() {
-      const action = this.textContent.trim();
-      // Add your quick action logic here based on the button clicked
-      console.log(`Quick action: ${action}`);
+  document.querySelectorAll('button').forEach(button => {
+    if (button.textContent.includes('Add User') ||
+        button.textContent.includes('New Task') ||
+        button.textContent.includes('Generate Report') ||
+        button.textContent.includes('Settings')) {
 
-      // Example: You could redirect to specific pages or open modals
-      // if (action.includes('Add User')) {
-      //   window.location.href = "{% url 'admin_user_add' branch=branch %}";
-      // }
+      button.addEventListener('click', function() {
+        const action = this.textContent.trim();
+        // Add your quick action logic here based on the button clicked
+        console.log(`Quick action: ${action}`);
+
+        // Example: You could redirect to specific pages or open modals
+        // if (action.includes('Add User')) {
+        //   window.location.href = "{% url 'admin_user_add' branch=branch %}";
+        // }
+      });
+    }
+  });
+
+  // Add card hover effects
+  document.querySelectorAll('.card-hover').forEach(card => {
+    card.addEventListener('mouseenter', function() {
+      this.style.transform = 'translateY(-2px)';
+      this.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.1)';
+    });
+
+    card.addEventListener('mouseleave', function() {
+      this.style.transform = 'translateY(0)';
+      this.style.boxShadow = '';
     });
   });
 </script>
+
+<style>
+.card-hover {
+  transition: all 0.3s ease;
+}
+
+.status-indicator {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 6px;
+}
+
+.status-online { background-color: #10b981; }
+.status-warning { background-color: #f59e0b; }
+.status-active { background-color: #3b82f6; }
+</style>
 
 {% endblock %}
