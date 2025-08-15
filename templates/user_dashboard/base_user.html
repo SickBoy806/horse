@@ -318,6 +318,30 @@
         <a href="{% url 'user_tasks' branch=branch %}" class="nav-item flex items-center space-x-3 px-4 py-3 relative">
           <span class="text-xl">✅</span><span class="font-medium accent-line">My Tasks</span>
         </a>
+<!-- Training Dropdown -->
+<div class="nav-dropdown relative">
+  <button class="nav-item flex items-center justify-between w-full px-4 py-3" onclick="toggleDropdown(this)" aria-expanded="false">
+    <span class="flex items-center space-x-3">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M9 12h6m2 8H7a2 2 0 01-2-2V6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v12a2 2 0 01-2 2z"/>
+      </svg>
+      <span class="font-medium accent-line">Training</span>
+    </span>
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+    </svg>
+  </button>
+  <div class="nav-dropdown-content hidden pl-8 mt-1 flex flex-col space-y-1">
+    <a href="{% url 'training_dashboard' %}#sessions" class="nav-subitem">Training Sessions</a>
+    <a href="{% url 'training_dashboard' %}#progression" class="nav-subitem">Training Progression</a>
+    <a href="{% url 'training_dashboard' %}#reports" class="nav-subitem">Training Reports</a>
+    <a href="{% url 'training_dashboard' %}#performance" class="nav-subitem">Performance Charts</a>
+  </div>
+</div>
+
+
+
         <a href="{% url 'animal_logs' branch=branch %}" class="nav-item flex items-center space-x-3 px-4 py-3 relative">
           <span class="text-xl">🐕</span><span class="font-medium accent-line">Animal Logs</span>
         </a>
@@ -520,6 +544,13 @@ document.addEventListener('DOMContentLoaded', () => {
   //   document.body.style.opacity = '0.7';
   // });
 });
+
+    function toggleDropdown(el) {
+  const content = el.nextElementSibling;
+  content.classList.toggle('hidden');
+  el.setAttribute('aria-expanded', !content.classList.contains('hidden'));
+}
+
 </script>
 
 </body>

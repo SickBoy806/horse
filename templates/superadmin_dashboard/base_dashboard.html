@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -13,15 +14,251 @@
   <div class="min-h-screen flex">
 
     <!-- Sidebar Navigation -->
-    <aside class="w-64 bg-white shadow-md px-4 py-6 hidden md:block">
-      <h2 class="text-2xl font-bold mb-8 text-blue-600">TPF SuperAdmin</h2>
+    <aside class="w-64 bg-white shadow-md px-4 py-6 hidden md:block overflow-y-auto">
+
+      <!-- Sidebar Header with Logo -->
+      <div class="flex flex-col items-center mb-8 space-y-2">
+        <img src="{% static 'images/tanzania-police-logo.png' %}" alt="TPF Logo" class="w-24 h-24 object-contain">
+        <h2 class="text-center text-xl font-bold text-blue-600 leading-tight">
+          <span class="block">TPF Animal Management Portal</span>
+          <span class="block">SuperAdmin</span>
+        </h2>
+      </div>
+
+      <!-- Sidebar Menu -->
       <nav class="space-y-3">
-        <a href="{% url 'superadmin_dashboard' %}" class="block px-4 py-2 rounded hover:bg-gray-200">Dashboard</a>
-        <a href="{% url 'superadmin_manage_branches' %}" class="block px-4 py-2 rounded hover:bg-gray-200">Manage Branches</a>
-        <a href="{% url 'superadmin_manage_users' %}" class="block px-4 py-2 rounded hover:bg-gray-200">Users & Roles</a>
-        <a href="{% url 'superadmin_view_logs' %}" class="block px-4 py-2 rounded hover:bg-gray-200">System Logs</a>
-        <a href="{% url 'superadmin_analytics' %}" class="block px-4 py-2 rounded hover:bg-gray-200">Analytics</a>
-        <a href="{% url 'superadmin_tickets' %}" class="block px-4 py-2 rounded hover:bg-gray-200">Support Tickets</a>
+        <!-- Dashboard -->
+        <div class="relative">
+          <a href="{% url 'superadmin_dashboard' %}" class="w-full flex items-center px-4 py-2 rounded hover:bg-gray-200">
+            <span class="flex items-center space-x-2">
+              <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5a2 2 0 012-2h4a2 2 0 012 2v3H8V5z"/>
+              </svg>
+              <span class="text-gray-900 font-medium">Dashboard</span>
+            </span>
+          </a>
+        </div>
+
+        <!-- Manage Branches -->
+        <div class="relative">
+          <a href="{% url 'superadmin_manage_branches' %}" class="w-full flex items-center px-4 py-2 rounded hover:bg-gray-200">
+            <span class="flex items-center space-x-2">
+              <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+              </svg>
+              <span class="text-gray-900 font-medium">Manage Branches</span>
+            </span>
+          </a>
+        </div>
+
+        <!-- Training Dropdown -->
+        <div class="relative">
+          <button class="w-full flex items-center justify-between px-4 py-2 rounded hover:bg-gray-200 focus:outline-none" onclick="toggleDropdown(this)">
+            <span class="flex items-center space-x-2">
+              <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+              </svg>
+              <span class="text-gray-900 font-medium">Training</span>
+            </span>
+            <svg class="w-4 h-4 text-gray-600 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+            </svg>
+          </button>
+          <div class="hidden flex-col mt-1 pl-8 space-y-1">
+            <a href="{% url 'training_sessions' %}" class="block px-2 py-1 rounded hover:bg-gray-200 text-gray-700 text-sm">Training Sessions</a>
+            <a href="{% url 'training_reports' %}" class="block px-2 py-1 rounded hover:bg-gray-200 text-gray-700 text-sm">Training Reports</a>
+            <a href="{% url 'training_progression' %}" class="block px-2 py-1 rounded hover:bg-gray-200 text-gray-700 text-sm">Training Progression</a>
+          </div>
+        </div>
+
+        <!-- Users & Roles -->
+        <div class="relative">
+          <a href="{% url 'superadmin_manage_users' %}" class="w-full flex items-center px-4 py-2 rounded hover:bg-gray-200">
+            <span class="flex items-center space-x-2">
+              <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"/>
+              </svg>
+              <span class="text-gray-900 font-medium">Users & Roles</span>
+            </span>
+          </a>
+        </div>
+
+        <!-- System Logs -->
+        <div class="relative">
+          <a href="{% url 'superadmin_view_logs' %}" class="w-full flex items-center px-4 py-2 rounded hover:bg-gray-200">
+            <span class="flex items-center space-x-2">
+              <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m2 8H7a2 2 0 01-2-2V6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v12a2 2 0 01-2 2z"/>
+              </svg>
+              <span class="text-gray-900 font-medium">System Logs</span>
+            </span>
+          </a>
+        </div>
+
+        <!-- Analytics -->
+        <div class="relative">
+          <a href="{% url 'superadmin_analytics' %}" class="w-full flex items-center px-4 py-2 rounded hover:bg-gray-200">
+            <span class="flex items-center space-x-2">
+              <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+              </svg>
+              <span class="text-gray-900 font-medium">Analytics</span>
+            </span>
+          </a>
+        </div>
+
+        <!-- Support Tickets -->
+        <div class="relative">
+          <a href="{% url 'superadmin_tickets' %}" class="w-full flex items-center px-4 py-2 rounded hover:bg-gray-200">
+            <span class="flex items-center space-x-2">
+              <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192L5.636 18.364M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"/>
+              </svg>
+              <span class="text-gray-900 font-medium">Support Tickets</span>
+            </span>
+          </a>
+        </div>
+
+        <!-- Notifications Dropdown in Sidebar -->
+        <div class="relative">
+          <button class="w-full flex items-center justify-between px-4 py-2 rounded hover:bg-gray-200 focus:outline-none" onclick="toggleDropdown(this)">
+            <span class="flex items-center space-x-2">
+              <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 00-9.33-4.702M5 11v3.159c0 .538-.214 1.055-.595 1.436L3 17h5m7 0v1a3 3 0 11-6 0v-1m6 0H9" />
+              </svg>
+              <span class="text-gray-900 font-medium">Notifications</span>
+            </span>
+            <div class="flex items-center space-x-2">
+              {% if unread_notifications_count > 0 %}
+                <span class="text-xs bg-red-600 text-white rounded-full px-1">{{ unread_notifications_count }}</span>
+              {% endif %}
+              <svg class="w-4 h-4 text-gray-600 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+              </svg>
+            </div>
+          </button>
+          <div class="hidden flex-col mt-1 pl-8 space-y-1 max-h-48 overflow-y-auto">
+            {% if notifications %}
+              {% for notif in notifications %}
+                <div class="px-2 py-1 text-sm text-gray-700 border-b hover:bg-gray-100 rounded">
+                  {{ notif.message }}
+                  <div class="text-xs text-gray-400">{{ notif.created_at|timesince }} ago</div>
+                </div>
+              {% endfor %}
+            {% else %}
+              <div class="px-2 py-1 text-gray-500 text-sm">No new notifications.</div>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Messages Dropdown in Sidebar -->
+        <div class="relative">
+          <button class="w-full flex items-center justify-between px-4 py-2 rounded hover:bg-gray-200 focus:outline-none" onclick="toggleDropdown(this)">
+            <span class="flex items-center space-x-2">
+              <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M7 8h10M7 12h8m-8 4h6"/>
+              </svg>
+              <span class="text-gray-900 font-medium">Messages</span>
+            </span>
+            <div class="flex items-center space-x-2">
+              {% if unread_messages_count > 0 %}
+                <span class="text-xs bg-red-600 text-white rounded-full px-1">{{ unread_messages_count }}</span>
+              {% endif %}
+              <svg class="w-4 h-4 text-gray-600 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+              </svg>
+            </div>
+          </button>
+          <div class="hidden flex-col mt-1 pl-8 space-y-1">
+            <a href="{% url 'inbox' %}" class="block px-2 py-1 rounded hover:bg-gray-200 text-gray-700 text-sm">Inbox</a>
+            <a href="{% url 'compose_message' %}" class="block px-2 py-1 rounded hover:bg-gray-200 text-gray-700 text-sm">Compose Message</a>
+
+            <!-- Recent Messages -->
+            <div class="mt-2 pt-2 border-t border-gray-200">
+              {% if messages %}
+                {% for msg in messages|slice:":3" %}
+                  <div class="px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">
+                    {{ msg.subject|truncatechars:25 }}
+                    <div class="text-xs text-gray-400">{{ msg.created_at|timesince }} ago</div>
+                  </div>
+                {% endfor %}
+              {% else %}
+                <div class="px-2 py-1 text-gray-500 text-xs">No new messages.</div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <!-- Tasks Dropdown in Sidebar -->
+        <div class="relative">
+          <button class="w-full flex items-center justify-between px-4 py-2 rounded hover:bg-gray-200 focus:outline-none" onclick="toggleDropdown(this)">
+            <span class="flex items-center space-x-2">
+              <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
+              </svg>
+              <span class="text-gray-900 font-medium">Tasks</span>
+            </span>
+            <div class="flex items-center space-x-2">
+              {% if pending_tasks_count > 0 %}
+                <span class="text-xs bg-red-600 text-white rounded-full px-1">{{ pending_tasks_count }}</span>
+              {% endif %}
+              <svg class="w-4 h-4 text-gray-600 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+              </svg>
+            </div>
+          </button>
+          <div class="hidden flex-col mt-1 pl-8 space-y-1">
+            <a href="{% url 'superadmin_create_task' %}" class="block px-2 py-1 rounded hover:bg-gray-200 text-gray-700 text-sm">Create Task</a>
+            <a href="{% url 'superadmin_pending_tasks' %}" class="block px-2 py-1 rounded hover:bg-gray-200 text-gray-700 text-sm">Pending Tasks</a>
+            <a href="{% url 'superadmin_completed_tasks' %}" class="block px-2 py-1 rounded hover:bg-gray-200 text-gray-700 text-sm">Completed Tasks</a>
+            <a href="{% url 'superadmin_branch_tasks' %}" class="block px-2 py-1 rounded hover:bg-gray-200 text-gray-700 text-sm">Branch Tasks</a>
+            <a href="{% url 'superadmin_task_logs' %}" class="block px-2 py-1 rounded hover:bg-gray-200 text-gray-700 text-sm">Task Logs</a>
+          </div>
+        </div>
+
+        <!-- Reports Dropdown in Sidebar -->
+        <div class="relative">
+          <button class="w-full flex items-center justify-between px-4 py-2 rounded hover:bg-gray-200 focus:outline-none" onclick="toggleDropdown(this)">
+            <span class="flex items-center space-x-2">
+              <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+              </svg>
+              <span class="text-gray-900 font-medium">Reports</span>
+            </span>
+            <div class="flex items-center space-x-2">
+              {% if new_reports_count > 0 %}
+                <span class="text-xs bg-red-600 text-white rounded-full px-1">{{ new_reports_count }}</span>
+              {% endif %}
+              <svg class="w-4 h-4 text-gray-600 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+              </svg>
+            </div>
+          </button>
+          <div class="hidden flex-col mt-1 pl-8 space-y-1">
+            <a href="{% url 'branch_medical_report' %}" class="block px-2 py-1 rounded hover:bg-gray-200 text-gray-700 text-sm">Medical Report</a>
+            <a href="{% url 'branch_equipment_report' %}" class="block px-2 py-1 rounded hover:bg-gray-200 text-gray-700 text-sm">Equipment Report</a>
+            <a href="{% url 'branch_task_report' %}" class="block px-2 py-1 rounded hover:bg-gray-200 text-gray-700 text-sm">Task Report</a>
+            <a href="{% url 'branch_support_report' %}" class="block px-2 py-1 rounded hover:bg-gray-200 text-gray-700 text-sm">Support Report</a>
+            <a href="{% url 'branch_animal_report' %}" class="block px-2 py-1 rounded hover:bg-gray-200 text-gray-700 text-sm">Animal Report</a>
+            <a href="{% url 'training_report' %}" class="block px-2 py-1 rounded hover:bg-gray-200 text-gray-700 text-sm">Training Report</a>
+          </div>
+        </div>
+
+        <!-- Logout -->
+        <div class="mt-6 pt-4 border-t border-gray-300">
+          <a href="{% url 'logout' %}" class="flex items-center px-4 py-2 text-red-600 hover:bg-red-50 rounded">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+            </svg>
+            <span class="text-gray-900 font-medium">Logout</span>
+          </a>
+        </div>
+
       </nav>
     </aside>
 
@@ -30,42 +267,86 @@
 
       <!-- Top Navbar -->
       <header class="bg-white shadow flex items-center justify-between px-6 py-4">
-        <h1 class="text-xl font-bold">SuperAdmin Dashboard</h1>
+        <div class="flex items-center space-x-4">
+          <h1 class="text-xl font-bold">SuperAdmin Dashboard</h1>
+          <span class="text-gray-600">Welcome back!</span>
+        </div>
+
         <div class="flex items-center space-x-4">
 
-          <!-- Notification Bell -->
-    <div class="relative">
-      <button id="notifBtn" class="relative text-gray-700 hover:text-blue-600 focus:outline-none">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-            d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 00-9.33-4.702M5 11v3.159c0 .538-.214 1.055-.595 1.436L3 17h5m7 0v1a3 3 0 11-6 0v-1m6 0H9" />
-        </svg>
-        {% if unread_notifications_count > 0 %}
-          <span class="absolute -top-1 -right-1 text-xs bg-red-600 text-white rounded-full px-1">{{ unread_notifications_count }}</span>
-        {% endif %}
-      </button>
+          <!-- Notifications in Top Bar (Quick Access) -->
+          <div class="relative">
+            <button id="notifBtn" class="relative text-gray-700 hover:text-blue-600 focus:outline-none" onclick="toggleDropdown(this)">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 00-9.33-4.702M5 11v3.159c0 .538-.214 1.055-.595 1.436L3 17h5m7 0v1a3 3 0 11-6 0v-1m6 0H9" />
+              </svg>
+              {% if unread_notifications_count > 0 %}
+                <span class="absolute -top-1 -right-1 text-xs bg-red-600 text-white rounded-full px-1">{{ unread_notifications_count }}</span>
+              {% endif %}
+            </button>
+            <div class="hidden absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg z-50">
+              <div class="py-2 px-4 border-b font-semibold">Recent Notifications</div>
+              {% if notifications %}
+                <ul class="max-h-64 overflow-y-auto">
+                  {% for notif in notifications|slice:":5" %}
+                    <li class="px-4 py-2 text-sm border-b hover:bg-gray-100">
+                      {{ notif.message }}
+                      <div class="text-xs text-gray-400">{{ notif.created_at|timesince }} ago</div>
+                    </li>
+                  {% endfor %}
+                </ul>
+                <div class="px-4 py-2 border-t">
+                  <a href="#" class="text-blue-600 text-sm hover:underline">View all notifications</a>
+                </div>
+              {% else %}
+                <div class="px-4 py-3 text-gray-500 text-sm">No new notifications.</div>
+              {% endif %}
+            </div>
+          </div>
 
-      <!-- Dropdown -->
-      <div id="notifDropdown" class="hidden absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg z-50">
-        <div class="py-2 px-4 border-b font-semibold">Notifications</div>
-        {% if notifications %}
-          <ul class="max-h-64 overflow-y-auto">
-            {% for notif in notifications %}
-              <li class="px-4 py-2 text-sm border-b hover:bg-gray-100">
-                {{ notif.message }}
-                <div class="text-xs text-gray-400">{{ notif.created_at|timesince }} ago</div>
-              </li>
-            {% endfor %}
-          </ul>
-        {% else %}
-          <div class="px-4 py-3 text-gray-500 text-sm">No new notifications.</div>
-        {% endif %}
-      </div>
-    </div>
+          <!-- Online Status & User Info -->
+          <div class="flex items-center space-x-3">
+            <!-- Online Status Indicator -->
+            <div class="flex items-center space-x-2">
+              <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+              <span class="text-sm text-green-600 font-medium">Online</span>
+            </div>
 
-          <span class="text-sm font-medium">{{ request.user.get_full_name }}</span>
-          <span class="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">SuperAdmin</span>
-          <a href="{% url 'logout' %}" class="text-red-600 hover:underline">Logout</a>
+            <!-- User Name -->
+            <span class="text-sm font-medium text-gray-700">{{ request.user.get_full_name }}</span>
+
+            <!-- Role Badge -->
+            <span class="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">SuperAdmin</span>
+
+            <!-- Profile Picture with Dropdown -->
+            <div class="relative">
+              <button class="flex items-center focus:outline-none" onclick="toggleDropdown(this)">
+                <img src="{% static 'images/default-profile.png' %}" alt="Profile" class="w-8 h-8 rounded-full border-2 border-gray-300 hover:border-blue-500 transition-colors">
+              </button>
+              <div class="hidden absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg z-50">
+                <div class="py-2 px-4 border-b">
+                  <div class="font-semibold text-gray-800">{{ request.user.get_full_name }}</div>
+                  <div class="text-sm text-gray-500">{{ request.user.email }}</div>
+                </div>
+                <ul class="py-2">
+                  <li><a href="{% url 'profile' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">My Profile</a></li>
+                  <li><a href="{% url 'settings' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Settings</a></li>
+                  <li class="border-t">
+                    <a href="{% url 'logout' %}" class="block px-4 py-2 text-sm text-red-600 hover:bg-red-50">
+                      <div class="flex items-center">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                        </svg>
+                        Logout
+                      </div>
+                    </a>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
         </div>
       </header>
 
@@ -79,17 +360,29 @@
     </div>
   </div>
 
-  <!-- GSAP animation hook -->
+  <!-- GSAP Animation and Dropdown -->
   <script>
-    gsap.from(".card", {
-      opacity: 0,
-      y: 30,
-      duration: 0.8,
-      stagger: 0.2,
-      ease: "power3.out"
+    gsap.from(".card", {opacity:0, y:30, duration:0.8, stagger:0.2, ease:"power3.out"});
+
+    function toggleDropdown(button){
+      const dropdown = button.nextElementSibling;
+      dropdown.classList.toggle('hidden');
+      const arrow = button.querySelector('svg:last-child');
+      if(arrow) arrow.classList.toggle('rotate-180');
+    }
+
+    // Close dropdowns when clicking outside
+    document.addEventListener('click', function(event) {
+      const dropdowns = document.querySelectorAll('[onclick="toggleDropdown(this)"] + div');
+      dropdowns.forEach(dropdown => {
+        if (!dropdown.classList.contains('hidden') && !dropdown.parentElement.contains(event.target)) {
+          dropdown.classList.add('hidden');
+          const arrow = dropdown.previousElementSibling.querySelector('svg:last-child');
+          if(arrow) arrow.classList.remove('rotate-180');
+        }
+      });
     });
   </script>
 
 </body>
 </html>
-

@@ -4,6 +4,8 @@ from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from django.contrib.auth.hashers import make_password
 from django.contrib import messages
+from core.models import Branch
+from core.models import MedicalRecord
 
 from .forms import CustomUserForm, AssignTaskForm, VetTaskForm, SupportTicketForm, TicketReplyForm
 from accounts.models import CustomUser
@@ -12,9 +14,6 @@ from core.models import (
     SupportTicket, TicketReply, EmergencyIncident, Branch, Message
 )
 from core.utils import log_action, create_notification, can_access_branch
-
-
-
 
 
 @login_required
@@ -29,6 +28,21 @@ def admin_dashboard_view(request, branch):
     open_tickets = SupportTicket.objects.filter(branch=branch, status='open').count()
     closed_tickets = SupportTicket.objects.filter(branch=branch, status='closed').count()
 
+    # Recent equipment logs
+    recent_equipment_logs = EquipmentLog.objects.filter(branch=branch).order_by('-created_at')[:5]
+
+    # Unread notifications for admins in this branch
+    unread_notifications = Notification.objects.filter(
+        user__branch=branch,
+        is_read=False
+    ).order_by('-created_at')[:5]
+
+    # Unread messages for this admin
+    unread_messages = Message.objects.filter(
+        receiver=request.user,
+        is_read=False
+    ).order_by('-timestamp')[:5]
+
     return render(request, 'admin_dashboard/dashboard.html', {
         'branch': branch,
         'total_users': total_users,
@@ -37,7 +51,11 @@ def admin_dashboard_view(request, branch):
         'reports_today': reports_today,
         'open_tickets': open_tickets,
         'closed_tickets': closed_tickets,
+        'recent_equipment_logs': recent_equipment_logs,
+        'unread_notifications': unread_notifications,
+        'unread_messages': unread_messages,
     })
+
 
 
 # 🔐 Admin Role Check
@@ -292,3 +310,39 @@ def close_support_ticket(request, branch, ticket_id):
     ticket.status = 'closed'
     ticket.save()
     return redirect('admin_support_detail', branch=branch, ticket_id=ticket.id)
+
+
+def notifications(request, branch):
+    # Fetch notifications for this branch
+    notifications_list = Notification.objects.filter(branch__name=branch)
+    return render(request, 'admin_dashboard/notifications.html', {
+        'branch': branch,
+        'notifications': notifications_list
+    })
+
+
+def admin_medical_records(request, branch_slug):
+    # Get branch
+    branch = Branch.objects.get(name__iexact=branch_slug)
+
+    # Filter records for animals in this branch
+    records = MedicalRecord.objects.filter(animal__branch=branch)
+
+    context = {
+        'records': records,
+        'branch': branch.name,
+    }
+    return render(request, 'admin_dashboard/medical_records_list.html', context)
+
+
+# admin_dashboard/views.py
+@login_required
+def admin_equipment_logs(request, branch):
+    if request.user.role != 'admin' or request.user.branch.name.lower() != branch.lower():
+        return HttpResponseForbidden("Unauthorized access")
+
+    logs = EquipmentLog.objects.filter(branch__name__iexact=branch).order_by('-created_at')
+    return render(request, 'admin_dashboard/equipment_logs.html', {
+        'logs': logs,
+        'branch': branch,
+    })

@@ -157,6 +157,8 @@ def add_medical_record(request, branch):
         form = MedicalRecordForm(request.POST, request.FILES, branch=branch_obj, user=request.user)
         if form.is_valid():
             medical_record = form.save(commit=False)
+            # Assign the veterinarian automatically
+            medical_record.veterinarian = request.user
             medical_record.created_by = request.user
             medical_record.branch = branch_obj
             medical_record.save()
@@ -166,7 +168,11 @@ def add_medical_record(request, branch):
     else:
         form = MedicalRecordForm(branch=branch_obj, user=request.user)
 
-    return render(request, 'veterinarian_dashboard/add_medical_record.html', {'form': form, 'branch': branch_obj})
+    return render(
+        request,
+        'veterinarian_dashboard/add_medical_record.html',
+        {'form': form, 'branch': branch_obj}
+    )
 
 
 @login_required
@@ -191,17 +197,16 @@ def assign_task(request, branch):
     if not is_authorized_branch(request.user, branch, role='veterinarian'):
         return render(request, 'errors/unauthorized.html', status=403)
 
-    form = VetTaskForm()
-    form.fields['animal'].queryset = Animal.objects.filter(branch__name__iexact=branch)
-    form.fields['assigned_to'].queryset = CustomUser.objects.filter(branch__name__iexact=branch, role__in=['staff', 'user'])
-
     if request.method == 'POST':
-        form = VetTaskForm(request.POST)
+        form = VetTaskForm(request.POST, user=request.user)  # Pass only user
         if form.is_valid():
             task = form.save(commit=False)
             task.assigned_by = request.user
+            task.branch = request.user.branch  # Set branch automatically
             task.save()
             return redirect('vet_task_list', branch=branch)
+    else:
+        form = VetTaskForm(user=request.user)  # Pass only user
 
     return render(request, 'veterinarian_dashboard/assign_task.html', {'form': form, 'branch': branch})
 
@@ -414,22 +419,30 @@ def inbox(request, branch):
     return render(request, 'veterinarian_dashboard/inbox.html', context)
 
 
+
 @login_required
-def message_detail(request, branch, message_id):
+def message_detail(request, message_id):
+    """
+    View a specific message, usable by all dashboards (user, admin, vet, superadmin)
+    """
+
+    # Get message: positional arguments first, then keyword arguments
     message = get_object_or_404(
         Message,
-        Q(id=message_id) & (Q(receiver=request.user) | Q(sender=request.user))
+        Q(id=message_id) & (Q(receiver=request.user) | Q(sender=request.user)),  # filter
+        is_deleted=False  # keyword argument
     )
 
+    # Mark as read if current user is the receiver
     if message.receiver == request.user and not message.is_read:
         message.is_read = True
         message.read_at = timezone.now()
         message.save()
 
-    return render(request, 'veterinarian_dashboard/message_detail.html', {
-        'message': message,
-        'branch': branch
-    })
+    # Render shared template for all dashboards
+    return render(request, 'core/message_detail.html', {'message': message})
+
+
 
 @login_required
 def compose_message(request, branch):
@@ -593,3 +606,10 @@ def vet_animal_list_wrapper(request, branch):
     request.branch_slug = branch  # optional: pass via request if needed internally
     return core_animal_list(request)
 
+
+def patient_detail(request, branch, patient_id):
+    patient = get_object_or_404(Patient, id=patient_id, branch__name__iexact=branch)
+    return render(request, 'veterinarian_dashboard/patient_detail.html', {
+        'branch': branch,
+        'patient': patient
+    })

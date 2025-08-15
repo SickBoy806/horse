@@ -9,17 +9,14 @@
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <!-- Animal Photo -->
       <div>
-       {% if animal.photo %}
-        <img src="{{ animal.photo.url }}" alt="{{ animal.name }}" width="300">
-      {% else %}
-        <p>No image available.</p>
-      {% endif %}
-
+        {% if animal.photo %}
+          <img src="{{ animal.photo.url }}" alt="{{ animal.name }}" width="300">
+        {% else %}
+          <p>No image available.</p>
+        {% endif %}
       </div>
 
-      <!-- Animal Details -->
       <div class="space-y-2">
         <p><strong>Species:</strong> {{ animal.species }}</p>
         <p><strong>Age:</strong> {{ animal.age }}</p>
@@ -29,7 +26,6 @@
       </div>
     </div>
 
-    <!-- Assigned Users -->
     <div class="mt-6">
       <h3 class="text-lg font-semibold mb-2">Assigned Users</h3>
       {% if animal.assigned_users.all %}
@@ -43,13 +39,51 @@
       {% endif %}
     </div>
 
-    <!-- Vet Notes (placeholder for future use) -->
+    <!-- Training Records -->
     <div class="mt-6">
-      <h3 class="text-lg font-semibold mb-2">Veterinarian Notes</h3>
-      <p class="text-gray-500 italic">Coming soon...</p>
+      <h3 class="text-lg font-semibold mb-2">Training Records</h3>
+      {% if training_records %}
+        <ul class="list-disc pl-6">
+          {% for record in training_records %}
+            <li>
+              {{ record.training_type }} - {{ record.date_completed|date:"M d, Y" }}
+              (Handler: {{ record.handler }})
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="text-gray-400 italic">No training records available</p>
+      {% endif %}
     </div>
 
-    <!-- Edit Button for Users -->
+    <!-- Medical Records -->
+    <div class="mt-6">
+      <h3 class="text-lg font-semibold mb-2">Medical Records</h3>
+      {% if medical_records %}
+        <ul class="list-disc pl-6">
+          {% for record in medical_records %}
+            <li>{{ record.date|date:"M d, Y" }} - {{ record.description }}</li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="text-gray-400 italic">No medical records available</p>
+      {% endif %}
+    </div>
+
+    <!-- Tasks -->
+    <div class="mt-6">
+      <h3 class="text-lg font-semibold mb-2">Tasks</h3>
+      {% if tasks %}
+        <ul class="list-disc pl-6">
+          {% for task in tasks %}
+            <li>{{ task.due_date|date:"M d, Y" }} - {{ task.title }} ({{ task.status }})</li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="text-gray-400 italic">No tasks assigned</p>
+      {% endif %}
+    </div>
+
     {% if request.user.role == 'user' %}
     <div class="mt-6 text-right">
       <a href="{% url 'edit_animal' animal.id %}" class="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600">

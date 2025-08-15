@@ -3,29 +3,136 @@
 {% block page_title %}Search Patients - {{ branch|title }}{% endblock %}
 
 {% block dashboard_content %}
-<h1 class="text-3xl font-bold mb-6">Search Patients - {{ branch|title }}</h1>
+<div class="max-w-4xl mx-auto">
+    <!-- Page Header -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">
+            Search Patients - {{ branch|title }}
+        </h1>
+        <p class="text-gray-600">Find and manage patient records</p>
+    </div>
 
-<form method="get" action="">
-    <input type="text" name="q" placeholder="Search patients by name or species" value="{{ request.GET.q }}" 
-           class="border p-2 rounded w-full md:w-1/2 mb-4" />
-    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Search</button>
-</form>
+    <br>
+    <br>
 
-{% if patients %}
-    <ul class="divide-y divide-gray-200 mt-4">
-        {% for patient in patients %}
-        <li class="py-3 flex justify-between">
-            <div>
-                <strong>{{ patient.name }}</strong> ({{ patient.species }}) - Age: {{ patient.age }}
+    <!-- Search Form -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+        <form method="get" action="" class="space-y-4">
+            <div class="flex flex-col md:flex-row gap-4">
+                <div class="flex-1">
+                    <label for="search" class="block text-sm font-medium text-gray-700 mb-2">
+                        Search Patients
+                    </label>
+                    <input
+                        type="text"
+                        id="search"
+                        name="q"
+                        placeholder="Search by patient name or species..."
+                        value="{{ request.GET.q }}"
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                    />
+                </div>
+                <div class="flex items-end">
+                    <button
+                        type="submit"
+                        class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                    >
+                        Search
+                    </button>
+                </div>
             </div>
-            <div>
-                <a href="{% url 'patient_detail' branch=branch patient_id=patient.id %}" class="text-blue-600 hover:underline">View</a>
-            </div>
-        </li>
-        {% endfor %}
-    </ul>
-{% elif request.GET.q %}
-    <p class="mt-4 text-gray-600">No patients found matching your query.</p>
-{% endif %}
+        </form>
+    </div>
 
+    <br>
+    <br>
+    <!-- Search Results -->
+    {% if patients %}
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h2 class="text-lg font-semibold text-gray-900">
+                    Search Results ({{ patients|length }} patient{{ patients|length|pluralize }})
+                </h2>
+            </div>
+
+            <div class="divide-y divide-gray-200">
+                {% for patient in patients %}
+                <div class="px-6 py-4 hover:bg-gray-50 transition-colors">
+                    <div class="flex items-center justify-between">
+                        <div class="flex-1">
+                            <div class="flex items-center space-x-3">
+                                <div class="flex-shrink-0">
+                                    <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                                        <span class="text-blue-600 font-medium text-sm">
+                                            {{ patient.name|first|upper }}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <h3 class="text-lg font-medium text-gray-900">
+                                        {{ patient.name }}
+                                    </h3>
+                                    <div class="flex items-center space-x-4 text-sm text-gray-600">
+                                        <span class="flex items-center">
+                                            <span class="font-medium">Species:</span>
+                                            <span class="ml-1">{{ patient.species }}</span>
+                                        </span>
+                                        <span class="flex items-center">
+                                            <span class="font-medium">Age:</span>
+                                            <span class="ml-1">{{ patient.age }}</span>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex-shrink-0">
+                            <a
+                                href="{% url 'patient_detail' branch=branch patient_id=patient.id %}"
+                                class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                            >
+                                View Details
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+    {% elif request.GET.q %}
+        <!-- No Results Found -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
+            <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+            </div>
+            <h3 class="text-lg font-medium text-gray-900 mb-2">No patients found</h3>
+            <p class="text-gray-600 mb-4">
+                We couldn't find any patients matching "{{ request.GET.q }}".
+                Try adjusting your search terms.
+            </p>
+            <a
+                href="{% url 'search_patients' branch=branch %}"
+                class="inline-flex items-center text-blue-600 hover:text-blue-700 font-medium"
+            >
+                Clear search
+            </a>
+        </div>
+
+    {% else %}
+        <!-- Initial State -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
+            <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+            </div>
+            <h3 class="text-lg font-medium text-gray-900 mb-2">Search for Patients</h3>
+            <p class="text-gray-600">
+                Enter a patient name or species to find their records
+            </p>
+        </div>
+    {% endif %}
+</div>
 {% endblock %}

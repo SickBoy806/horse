@@ -40,6 +40,7 @@ from .views import (
     support_request_view,
     notification_count_api,
     unread_message_count,
+    patient_detail,
 )
 
 urlpatterns = [
@@ -74,6 +75,7 @@ urlpatterns = [
     path('<str:branch>/add-patient/', add_patient, name='add_patient'),
     path('<str:branch>/patients/', patient_list, name='patient_list'),
     path('<str:branch>/search-patients/', search_patients, name='search_patients'),
+    path('<str:branch>/patients/<int:patient_id>/', patient_detail, name='patient_detail'),
 
     # Messages
     path('<str:branch>/messages/', inbox, name='inbox'),

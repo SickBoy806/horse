@@ -1,4 +1,4 @@
-{% extends "veterinarian_dashboard/base_dashboard.html" %}
+{% extends "base.html" %}
 
 {% block dashboard_content %}
 <div class="max-w-3xl mx-auto bg-white p-6 rounded-lg shadow-md border border-gray-200">
@@ -17,10 +17,12 @@
   <p class="text-gray-700 whitespace-pre-line">{{ message.content }}</p>
 
   <div class="mt-6 flex space-x-4">
-    <a href="{% url 'reply_message' branch message.id %}" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+    {% if message.receiver == user %}
+    <a href="{% url 'reply_message' message.id %}" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
       Reply
     </a>
-    <a href="{% url 'inbox' branch %}" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 transition">
+    {% endif %}
+    <a href="{% url 'inbox' %}" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 transition">
       Back to Inbox
     </a>
   </div>

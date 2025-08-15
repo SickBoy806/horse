@@ -5,6 +5,16 @@ from django.contrib import messages
 from django.db.models import Q
 from django.core.paginator import Paginator
 from django.utils import timezone
+from django.forms import inlineformset_factory
+from core.models import Animal, TrainingRecord
+from .forms import TrainingRecordForm
+from .models import Report  # or adjust the import path as needed
+from core.forms import ReportForm
+
+
+
+
+
 
 from .models import (
     Branch, Animal, Notification, Message, VetTask, 
@@ -29,27 +39,42 @@ def dashboard_redirect(request):
 # ------------------------------
 # Animal Views
 # ------------------------------
+# Create the inline formset
+TrainingRecordFormSet = inlineformset_factory(
+    Animal, TrainingRecord,
+    form=TrainingRecordForm,
+    extra=1,           # start with one blank training record
+    can_delete=True
+)
 
 @login_required
 def add_animal(request):
-    """Add a new animal to the system"""
+    """Add a new animal with training records"""
     if request.user.role not in ['admin', 'veterinarian', 'superadmin']:
         return render(request, 'errors/unauthorized.html', status=403)
 
+    branch = getattr(request.user, 'branch', None)  # get branch from user
+
     if request.method == 'POST':
         form = AnimalForm(request.POST, request.FILES, user=request.user)
-        if form.is_valid():
+        formset = TrainingRecordFormSet(request.POST)
+
+        if form.is_valid() and formset.is_valid():
             animal = form.save(commit=False)
-            animal.branch = request.user.branch
+            animal.branch = branch
             animal.save()
             form.save_m2m()
-            
-            # Add the creator to assigned users
+
+            # Link training records to this animal
+            formset.instance = animal
+            formset.save()
+
+            # Assign the creator to this animal
             animal.assigned_users.add(request.user)
 
-            # Notify relevant users
+            # Notify admins/superadmins
             admins = CustomUser.objects.filter(
-                branch=request.user.branch, 
+                branch=branch,
                 role__in=['admin', 'superadmin']
             )
             notify_users(
@@ -67,42 +92,19 @@ def add_animal(request):
                 message=f"Added animal #{animal.force_number} - {animal.name}"
             )
 
-            messages.success(request, "Animal added successfully.")
+            messages.success(request, "Animal and training records added successfully.")
             return redirect(get_user_dashboard_url(request.user))
-
         else:
             messages.error(request, "Please correct the errors below.")
     else:
         form = AnimalForm(user=request.user)
+        formset = TrainingRecordFormSet()
 
-    return render(request, 'core/add_animal.html', {'form': form})
-
-
-@login_required
-def view_animal_detail(request, animal_id):
-    """View detailed information about an animal"""
-    animal = get_object_or_404(Animal, id=animal_id)
-
-    # Check permissions
-    if request.user.role != 'superadmin':
-        if not animal.assigned_users.filter(branch=request.user.branch).exists():
-            return render(request, 'errors/unauthorized.html', status=403)
-
-    # Get related data
-    assigned_users = animal.assigned_users.all()
-    medical_records = animal.medical_records.all()[:5]  # Latest 5 records
-    activity_logs = animal.activity_logs.all()[:10]  # Latest 10 logs
-    vet_tasks = animal.vet_tasks.filter(status__in=['pending', 'in_progress'])
-
-    context = {
-        'animal': animal,
-        'assigned_users': assigned_users,
-        'medical_records': medical_records,
-        'activity_logs': activity_logs,
-        'vet_tasks': vet_tasks,
-    }
-
-    return render(request, 'core/animal_detail.html', context)
+    return render(request, 'core/add_animal.html', {
+        'form': form,
+        'formset': formset,
+        'branch': branch or 'default-branch'  # Pass branch to template to fix NoReverseMatch
+    })
 
 
 @login_required
@@ -335,20 +337,21 @@ def inbox(request):
 
 @login_required
 def message_detail(request, message_id):
-    """View a specific message"""
+    """View a specific message for any user type"""
     message = get_object_or_404(
-        Message, 
-        id=message_id, 
-        receiver=request.user,
+        Message,
+        Q(id=message_id) & (Q(receiver=request.user) | Q(sender=request.user)),
         is_deleted=False
     )
-    
-    # Mark as read
-    if not message.is_read:
+
+    # Mark as read if the current user is the receiver
+    if message.receiver == request.user and not message.is_read:
         message.is_read = True
+        message.read_at = timezone.now()
         message.save()
-    
+
     return render(request, 'core/message_detail.html', {'message': message})
+
 
 
 @login_required
@@ -423,9 +426,14 @@ def reply_message(request, message_id):
 
 
 @login_required
-def sent_messages(request):
-    messages = Message.objects.filter(sender=request.user, status='sent').order_by('-created_at')
+def sent_messages(request, branch):
+    messages = Message.objects.filter(
+        sender=request.user,
+        branch__name__iexact=branch,
+        status='sent'
+    ).order_by('-timestamp')
     return render(request, 'messages/sent.html', {'messages': messages})
+
 
 @login_required
 def archived_messages(request):
@@ -457,3 +465,103 @@ def unread_message_count_api(request):
         is_deleted=False
     ).count()
     return JsonResponse({'count': count})
+
+
+@login_required
+def view_animal_detail(request, animal_id):
+    if request.user.role not in ['admin', 'veterinarian', 'superadmin']:
+        return render(request, 'errors/unauthorized.html', status=403)
+
+    animal = get_object_or_404(Animal, pk=animal_id, branch=request.user.branch)
+
+    medical_records = animal.medical_records.all().order_by('-date_recorded')
+    tasks = animal.vet_tasks.all().order_by('-due_date')      # use correct related_name
+    training_records = animal.training_records.all().order_by('-date_recorded')
+
+    log_action(
+        user=request.user,
+        action='view',
+        message=f"Viewed animal #{animal.force_number} - {animal.name}"
+    )
+
+    context = {
+        'animal': animal,
+        'medical_records': medical_records,
+        'tasks': tasks,
+        'training_records': training_records
+    }
+
+    return render(request, 'core/animal_detail.html', context)
+
+
+
+@login_required
+def reports_list(request):
+    """Show only the reports relevant to the logged-in user's role."""
+    role = getattr(request.user, 'role', None)
+
+    if role in ['trainer', 'worker']:
+        reports = Report.objects.filter(role_category='user')
+    elif role == 'veterinarian':
+        reports = Report.objects.filter(role_category='veterinarian')
+    elif role == 'admin':
+        reports = Report.objects.filter(role_category='admin')
+    elif role == 'superadmin':
+        reports = Report.objects.filter(role_category='superadmin')
+    else:
+        reports = Report.objects.none()
+
+    return render(request, 'core/reports_list.html', {'reports': reports})
+
+
+@login_required
+def create_report(request):
+    if request.method == 'POST':
+        form = ReportForm(request.POST, request.FILES, user=request.user)
+        if form.is_valid():
+            report = form.save(commit=False)
+            report.created_by = request.user
+            report.branch = request.user.branch
+            report.role_category = form.role_category_value
+            report.save()
+            return redirect('reports_list')
+    else:
+        form = ReportForm(user=request.user)
+
+    return render(request, 'core/create_report.html', {'form': form})
+
+
+@login_required
+def training_dashboard(request):
+    user = request.user
+    role = getattr(user, 'role', None)
+
+    # Determine which animals to show based on role
+    if role in ['trainer', 'worker', 'veterinarian']:
+        training_records = TrainingRecord.objects.filter(
+            animal__branch=user.branch
+        ).prefetch_related('sessions')
+        show_add_button = True
+    elif role in ['admin', 'superadmin']:
+        training_records = TrainingRecord.objects.all().prefetch_related('sessions')
+        show_add_button = True if role == 'admin' else False
+    else:
+        training_records = TrainingRecord.objects.none()
+        show_add_button = False
+
+    # Optionally fetch reports related to training
+    training_reports = Report.objects.filter(
+        specific_report_type__in=[
+            'training_progress', 'training_log', 'performance_eval',
+            'behavior_assessment', 'missed_training', 'training_schedule',
+            'special_skills', 'daily_care'
+        ]
+    )
+
+    context = {
+        'role': role,
+        'training_records': training_records,
+        'training_reports': training_reports,
+        'show_add_button': show_add_button,
+    }
+    return render(request, 'training/universal_training_dashboard.html', context)

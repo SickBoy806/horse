@@ -27,4 +27,9 @@ urlpatterns = [
     # API endpoints
     path('api/notifications/count/', views.notification_count_api, name='notification_count_api'),
     path('api/messages/unread/', views.unread_message_count_api, name='unread_message_count_api'),
+
+    # Reports
+    path('reports/', views.reports_list, name='reports_list'),
+    path('reports/create/', views.create_report, name='create_report'),
+    path('dashboard/training/', views.training_dashboard, name='training_dashboard'),
 ]

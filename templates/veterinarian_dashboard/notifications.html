@@ -1,8 +1,13 @@
-{% extends 'base.html' %}
+{% extends "veterinarian_dashboard/base_dashboard.html" %}
+
 
 {% block content %}
   <div class="p-6">
     <h2 class="text-2xl font-bold mb-4">Notifications for {{ branch.name }}</h2>
+
+      <br>
+      <br>
+
 
     {% if notifications %}
       <ul class="space-y-4">

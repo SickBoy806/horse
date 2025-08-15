@@ -305,12 +305,11 @@ class Message(models.Model):
     is_archived = models.BooleanField(default=False)
     is_deleted = models.BooleanField(default=False)
     timestamp = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return f"{self.sender} → {self.receiver}: {self.subject}"
+    branch = models.ForeignKey('Branch', on_delete=models.CASCADE, null=True, blank=True)  # NEW
 
     class Meta:
         ordering = ['-timestamp']
+
 
 
 class SupportTicket(models.Model):
@@ -388,7 +387,58 @@ class SystemLog(models.Model):
     class Meta:
         ordering = ['-timestamp']
 
+
 class Report(models.Model):
+    ROLE_CATEGORIES = [
+        ('user', 'User (Trainer / Worker)'),
+        ('veterinarian', 'Veterinarian'),
+        ('admin', 'Admin'),
+        ('superadmin', 'Super Admin'),
+    ]
+
+    SPECIFIC_REPORT_TYPES = [
+        # User (Trainer / Worker)
+        ('training_progress', 'Training Progress Report'),
+        ('training_log', 'Daily/Weekly Training Log'),
+        ('performance_eval', 'Performance Evaluation'),
+        ('behavior_assessment', 'Behavioral Assessment Report'),
+        ('missed_training', 'Missed / Incomplete Training Sessions'),
+        ('training_schedule', 'Training Schedule Report'),
+        ('special_skills', 'Specialized Skill Tracking'),
+        ('daily_care', 'Daily Care Log'),
+        ('inventory', 'Inventory & Supplies Report'),
+        ('facility_maintenance', 'Facility Maintenance Report'),
+        ('animal_condition', 'Animal Condition Check'),
+        ('work_shift', 'Work Shift Log'),
+        ('incident', 'Incident Report'),
+
+        # Veterinarian
+        ('medical_record', 'Medical Record Report'),
+        ('vet_activity_log', 'Daily Veterinary Activity Log'),
+        ('treatment_medication', 'Treatment & Medication Report'),
+        ('vaccination_schedule', 'Vaccination Schedule & Compliance Report'),
+        ('lab_results', 'Lab Test Results Report'),
+        ('injury_illness', 'Injury/Illness Incident Report'),
+        ('disease_tracking', 'Disease Outbreak Tracking Report'),
+
+        # Admin
+        ('staff_attendance', 'Staff Attendance Report'),
+        ('animal_assignment', 'Animal Assignment Report'),
+        ('facility_resource', 'Facility Resource Report'),
+        ('task_completion', 'Task Completion Status'),
+        ('support_requests', 'Support Requests Report'),
+        ('animal_acquisition', 'Animal Acquisition & Retirement Report'),
+
+        # Super Admin
+        ('operations_summary', 'Overall Operations Summary'),
+        ('cross_branch_performance', 'Cross-Branch Performance Report'),
+        ('financial_resource', 'Financial & Resource Usage Report'),
+        ('incident_safety', 'Incident & Safety Reports'),
+        ('compliance_audit', 'Compliance & Audit Report'),
+        ('staff_productivity', 'Staff Productivity Report'),
+        ('long_term_performance', 'Long-Term Animal Performance & Health Trends'),
+    ]
+
     REPORT_TYPES = [
         ('daily', 'Daily Report'),
         ('weekly', 'Weekly Report'),
@@ -400,14 +450,80 @@ class Report(models.Model):
 
     title = models.CharField(max_length=255)
     report_type = models.CharField(max_length=20, choices=REPORT_TYPES)
+    role_category = models.CharField(max_length=20, choices=ROLE_CATEGORIES)
+    specific_report_type = models.CharField(max_length=50, choices=SPECIFIC_REPORT_TYPES)
+
     description = models.TextField()
-    created_by = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='created_reports')
-    branch = models.ForeignKey(Branch, on_delete=models.CASCADE, related_name='reports')
+    created_by = models.ForeignKey('accounts.CustomUser', on_delete=models.CASCADE, related_name='created_reports')
+    branch = models.ForeignKey('core.Branch', on_delete=models.CASCADE, related_name='reports')
     file = models.FileField(upload_to='reports/', blank=True, null=True)
     date_created = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return self.title
+        return f"{self.get_specific_report_type_display()} - {self.title}"
 
     class Meta:
         ordering = ['-date_created']
+
+
+
+class TrainingRecord(models.Model):
+    animal = models.ForeignKey(
+        Animal, on_delete=models.CASCADE, related_name='training_records'
+    )
+
+    # Training Types
+    training_tracking = models.BooleanField("Tracking", default=False)
+    training_sniffer = models.BooleanField("Sniffer", default=False)
+    training_explosives = models.BooleanField("Explosives", default=False)
+    training_govt_trophies = models.BooleanField("Government Trophies", default=False)
+    training_narcotics = models.BooleanField("Narcotics", default=False)
+    training_other = models.TextField("Other Training", blank=True, null=True, help_text="Describe any other training")
+
+    # Training Details
+    training_place = models.CharField("Training Place", max_length=255)
+    training_duration = models.CharField("Duration", max_length=100, help_text="e.g., 2 weeks, 30 hours")
+    training_time = models.CharField("Training Time", max_length=100, help_text="e.g., Morning, 9:00 AM - 5:00 PM")
+    training_handler = models.CharField("Training Handler", max_length=100)
+
+    date_recorded = models.DateField("Date Recorded", auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        training_types = []
+        if self.training_tracking: training_types.append("Tracking")
+        if self.training_sniffer: training_types.append("Sniffer")
+        if self.training_explosives: training_types.append("Explosives")
+        if self.training_govt_trophies: training_types.append("Govt Trophies")
+        if self.training_narcotics: training_types.append("Narcotics")
+
+        types_str = ", ".join(training_types) if training_types else "General Training"
+        return f"{self.animal.name} - {types_str} ({self.date_recorded})"
+
+    class Meta:
+        ordering = ['-date_recorded']
+
+
+class TrainingSession(models.Model):
+    training_record = models.ForeignKey(
+        'TrainingRecord',
+        on_delete=models.CASCADE,
+        related_name='sessions'
+    )
+    date = models.DateField()
+    description = models.TextField()
+    trainer = models.CharField(max_length=100, blank=True, null=True)  # optional external trainer
+    conducted_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,  # links to your CustomUser
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='conducted_training_sessions'
+    )
+    duration = models.CharField(max_length=50, blank=True, null=True)  # e.g., '2 hours', '1 week'
+    result = models.TextField(blank=True, null=True)  # performance notes, remarks
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Session for {self.training_record.animal.name} on {self.date}"

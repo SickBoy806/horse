@@ -2,17 +2,20 @@
 {% load widget_tweaks %}
 
 {% block content %}
-<div class="min-h-screen bg-gray-100 py-12">
-  <div class="max-w-4xl mx-auto px-6">
+<div class="min-h-screen bg-gray-50 py-8">
+  <div class="max-w-5xl mx-auto px-6">
 
     <!-- Header Section -->
-    <div class="flex items-center justify-between mb-6">
-      <h2 class="text-3xl font-bold text-gray-800">Add New Animal</h2>
+    <div class="flex items-center justify-between mb-8">
+      <div>
+        <h1 class="text-3xl font-bold text-gray-900">Add New Animal</h1>
+        <p class="text-gray-600 mt-1">Register a new animal in the system</p>
+      </div>
 
       <!-- Role-based Dashboard Redirect -->
       {% if request.user.role == 'admin' and request.user.branch and request.user.branch.slug %}
         <a href="{% url 'admin_dashboard' branch=request.user.branch.slug %}"
-           class="inline-flex items-center text-sm bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors shadow-sm">
+           class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors shadow-sm">
           <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
           </svg>
@@ -20,7 +23,7 @@
         </a>
       {% elif request.user.role == 'veterinarian' and request.user.branch and request.user.branch.slug %}
         <a href="{% url 'vet_dashboard' branch=request.user.branch.slug %}"
-           class="inline-flex items-center text-sm bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors shadow-sm">
+           class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors shadow-sm">
           <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
           </svg>
@@ -28,16 +31,15 @@
         </a>
       {% elif request.user.role == 'staff' and request.user.branch and request.user.branch.slug %}
         <a href="{% url 'staff_dashboard' branch=request.user.branch.slug %}"
-           class="inline-flex items-center text-sm bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors shadow-sm">
+           class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors shadow-sm">
           <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
           </svg>
           Back to Dashboard
         </a>
       {% else %}
-        <!-- Fallback dashboard button if no specific role match -->
         <a href="{% url 'login' %}"
-           class="inline-flex items-center text-sm bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors shadow-sm">
+           class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors shadow-sm">
           <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
           </svg>
@@ -47,151 +49,175 @@
     </div>
 
     <!-- Debug Info -->
-    <div class="mb-6 p-4 bg-gray-50 rounded-lg border">
-      <h3 class="font-semibold text-gray-700 mb-2">Debug Information</h3>
-      <div class="text-sm text-gray-600 space-y-1">
+    {% if debug %}
+    <div class="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+      <h3 class="font-semibold text-blue-800 mb-2">Debug Information</h3>
+      <div class="text-sm text-blue-700 space-y-1">
         <p><strong>Form action URL:</strong> {% url 'add_animal' %}</p>
         <p><strong>Branch:</strong> {{ request.user.branch.name }} ({{ request.user.branch.slug }})</p>
         <p><strong>Logged in as:</strong> {{ request.user.get_full_name }} ({{ request.user.role }})</p>
       </div>
     </div>
+    {% endif %}
 
-    <!-- Flash Messages -->
+    <!-- Messages -->
     {% if messages %}
       <div class="mb-6 space-y-3">
         {% for message in messages %}
-          <div class="p-4 text-white rounded-lg shadow-sm
-            {% if message.tags == 'success' %}bg-green-600
-            {% elif message.tags == 'error' %}bg-red-600
-            {% else %}bg-blue-600{% endif %}">
+          <div class="p-4 rounded-lg shadow-sm
+            {% if message.tags == 'success' %}bg-green-100 text-green-800 border border-green-200
+            {% elif message.tags == 'error' %}bg-red-100 text-red-800 border border-red-200
+            {% else %}bg-blue-100 text-blue-800 border border-blue-200{% endif %}">
             {{ message }}
           </div>
         {% endfor %}
       </div>
     {% endif %}
 
-    <!-- Animal Form -->
-    <div class="bg-white shadow-lg rounded-lg overflow-hidden">
-      <div class="px-10 py-8">
-        <form method="POST" action="{% url 'add_animal' %}" enctype="multipart/form-data" class="space-y-8">
-          {% csrf_token %}
+    <!-- Main Form -->
+    <div class="bg-white shadow-lg rounded-xl overflow-hidden">
+      <form method="POST" action="{% url 'add_animal' %}" enctype="multipart/form-data" id="animal-form">
+        {% csrf_token %}
 
-          <!-- Non-field errors -->
-          {% if form.non_field_errors %}
-            <div class="mb-4 text-red-600 font-semibold">
+        <!-- Non-field errors -->
+        {% if form.non_field_errors %}
+          <div class="p-6 bg-red-50 border-b border-red-200">
+            <div class="text-red-800 font-medium">
               {{ form.non_field_errors }}
             </div>
-          {% endif %}
+          </div>
+        {% endif %}
 
-          <!-- Basic Information Section -->
-          <div class="space-y-8">
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-3">Name:</label>
-                {{ form.name|add_class:"w-full border border-gray-300 px-6 py-4 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all bg-white" }}
-                {% if form.name.errors %}
-                  <p class="text-red-600 text-sm mt-1">{{ form.name.errors|striptags }}</p>
-                {% endif %}
-              </div>
+        <!-- Basic Information -->
+        <div class="p-8 border-b border-gray-200">
+          <h2 class="text-xl font-semibold text-gray-800 mb-6">Basic Information</h2>
 
-              <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-3">Species:</label>
-                {{ form.species|add_class:"w-full border border-gray-300 px-6 py-4 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all bg-white" }}
-                {% if form.species.errors %}
-                  <p class="text-red-600 text-sm mt-1">{{ form.species.errors|striptags }}</p>
-                {% endif %}
-              </div>
-            </div>
-
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-3">Date of Birth:</label>
-                <input type="date"
-                       id="date_of_birth"
-                       name="date_of_birth"
-                       class="w-full border border-gray-300 px-6 py-4 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all bg-white"
-                       onchange="calculateAge()"
-                       value="{{ form.date_of_birth.value|default:'' }}">
-                <p class="text-xs text-gray-500 mt-2">Select the animal's birth date</p>
-                <div id="calculated_age" class="text-sm font-medium text-blue-600 mt-2 {% if not form.date_of_birth.value %}hidden{% endif %}"></div>
-                <input type="hidden" id="age_field" name="age" value="{{ form.age.value|default:'' }}">
-                {% if form.date_of_birth.errors %}
-                  <p class="text-red-600 text-sm mt-1">{{ form.date_of_birth.errors|striptags }}</p>
-                {% endif %}
-              </div>
-
-              <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-3">Force Number:</label>
-                {{ form.force_number|add_class:"w-full border border-gray-300 px-6 py-4 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all bg-white" }}
-                {% if form.force_number.errors %}
-                  <p class="text-red-600 text-sm mt-1">{{ form.force_number.errors|striptags }}</p>
-                {% endif %}
-              </div>
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Name</label>
+              {{ form.name|add_class:"w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" }}
+              {% if form.name.errors %}
+                <p class="text-red-600 text-sm mt-1">{{ form.name.errors|striptags }}</p>
+              {% endif %}
             </div>
 
             <div>
-              <label class="block text-sm font-semibold text-gray-700 mb-3">Owner Name:</label>
-              {{ form.owner_name|add_class:"w-full border border-gray-300 px-6 py-4 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all bg-white" }}
+              <label class="block text-sm font-medium text-gray-700 mb-2">Species</label>
+              {{ form.species|add_class:"w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" }}
+              {% if form.species.errors %}
+                <p class="text-red-600 text-sm mt-1">{{ form.species.errors|striptags }}</p>
+              {% endif %}
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Date of Birth</label>
+              <input type="date" id="date_of_birth" name="date_of_birth"
+                     class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                     onchange="calculateAge()" value="{{ form.date_of_birth.value|default:'' }}">
+              <div id="calculated_age" class="text-sm font-medium text-blue-600 mt-2 p-2 bg-blue-50 rounded {% if not form.date_of_birth.value %}hidden{% endif %}"></div>
+              <input type="hidden" id="age_field" name="age" value="{{ form.age.value|default:'' }}">
+              {% if form.date_of_birth.errors %}
+                <p class="text-red-600 text-sm mt-1">{{ form.date_of_birth.errors|striptags }}</p>
+              {% endif %}
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Force Number</label>
+              {{ form.force_number|add_class:"w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" }}
+              {% if form.force_number.errors %}
+                <p class="text-red-600 text-sm mt-1">{{ form.force_number.errors|striptags }}</p>
+              {% endif %}
+            </div>
+
+            <div class="lg:col-span-2">
+              <label class="block text-sm font-medium text-gray-700 mb-2">Owner Name</label>
+              {{ form.owner_name|add_class:"w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" }}
               {% if form.owner_name.errors %}
                 <p class="text-red-600 text-sm mt-1">{{ form.owner_name.errors|striptags }}</p>
               {% endif %}
             </div>
           </div>
+        </div>
 
-          <!-- Photo Section -->
-          <div class="border-t border-gray-200 pt-8">
-            <h3 class="text-lg font-semibold text-gray-800 mb-6">Animal Photo</h3>
-            <div class="space-y-4">
-              <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-3">Upload Photo:</label>
-                {{ form.photo|add_class:"w-full border border-gray-300 px-6 py-4 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all bg-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" }}
-                {% if form.photo.errors %}
-                  <p class="text-red-600 text-sm mt-1">{{ form.photo.errors|striptags }}</p>
-                {% endif %}
-              </div>
-              <div class="flex justify-center mt-6">
-                <img id="preview" src="#" class="hidden w-48 h-48 object-cover rounded-lg border-2 border-gray-300 shadow-sm" alt="Preview">
-              </div>
+        <!-- Photo Section -->
+        <div class="p-8 border-b border-gray-200">
+          <h2 class="text-xl font-semibold text-gray-800 mb-6">Animal Photo</h2>
+
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Upload Photo</label>
+              {{ form.photo|add_class:"w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" }}
+              {% if form.photo.errors %}
+                <p class="text-red-600 text-sm mt-1">{{ form.photo.errors|striptags }}</p>
+              {% endif %}
+            </div>
+
+            <div class="flex justify-center">
+              <img id="preview" src="#" class="hidden w-48 h-48 object-cover rounded-lg border-2 border-gray-300 shadow-sm" alt="Preview">
             </div>
           </div>
+        </div>
 
-          <!-- Assignment Section -->
-          {% if form.assigned_users %}
-            <div class="border-t border-gray-200 pt-8">
-              <h3 class="text-lg font-semibold text-gray-800 mb-6">User Assignment</h3>
-              <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-3">Assign to Other Users:</label>
-                <div class="border border-gray-300 rounded-lg p-6 bg-gray-50">
-                  {{ form.assigned_users }}
-                </div>
-                {% if form.assigned_users.errors %}
-                  <p class="text-red-600 text-sm mt-1">{{ form.assigned_users.errors|striptags }}</p>
-                {% endif %}
+        <!-- User Assignment -->
+        {% if form.assigned_users %}
+          <div class="p-8 border-b border-gray-200">
+            <h2 class="text-xl font-semibold text-gray-800 mb-6">User Assignment</h2>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Assign to Users</label>
+              <div class="border border-gray-300 rounded-lg p-4 bg-gray-50">
+                {{ form.assigned_users }}
               </div>
+              {% if form.assigned_users.errors %}
+                <p class="text-red-600 text-sm mt-1">{{ form.assigned_users.errors|striptags }}</p>
+              {% endif %}
             </div>
-          {% endif %}
+          </div>
+        {% endif %}
 
-          <br>
+        <!-- Training Records -->
+        <div class="p-8 border-b border-gray-200">
+          <div class="flex justify-between items-center mb-6">
+            <h2 class="text-xl font-semibold text-gray-800">Training Records</h2>
+            <button type="button" id="add-training"
+                    class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors">
+              + Add Training Record
+            </button>
+          </div>
 
-          <!-- Submit Button -->
-          <div class="border-t border-gray-200 pt-10 flex justify-center">
-            <button type="submit" class="bg-blue-600 text-white px-16 py-5 rounded-xl hover:bg-blue-700 transition-colors font-semibold shadow-lg text-lg tracking-wide">
+          {{ formset.management_form }}
+
+          <div id="training-records-container" class="space-y-4">
+            {% for form in formset %}
+              <div class="training-record border border-gray-300 rounded-lg p-4 bg-gray-50 relative">
+                {{ form.as_p }}
+                <button type="button" class="remove-training absolute top-2 right-2 w-8 h-8 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-lg font-bold">&times;</button>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+
+        <!-- Submit Button -->
+        <div class="p-8 bg-gray-50">
+          <div class="flex justify-center">
+            <button type="submit" class="px-12 py-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-lg transition-colors">
               Add Animal
             </button>
           </div>
-        </form>
-      </div>
+        </div>
+      </form>
     </div>
   </div>
 </div>
 
-<!-- Image Preview Script -->
+<!-- Scripts -->
 <script>
-  const photoInput = document.querySelector('input[type="file"]');
+  // Photo preview
+  const photoInput = document.querySelector('input[type="file"][name="{{ form.photo.html_name }}"]');
   const preview = document.getElementById('preview');
 
   if (photoInput) {
-    photoInput.addEventListener('change', function () {
+    photoInput.addEventListener('change', function() {
       const file = this.files[0];
       if (file) {
         preview.src = URL.createObjectURL(file);
@@ -202,15 +228,15 @@
     });
   }
 
-  // Age calculation function
+  // Age calculation
   function calculateAge() {
     const birthDateInput = document.getElementById('date_of_birth');
     const birthDate = new Date(birthDateInput.value);
     const today = new Date();
 
     if (birthDate && birthDate <= today) {
-      let ageInMilliseconds = today - birthDate;
-      let ageInDays = Math.floor(ageInMilliseconds / (1000 * 60 * 60 * 24));
+      let ageInMs = today - birthDate;
+      let ageInDays = Math.floor(ageInMs / (1000 * 60 * 60 * 24));
       let years = Math.floor(ageInDays / 365);
       let months = Math.floor((ageInDays % 365) / 30);
       let days = (ageInDays % 365) % 30;
@@ -232,8 +258,6 @@
 
       document.getElementById('calculated_age').innerHTML = 'Calculated Age: ' + ageText;
       document.getElementById('calculated_age').classList.remove('hidden');
-
-      // Store the calculated age in the hidden field (you might want to adjust this format)
       document.getElementById('age_field').value = years + '.' + months;
     } else {
       document.getElementById('calculated_age').classList.add('hidden');
@@ -241,9 +265,9 @@
     }
   }
 
-  // Clear form function
+  // Form reset after success
   function clearForm() {
-    document.querySelector('form').reset();
+    document.querySelector('form#animal-form').reset();
 
     if (preview) {
       preview.classList.add('hidden');
@@ -253,19 +277,71 @@
     document.getElementById('calculated_age').classList.add('hidden');
     document.getElementById('age_field').value = '';
 
-    document.querySelector('form').scrollIntoView({ behavior: 'smooth' });
+    const container = document.getElementById('training-records-container');
+    container.innerHTML = '';
+    const totalForms = document.querySelector('#id_trainingrecord_set-TOTAL_FORMS');
+    totalForms.value = 0;
+
+    document.querySelector('form#animal-form').scrollIntoView({ behavior: 'smooth' });
   }
 
+  // Initialize
   document.addEventListener('DOMContentLoaded', function() {
-    const successMessages = document.querySelectorAll('.bg-green-600');
+    calculateAge();
+
+    const successMessages = document.querySelectorAll('.bg-green-100');
     if (successMessages.length > 0) {
       setTimeout(clearForm, 1000);
     }
   });
 
-  // Trigger age calculation on page load if date is already set
-  document.addEventListener('DOMContentLoaded', function() {
-    calculateAge();
+  // Training Records Management
+  document.addEventListener('DOMContentLoaded', () => {
+    const addBtn = document.getElementById('add-training');
+    const container = document.getElementById('training-records-container');
+    const totalForms = document.querySelector('#id_trainingrecord_set-TOTAL_FORMS');
+
+    addBtn.addEventListener('click', () => {
+      const currentCount = parseInt(totalForms.value);
+      const newFormIndex = currentCount;
+
+      const emptyFormHTML = document.getElementById('empty-form-template').innerHTML.replace(/__prefix__/g, newFormIndex);
+
+      const newDiv = document.createElement('div');
+      newDiv.classList.add('training-record', 'border', 'border-gray-300', 'rounded-lg', 'p-4', 'bg-gray-50', 'relative');
+      newDiv.innerHTML = emptyFormHTML + `
+        <button type="button" class="remove-training absolute top-2 right-2 w-8 h-8 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-lg font-bold">&times;</button>
+      `;
+
+      container.appendChild(newDiv);
+      totalForms.value = newFormIndex + 1;
+    });
+
+    container.addEventListener('click', (e) => {
+      if (e.target.classList.contains('remove-training')) {
+        const recordDiv = e.target.closest('.training-record');
+        recordDiv.remove();
+
+        const forms = container.querySelectorAll('.training-record');
+        totalForms.value = forms.length;
+
+        forms.forEach((formDiv, index) => {
+          formDiv.querySelectorAll('input, select, textarea, label').forEach(el => {
+            ['name', 'id', 'for'].forEach(attr => {
+              if (el.hasAttribute(attr)) {
+                el.setAttribute(attr, el.getAttribute(attr).replace(/\d+/, index));
+              }
+            });
+          });
+        });
+      }
+    });
   });
 </script>
+
+<!-- Hidden Template -->
+<div id="empty-form-template" class="hidden">
+  {{ formset.empty_form.as_p }}
+</div>
+
 {% endblock %}

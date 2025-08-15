@@ -1,4 +1,7 @@
 from django import forms
+from .models import TrainingRecord
+from .models import Report
+from django.forms import inlineformset_factory
 from django.core.exceptions import ValidationError
 from .models import (
     VetTask, SupportTicket, TicketReply, Animal, Message, 
@@ -28,6 +31,7 @@ class VetTaskForm(forms.ModelForm):
                 role__in=['veterinarian', 'user', 'staff']
             )
             self.fields['animal'].queryset = Animal.objects.filter(branch=user.branch)
+
 
 
 class SupportTicketForm(forms.ModelForm):
@@ -69,6 +73,7 @@ class AnimalForm(forms.ModelForm):
             branch_users = CustomUser.objects.filter(branch=user.branch)
             self.fields['assigned_users'].queryset = branch_users
             self.fields['assigned_vet'].queryset = branch_users.filter(role='veterinarian')
+
 
     def clean_force_number(self):
         force_number = self.cleaned_data.get('force_number')
@@ -199,3 +204,114 @@ class MessageReplyForm(forms.ModelForm):
         widgets = {
             'content': forms.Textarea(attrs={'rows': 6, 'placeholder': 'Type your reply...'}),
         }
+
+
+class TrainingRecordForm(forms.ModelForm):
+    class Meta:
+        model = TrainingRecord
+        fields = [
+            'training_tracking', 'training_sniffer', 'training_explosives',
+            'training_govt_trophies', 'training_narcotics', 'training_other',
+            'training_place', 'training_duration', 'training_time', 'training_handler'
+        ]
+        widgets = {
+            'training_other': forms.Textarea(attrs={
+                'rows': 2,
+                'placeholder': 'Describe any other training types or special notes...'
+            }),
+            'training_place': forms.TextInput(attrs={
+                'placeholder': 'Training facility or location'
+            }),
+            'training_duration': forms.TextInput(attrs={
+                'placeholder': 'e.g., 2 weeks, 40 hours'
+            }),
+            'training_time': forms.TextInput(attrs={
+                'placeholder': 'e.g., 9:00 AM - 5:00 PM'
+            }),
+            'training_handler': forms.TextInput(attrs={
+                'placeholder': 'Handler name'
+            }),
+        }
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        # Check if at least one training type is selected
+        training_types = [
+            cleaned_data.get('training_tracking'),
+            cleaned_data.get('training_sniffer'),
+            cleaned_data.get('training_explosives'),
+            cleaned_data.get('training_govt_trophies'),
+            cleaned_data.get('training_narcotics'),
+        ]
+
+        has_other_training = cleaned_data.get('training_other', '').strip()
+
+        if not any(training_types) and not has_other_training:
+            raise forms.ValidationError(
+                "Please select at least one training type or specify other training."
+            )
+
+        return cleaned_data
+
+
+class ReportForm(forms.ModelForm):
+    class Meta:
+        model = Report
+        fields = ['title', 'report_type', 'specific_report_type', 'description', 'file']
+
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+        self.role_category_value = None  # default
+
+        if user:
+            role = getattr(user, 'role', None)
+
+            if role in ['trainer', 'worker']:
+                self.fields['specific_report_type'].choices = [
+                    choice for choice in Report.SPECIFIC_REPORT_TYPES
+                    if choice[0] in [
+                        'training_progress', 'training_log', 'performance_eval',
+                        'behavior_assessment', 'missed_training', 'training_schedule',
+                        'special_skills', 'daily_care', 'inventory', 'facility_maintenance',
+                        'animal_condition', 'work_shift', 'incident'
+                    ]
+                ]
+                self.role_category_value = 'user'
+
+            elif role == 'veterinarian':
+                self.fields['specific_report_type'].choices = [
+                    choice for choice in Report.SPECIFIC_REPORT_TYPES
+                    if choice[0] in [
+                        'medical_record', 'vet_activity_log', 'treatment_medication',
+                        'vaccination_schedule', 'lab_results', 'injury_illness',
+                        'disease_tracking'
+                    ]
+                ]
+                self.role_category_value = 'veterinarian'
+
+            elif role == 'admin':
+                self.fields['specific_report_type'].choices = [
+                    choice for choice in Report.SPECIFIC_REPORT_TYPES
+                    if choice[0] in [
+                        'staff_attendance', 'animal_assignment', 'facility_resource',
+                        'task_completion', 'support_requests', 'animal_acquisition'
+                    ]
+                ]
+                self.role_category_value = 'admin'
+
+            elif role == 'superadmin':
+                self.fields['specific_report_type'].choices = [
+                    choice for choice in Report.SPECIFIC_REPORT_TYPES
+                    if choice[0] in [
+                        'operations_summary', 'cross_branch_performance', 'financial_resource',
+                        'incident_safety', 'compliance_audit', 'staff_productivity',
+                        'long_term_performance'
+                    ]
+                ]
+                self.role_category_value = 'superadmin'
+
+            else:
+                self.fields['specific_report_type'].choices = []
+                self.role_category_value = None

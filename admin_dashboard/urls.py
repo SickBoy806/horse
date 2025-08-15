@@ -1,5 +1,6 @@
 from django.urls import path
 from . import views
+from .views import notifications
 from .views import (
     admin_dashboard,
     create_user,
@@ -19,6 +20,7 @@ from .views import (
     support_ticket_list,
     support_ticket_detail,
     close_support_ticket,
+    notifications,
 )
 
 urlpatterns = [
@@ -43,7 +45,15 @@ urlpatterns = [
     path('<str:branch>/create-user/', views.user_add, name='admin_user_add'),
     path('<str:branch>/user_edit/<int:user_id>/', user_edit, name='admin_user_edit'),
     path('<str:branch>/user_delete/<int:user_id>/', user_delete, name='admin_user_delete'),
+    path('dashboard/vet/<branch>/notifications/', notifications, name='notifications'),
+    path('dashboard/admin/<str:branch>/medical-records/', views.admin_medical_records, name='medical_records'),
+    path('<str:branch>/equipment-logs/', views.admin_equipment_logs, name='admin_equipment_logs'),
+
 
 
 ]
+
+
+
+
 

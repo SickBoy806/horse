@@ -405,195 +405,217 @@
   <!-- Mobile Overlay -->
   <div id="mobileOverlay" class="mobile-overlay"></div>
 
+
+
   <!-- =================================
        SIDEBAR NAVIGATION
        ================================= -->
-  <aside id="sidebar" class="sidebar">
-    <!-- Logo Section -->
-    <div class="sidebar-logo flex items-center space-x-3">
-      <img src="{% static 'images/tanzania-police-logo.png' %}" alt="Logo" class="w-10 h-10 object-contain" />
-      <div>
-        <div class="logo-text">TPF Animal System</div>
-        <div class="logo-subtitle">Management Portal</div>
-      </div>
-      <button id="closeSidebar" class="mobile-menu-btn ml-auto" aria-label="Close sidebar">
+
+
+<aside id="sidebar" class="sidebar">
+  <!-- Logo Section -->
+  <div class="sidebar-logo flex items-center space-x-3">
+    <img src="{% static 'images/tanzania-police-logo.png' %}" alt="Logo" class="w-10 h-10 object-contain" />
+    <div>
+      <div class="logo-text">TPF Animal System</div>
+      <div class="logo-subtitle">Management Portal</div>
+    </div>
+    <button id="closeSidebar" class="mobile-menu-btn ml-auto" aria-label="Close sidebar">
+      <svg class="nav-item-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+      </svg>
+    </button>
+  </div>
+
+  <!-- Navigation Menu -->
+  <nav class="sidebar-nav">
+    <!-- Dashboard -->
+    <a href="{% url 'vet_dashboard' branch=branch %}" class="nav-item {% block dashboard_active %}active{% endblock %}">
+      <svg class="nav-item-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"/>
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5a2 2 0 012-2h4a2 2 0 012 2v6a2 2 0 01-2 2H10a2 2 0 01-2-2V5z"/>
+      </svg>
+      Dashboard
+    </a>
+
+    <!-- Medical Records Dropdown -->
+    <div class="nav-dropdown">
+      <button class="nav-item" onclick="toggleDropdown(this)" aria-expanded="false">
         <svg class="nav-item-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+        </svg>
+        Medical Records
+        <svg class="dropdown-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
         </svg>
       </button>
+      <div class="nav-dropdown-content">
+        <a href="{% url 'add_medical_record' branch=branch %}" class="nav-subitem">Add Record</a>
+        <a href="{% url 'search_medical_records' branch=branch %}" class="nav-subitem">Search Records</a>
+        <a href="{% url 'medical_records_list' branch=branch %}" class="nav-subitem">All Records</a>
+        <a href="{% url 'performance_reports' branch=branch %}" class="nav-subitem">Reports</a>
+      </div>
     </div>
 
-    <!-- Navigation Menu -->
-    <nav class="sidebar-nav">
-      <!-- Dashboard -->
-      <a href="{% url 'vet_dashboard' branch=branch %}" class="nav-item {% block dashboard_active %}active{% endblock %}">
-        <svg class="nav-item-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"/>
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5a2 2 0 012-2h4a2 2 0 012 2v6a2 2 0 01-2 2H10a2 2 0 01-2-2V5z"/>
-        </svg>
-        Dashboard
-      </a>
+     <!-- Training Dropdown -->
+<div class="nav-dropdown">
+  <button class="nav-item" onclick="toggleDropdown(this)" aria-expanded="false">
+    <svg class="nav-item-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M9 12h6m2 8H7a2 2 0 01-2-2V6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v12a2 2 0 01-2 2z"/>
+    </svg>
+    Training
+    <svg class="dropdown-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+    </svg>
+  </button>
+  <div class="nav-dropdown-content">
+    <a href="{% url 'training_dashboard' %}#sessions" class="nav-subitem">Training Sessions</a>
+    <a href="{% url 'training_dashboard' %}#progression" class="nav-subitem">Training Progression</a>
+    <a href="{% url 'training_dashboard' %}#reports" class="nav-subitem">Training Reports</a>
+    <a href="{% url 'training_dashboard' %}#performance" class="nav-subitem">Performance Charts</a>
+  </div>
+</div>
 
-      <!-- Medical Records Dropdown -->
-      <div class="nav-dropdown">
-        <button class="nav-item" onclick="toggleDropdown(this)" aria-expanded="false">
-          <svg class="nav-item-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-          </svg>
-          Medical Records
-          <svg class="dropdown-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-          </svg>
-        </button>
-        <div class="nav-dropdown-content">
-          <a href="{% url 'add_medical_record' branch=branch %}" class="nav-subitem">Add Record</a>
-          <a href="{% url 'search_medical_records' branch=branch %}" class="nav-subitem">Search Records</a>
-          <a href="{% url 'medical_records_list' branch=branch %}" class="nav-subitem">All Records</a>
-          <a href="{% url 'performance_reports' branch=branch %}" class="nav-subitem">Reports</a>
-        </div>
+
+    <!-- Tasks Dropdown -->
+    <div class="nav-dropdown">
+      <button class="nav-item" onclick="toggleDropdown(this)" aria-expanded="false">
+        <svg class="nav-item-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+        </svg>
+        My Tasks
+        <svg class="dropdown-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+        </svg>
+      </button>
+      <div class="nav-dropdown-content">
+        <a href="{% url 'assign_task' branch=branch %}" class="nav-subitem">Assign Task</a>
+        <a href="{% url 'vet_task_list' branch=branch %}" class="nav-subitem">All Tasks</a>
+        <a href="{% url 'pending_tasks' branch=branch %}" class="nav-subitem">Pending Tasks</a>
+        <a href="{% url 'completed_tasks' branch=branch %}" class="nav-subitem">Completed Tasks</a>
       </div>
+    </div>
 
-      <!-- Tasks Dropdown -->
-      <div class="nav-dropdown">
-        <button class="nav-item" onclick="toggleDropdown(this)" aria-expanded="false">
-          <svg class="nav-item-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
-          </svg>
-          My Tasks
-          <svg class="dropdown-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-          </svg>
-        </button>
-        <div class="nav-dropdown-content">
-          <a href="{% url 'assign_task' branch=branch %}" class="nav-subitem">Assign Task</a>
-          <a href="{% url 'vet_task_list' branch=branch %}" class="nav-subitem">All Tasks</a>
-          <a href="{% url 'pending_tasks' branch=branch %}" class="nav-subitem">Pending Tasks</a>
-          <a href="{% url 'completed_tasks' branch=branch %}" class="nav-subitem">Completed Tasks</a>
-        </div>
+    <!-- Animal Logs Dropdown -->
+    <div class="nav-dropdown">
+      <button class="nav-item" onclick="toggleDropdown(this)" aria-expanded="false">
+        <svg class="nav-item-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+        </svg>
+        Animal Logs
+        <svg class="dropdown-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+        </svg>
+      </button>
+      <div class="nav-dropdown-content">
+        <a href="{% url 'add_patient' branch=branch %}" class="nav-subitem">Add Patient</a>
+        <a href="{% url 'patient_list' branch=branch %}" class="nav-subitem">All Patients</a>
+        <a href="{% url 'search_patients' branch=branch %}" class="nav-subitem">Search Patients</a>
       </div>
+    </div>
 
-      <!-- Animal Logs Dropdown -->
-      <div class="nav-dropdown">
-        <button class="nav-item" onclick="toggleDropdown(this)" aria-expanded="false">
-          <svg class="nav-item-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
-          </svg>
-          Animal Logs
-          <svg class="dropdown-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-          </svg>
-        </button>
-        <div class="nav-dropdown-content">
-          <a href="{% url 'add_patient' branch=branch %}" class="nav-subitem">Add Patient</a>
-          <a href="{% url 'patient_list' branch=branch %}" class="nav-subitem">All Patients</a>
-          <a href="{% url 'search_patients' branch=branch %}" class="nav-subitem">Search Patients</a>
-        </div>
+    <!-- Reports Dropdown -->
+    <div class="nav-dropdown">
+      <button class="nav-item" onclick="toggleDropdown(this)" aria-expanded="false">
+        <svg class="nav-item-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+        </svg>
+        Reports
+        <svg class="dropdown-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+        </svg>
+      </button>
+      <div class="nav-dropdown-content">
+        <a href="{% url 'reports_list' %}" class="nav-subitem">All Reports</a>
+        <a href="{% url 'create_report' %}" class="nav-subitem">Create Report</a>
+        <a href="{% url 'analytics_dashboard' branch=branch %}" class="nav-subitem">Analytics</a>
+        <a href="{% url 'performance_reports' branch=branch %}" class="nav-subitem">Performance Reports</a>
       </div>
+    </div>
 
-      <!-- Single Navigation Items -->
-      <a href="{% url 'analytics_dashboard' branch=branch %}" class="nav-item">
+    <!-- Messages Dropdown -->
+    <div class="nav-dropdown">
+      <button class="nav-item" onclick="toggleDropdown(this)" aria-expanded="false">
         <svg class="nav-item-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
         </svg>
-        Report Activity
-      </a>
-
-      <!-- Messages Dropdown -->
-      <div class="nav-dropdown">
-        <button class="nav-item" onclick="toggleDropdown(this)" aria-expanded="false">
-          <svg class="nav-item-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
-          </svg>
-          Messages
-          <svg class="dropdown-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-          </svg>
-        </button>
-        <div class="nav-dropdown-content">
-          <a href="{% url 'inbox' branch=branch %}" class="nav-subitem">Inbox</a>
-          <a href="{% url 'sent_messages' branch=branch %}" class="nav-subitem">Sent</a>
-          <a href="{% url 'archived_messages' branch=branch %}" class="nav-subitem">Archived</a>
-          <a href="{% url 'deleted_messages' branch=branch %}" class="nav-subitem">Deleted</a>
-          <a href="{% url 'compose_message' branch=branch %}" class="nav-subitem">Compose</a>
-        </div>
+        Messages
+        <svg class="dropdown-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+        </svg>
+      </button>
+      <div class="nav-dropdown-content">
+        <a href="{% url 'inbox' branch=branch %}" class="nav-subitem">Inbox</a>
+        <a href="{% url 'sent_messages' branch=branch %}" class="nav-subitem">Sent</a>
+        <a href="{% url 'archived_messages' branch=branch %}" class="nav-subitem">Archived</a>
+        <a href="{% url 'deleted_messages' branch=branch %}" class="nav-subitem">Deleted</a>
+        <a href="{% url 'compose_message' branch=branch %}" class="nav-subitem">Compose</a>
       </div>
+    </div>
 
-      <!-- Additional Navigation Items -->
-      <a href="{% url 'notifications' branch=branch %}" class="nav-item">
-        <svg class="nav-item-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5-5v5zM4 2v20l5-5h11a2 2 0 002-2V4a2 2 0 00-2-2H4z"/>
-        </svg>
-        Notifications
-      </a>
+    <!-- Additional Navigation Items -->
+    <a href="{% url 'notifications' branch=branch %}" class="nav-item">
+      <svg class="nav-item-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5-5v5zM4 2v20l5-5h11a2 2 0 002-2V4a2 2 0 00-2-2H4z"/>
+      </svg>
+      Notifications
+    </a>
 
-      <a href="{% url 'update_task' branch=branch %}" class="nav-item">
-        <svg class="nav-item-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-        </svg>
-        Update Task
-      </a>
+    <a href="{% url 'update_task' branch=branch %}" class="nav-item">
+      <svg class="nav-item-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+      </svg>
+      Update Task
+    </a>
 
-      <a href="{% url 'animal_list' branch=branch %}" class="nav-item">
-        <svg class="nav-item-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-        </svg>
-        Assigned Animals
-      </a>
+    <a href="{% url 'animal_list' branch=branch %}" class="nav-item">
+      <svg class="nav-item-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+      </svg>
+      Assigned Animals
+    </a>
 
-      <a href="{% url 'equipment_logs' branch=branch %}" class="nav-item">
-        <svg class="nav-item-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-        </svg>
-        Equipment Logs
-      </a>
+    <a href="{% url 'equipment_logs' branch=branch %}" class="nav-item">
+      <svg class="nav-item-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+      </svg>
+      Equipment Logs
+    </a>
 
-      <a href="{% url 'report_emergency' branch=branch %}" class="nav-item">
-        <svg class="nav-item-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-        </svg>
-        Report Emergency
-      </a>
+    <a href="{% url 'report_emergency' branch=branch %}" class="nav-item">
+      <svg class="nav-item-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+      </svg>
+      Report Emergency
+    </a>
 
-      <a href="{% url 'support_request' branch=branch %}" class="nav-item">
-        <svg class="nav-item-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192L5.636 18.364M12 2.25A9.75 9.75 0 002.25 12c0 .414.336.75.75.75h4.5c.414 0 .75-.336.75-.75 0-1.657 1.343-3 3-3s3 1.343 3 3c0 .414.336.75.75.75h4.5c.414 0 .75-.336.75-.75A9.75 9.75 0 0012 2.25z"/>
-        </svg>
-        Support Request
-      </a>
+    <a href="{% url 'support_request' branch=branch %}" class="nav-item">
+      <svg class="nav-item-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192L5.636 18.364M12 2.25A9.75 9.75 0 002.25 12c0 .414.336.75.75.75h4.5c.414 0 .75-.336.75-.75 0-1.657 1.343-3 3-3s3 1.343 3 3c0 .414.336.75.75.75h4.5c.414 0 .75-.336.75-.75A9.75 9.75 0 0012 2.25z"/>
+      </svg>
+      Support Request
+    </a>
 
-      <a href="{% url 'animal_list' branch=branch %}" class="nav-item">
-        <svg class="nav-item-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-        </svg>
-        View Animals
-      </a>
+    <a href="{% url 'animal_list' branch=branch %}" class="nav-item">
+      <svg class="nav-item-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+      </svg>
+      All Animals
+    </a>
 
-      <!-- Role-based Navigation -->
-      {% if request.user.role == 'admin' or request.user.role == 'veterinarian' %}
-      <a href="{% url 'add_animal' %}" class="nav-item">
-        <svg class="nav-item-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
-        </svg>
-        Add Animal
-      </a>
-      {% endif %}
 
-      <!-- Logout Section -->
-      <div class="px-5 mt-4">
-        <form method="POST" action="{% url 'logout' %}">
-          {% csrf_token %}
-          <button type="submit" class="logout-btn w-full flex items-center justify-center gap-2">
-            <svg class="nav-item-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
-            </svg>
-            Logout
-          </button>
-        </form>
-      </div>
-    </nav>
-  </aside>
+    <!-- Logout -->
+    <a href="{% url 'logout' %}" class="nav-item nav-item-logout">
+      <svg class="nav-item-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+      </svg>
+      Logout
+    </a>
+  </nav>
+</aside>
 
   <!-- =================================
        MAIN CONTENT AREA

@@ -316,3 +316,38 @@ def unlock_account(request, user_id):
         user.save()
         messages.success(request, f"{user.get_full_name()}'s account has been unlocked.")
     return redirect('superadmin_permissions')
+
+def superadmin_create_task(request):
+    # Placeholder logic for now
+    return render(request, 'superadmin_dashboard/create_task.html')
+
+def superadmin_pending_tasks(request):
+    return render(request, 'superadmin_dashboard/pending_tasks.html')
+
+def superadmin_completed_tasks(request):
+    return render(request, 'superadmin_dashboard/completed_tasks.html')
+
+def superadmin_branch_tasks(request):
+    return render(request, 'superadmin_dashboard/branch_tasks.html')
+
+def superadmin_task_logs(request):
+    return render(request, 'superadmin_dashboard/task_logs.html')
+
+# --- Reports ---
+def branch_medical_report(request):
+    return render(request, 'superadmin_dashboard/branch_medical_report.html')
+
+def branch_equipment_report(request):
+    return render(request, 'superadmin_dashboard/branch_equipment_report.html')
+
+def branch_task_report(request):
+    return render(request, 'superadmin_dashboard/branch_task_report.html')
+
+def branch_support_report(request):
+    return render(request, 'superadmin_dashboard/branch_support_report.html')
+
+def branch_animal_report(request):
+    return render(request, 'superadmin_dashboard/branch_animal_report.html')
+
+def training_report(request):
+    return render(request, 'superadmin_dashboard/training_report.html')

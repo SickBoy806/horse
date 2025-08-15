@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="max-w-6xl mx-auto bg-white shadow-lg rounded-lg p-6">
+    <div class="flex justify-between items-center mb-4">
+        <h1 class="text-2xl font-bold">My Reports</h1>
+        <a href="{% url 'create_report' %}" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+            + New Report
+        </a>
+    </div>
+
+    {% if reports %}
+        <table class="w-full border-collapse border border-gray-200">
+            <thead class="bg-gray-100">
+                <tr>
+                    <th class="border p-2 text-left">Title</th>
+                    <th class="border p-2 text-left">Type</th>
+                    <th class="border p-2 text-left">Created</th>
+                    <th class="border p-2 text-left">File</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for report in reports %}
+                <tr>
+                    <td class="border p-2">{{ report.title }}</td>
+                    <td class="border p-2">{{ report.get_specific_report_type_display }}</td>
+                    <td class="border p-2">{{ report.date_created|date:"Y-m-d H:i" }}</td>
+                    <td class="border p-2">
+                        {% if report.file %}
+                            <a href="{{ report.file.url }}" class="text-blue-600 hover:underline">Download</a>
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p class="text-gray-500">No reports found.</p>
+    {% endif %}
+</div>
+{% endblock %}

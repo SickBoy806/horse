@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+
+<div class="p-6 bg-white shadow rounded-lg border border-gray-200">
+
+    <div class="flex justify-between items-center mb-4">
+        <h2 class="text-2xl font-semibold text-gray-800">Training Dashboard</h2>
+
+        {% if show_add_button %}
+        <a href="{% url 'add_training_record' %}" 
+           class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition">
+            + Add Training Record
+        </a>
+        {% endif %}
+    </div>
+
+    <!-- Dropdown Navigation -->
+    <div class="mb-6">
+        <div class="inline-block relative">
+            <button class="bg-gray-100 text-gray-800 font-semibold py-2 px-4 rounded inline-flex items-center">
+                <span>Training Features</span>
+                <svg class="fill-current w-4 h-4 ml-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                    <path d="M5.516 7.548l4.484 4.484 4.484-4.484L15.484 9l-5.484 5-5.484-5z"/>
+                </svg>
+            </button>
+            <ul class="absolute hidden text-gray-700 pt-1 w-56">
+                <li><a class="rounded-t bg-gray-100 hover:bg-gray-200 py-2 px-4 block whitespace-no-wrap" href="#sessions">Training Sessions</a></li>
+                <li><a class="bg-gray-100 hover:bg-gray-200 py-2 px-4 block whitespace-no-wrap" href="#progression">Training Progression</a></li>
+                <li><a class="rounded-b bg-gray-100 hover:bg-gray-200 py-2 px-4 block whitespace-no-wrap" href="#reports">Training Reports</a></li>
+            </ul>
+        </div>
+    </div>
+
+    {% if training_records %}
+    <div id="sessions" class="space-y-4">
+        {% for record in training_records %}
+        <div class="border border-gray-300 rounded-lg p-4 hover:shadow-md transition">
+            <div class="flex justify-between items-center">
+                <h3 class="text-lg font-medium text-gray-900">
+                    {{ record.animal.name }} - 
+                    {% if record.training_tracking %}Tracking{% endif %}
+                    {% if record.training_sniffer %}, Sniffer{% endif %}
+                    {% if record.training_explosives %}, Explosives{% endif %}
+                    {% if record.training_govt_trophies %}, Govt Trophies{% endif %}
+                    {% if record.training_narcotics %}, Narcotics{% endif %}
+                    {% if record.training_other %}, {{ record.training_other }}{% endif %}
+                </h3>
+                <span class="text-gray-500 text-sm">{{ record.date_recorded }}</span>
+            </div>
+
+            <div class="mt-2 text-gray-700 text-sm space-y-1">
+                <p><strong>Place:</strong> {{ record.training_place }}</p>
+                <p><strong>Duration:</strong> {{ record.training_duration }}</p>
+                <p><strong>Time:</strong> {{ record.training_time }}</p>
+                <p><strong>Handler:</strong> {{ record.training_handler }}</p>
+            </div>
+
+            {% if record.sessions.exists %}
+            <details class="mt-3 bg-gray-50 border border-gray-200 rounded p-2">
+                <summary class="cursor-pointer font-semibold text-gray-800">
+                    Training Sessions ({{ record.sessions.count }})
+                </summary>
+                <ul class="mt-2 space-y-2">
+                    {% for session in record.sessions.all %}
+                    <li class="border border-gray-200 rounded p-2 bg-white">
+                        <p><strong>Date:</strong> {{ session.date }}</p>
+                        <p><strong>Description:</strong> {{ session.description }}</p>
+                        {% if session.trainer %}
+                        <p><strong>Trainer:</strong> {{ session.trainer }}</p>
+                        {% endif %}
+                        {% if session.conducted_by %}
+                        <p><strong>Conducted By:</strong> {{ session.conducted_by.get_full_name }}</p>
+                        {% endif %}
+                        {% if session.duration %}
+                        <p><strong>Duration:</strong> {{ session.duration }}</p>
+                        {% endif %}
+                        {% if session.result %}
+                        <p><strong>Result:</strong> {{ session.result }}</p>
+                        {% endif %}
+                    </li>
+                    {% endfor %}
+                </ul>
+            </details>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Training Progression Section -->
+    <div id="progression" class="mt-8">
+        <h3 class="text-xl font-semibold text-gray-800 mb-4">Training Progression</h3>
+        <ul class="space-y-2">
+            {% for record in training_records %}
+            <li class="border border-gray-200 rounded p-3 bg-gray-50">
+                <p><strong>{{ record.animal.name }}:</strong> {{ record.training_duration }} at {{ record.training_place }}</p>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <!-- Training Reports Section -->
+    <div id="reports" class="mt-8">
+        <h3 class="text-xl font-semibold text-gray-800 mb-4">Training Reports</h3>
+        {% if training_reports %}
+        <ul class="space-y-2">
+            {% for report in training_reports %}
+            <li class="border border-gray-200 rounded p-3 bg-gray-50 flex justify-between items-center">
+                <span>{{ report.title }} ({{ report.specific_report_type }})</span>
+                {% if report.file %}
+                <a href="{{ report.file.url }}" target="_blank" class="text-blue-600 hover:underline">View</a>
+                {% endif %}
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="text-gray-500">No training reports available.</p>
+        {% endif %}
+    </div>
+
+    {% else %}
+    <p class="text-gray-500 text-center mt-6">No training records found.</p>
+    {% endif %}
+</div>
+
+<script>
+    // Simple dropdown toggle
+    const dropdownBtn = document.querySelector('.inline-block.relative button');
+    const dropdownMenu = document.querySelector('.inline-block.relative ul');
+
+    dropdownBtn.addEventListener('click', () => {
+        dropdownMenu.classList.toggle('hidden');
+    });
+</script>
+
+{% endblock %}

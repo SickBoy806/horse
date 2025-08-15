@@ -1,12 +1,16 @@
 {% load static %}
+{% with current_url=request.resolver_match.url_name %}
 
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Admin Dashboard</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <link
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+    rel="stylesheet"
+  />
   <style>
     .brand-logo {
       width: 100px;
@@ -27,16 +31,88 @@
       color: #374151;
       text-decoration: none;
     }
-
     .nav-link:hover {
       background-color: #f3f4f6;
       color: #3b82f6;
       transform: translateX(2px);
     }
-
     .nav-link.active {
       background-color: #3b82f6;
       color: white;
+    }
+
+    /* Dropdown styling */
+    .nav-dropdown {
+      position: relative;
+      margin-bottom: 2px;
+    }
+    .nav-dropdown-btn {
+      transition: all 0.2s ease;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 12px;
+      font-size: 16px;
+      font-weight: 600;
+      color: #374151;
+      background: none;
+      border: none;
+      cursor: pointer;
+      width: 100%;
+      text-align: left;
+    }
+    .nav-dropdown-btn:hover {
+      background-color: #f3f4f6;
+      color: #3b82f6;
+      transform: translateX(2px);
+    }
+    .nav-dropdown-btn.active {
+      background-color: #3b82f6;
+      color: white;
+    }
+    .nav-dropdown-content {
+      display: none;
+      background: #f8fafc;
+      border-radius: 6px;
+      margin-top: 2px;
+      margin-left: 8px;
+      border-left: 2px solid #e5e7eb;
+      padding-left: 8px;
+    }
+    .nav-dropdown-content.show {
+      display: block;
+    }
+
+    .nav-sublink {
+      transition: all 0.2s ease;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      padding: 6px 10px;
+      font-size: 14px;
+      font-weight: 500;
+      color: #6b7280;
+      text-decoration: none;
+      margin-bottom: 1px;
+    }
+    .nav-sublink:hover {
+      background-color: #e5e7eb;
+      color: #3b82f6;
+      transform: translateX(2px);
+    }
+    .nav-sublink.active {
+      background-color: #3b82f6;
+      color: white;
+    }
+
+    .dropdown-arrow {
+      width: 16px;
+      height: 16px;
+      transition: transform 0.2s ease;
+    }
+    .dropdown-arrow.rotated {
+      transform: rotate(180deg);
     }
 
     .sidebar {
@@ -50,100 +126,337 @@
       overflow-y: auto;
       box-shadow: 1px 0 3px rgba(0, 0, 0, 0.05);
     }
-
     .main-content {
       margin-left: 260px;
       background: #f8fafc;
       min-height: 100vh;
+      padding: 20px;
     }
 
     @media (max-width: 768px) {
       .sidebar {
         transform: translateX(-100%);
         transition: transform 0.3s ease;
-      }
-      .main-content {
-        margin-left: 0;
+        z-index: 50;
       }
       .sidebar.mobile-open {
         transform: translateX(0);
+      }
+      .main-content {
+        margin-left: 0;
       }
     }
   </style>
 </head>
 <body class="bg-gray-50">
 
- <!-- Sidebar -->
-<aside class="sidebar">
-  <div class="p-4">
-    <!-- Brand -->
-    <div class="text-center mb-4">
-      <img src="{% static 'images/tanzania-police-logo.png' %}"
-           alt="Tanzania Police Logo"
-           class="brand-logo mx-auto"
-           onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
-
-      <!-- Fallback Element -->
-      <div class="hidden items-center justify-center text-xs text-gray-500 rounded p-2">
-        Logo Unavailable
+  <!-- Sidebar -->
+  <aside class="sidebar" role="complementary" aria-label="Admin sidebar navigation">
+    <div class="p-4">
+      <!-- Brand -->
+      <div class="text-center mb-4">
+        <img
+          src="{% static 'images/tanzania-police-logo.png' %}"
+          alt="Tanzania Police Logo"
+          class="brand-logo mx-auto"
+          onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+        />
+        <div class="hidden items-center justify-center text-xs text-gray-500 rounded p-2">
+          Logo Unavailable
+        </div>
+        <h2 class="text-sm font-bold mt-2">TPF Animal System</h2>
+        <div class="text-xs opacity-75">Management Portal</div>
       </div>
 
-      <h2 class="text-sm font-bold mt-2">TPF Animal System</h2>
-      <div class="text-xs opacity-75">Management Portal</div>
-    </div>
+      <!-- Navigation Links -->
+      <nav role="navigation" aria-label="Main menu" class="space-y-1">
+        <a
+          href="{% url 'admin_dashboard' branch=branch %}"
+          class="nav-link {% if current_url == 'admin_dashboard' %}active{% endif %}"
+          aria-current="{% if current_url == 'admin_dashboard' %}page{% endif %}"
+        >
+          <i class="fas fa-tachometer-alt w-4 mr-2"></i>
+          Dashboard
+        </a>
 
-    <!-- Navigation Links -->
-    <nav class="space-y-1">
-      <a href="{% url 'admin_dashboard' branch=branch %}" class="nav-link">
-        <i class="fas fa-tachometer-alt w-4 mr-2"></i>
-        Dashboard
-      </a>
-      <a href="{% url 'admin_user_list' branch=branch %}" class="nav-link">
-        <i class="fas fa-users w-4 mr-2"></i>
-        Manage Users
-      </a>
-      <a href="{% url 'admin_task_list' branch=branch %}" class="nav-link">
-        <i class="fas fa-tasks w-4 mr-2"></i>
-        Tasks
-      </a>
-      <a href="{% url 'admin_reports' branch=branch %}" class="nav-link">
-        <i class="fas fa-chart-bar w-4 mr-2"></i>
-        Reports
-      </a>
-      <a href="{% url 'animal_list' %}" class="nav-link">
-        <i class="fas fa-paw w-4 mr-2"></i>
-        View Animals
-      </a>
+        <a
+          href="{% url 'admin_user_list' branch=branch %}"
+          class="nav-link {% if current_url == 'admin_user_list' %}active{% endif %}"
+          aria-current="{% if current_url == 'admin_user_list' %}page{% endif %}"
+        >
+          <i class="fas fa-users w-4 mr-2"></i>
+          Manage Users
+        </a>
 
-      {% if request.user.is_authenticated %}
-        {% if request.user.role == 'admin' or request.user.role == 'veterinarian' %}
-          <a href="{% url 'add_animal' %}" class="nav-link">
-            <i class="fas fa-plus w-4 mr-2"></i>
-            Add Animal
-          </a>
+        <a
+          href="{% url 'admin_task_list' branch=branch %}"
+          class="nav-link {% if current_url == 'admin_task_list' %}active{% endif %}"
+          aria-current="{% if current_url == 'admin_task_list' %}page{% endif %}"
+        >
+          <i class="fas fa-tasks w-4 mr-2"></i>
+          Tasks
+        </a>
+
+        {% with report_pages='reports_list create_report' %}
+        <div class="nav-dropdown">
+          <button
+            class="nav-dropdown-btn {% if current_url in report_pages %}active{% endif %}"
+            aria-haspopup="true"
+            aria-controls="reports-menu"
+            aria-expanded="{% if current_url in report_pages %}true{% else %}false{% endif %}"
+            type="button"
+            onclick="toggleDropdown(this)"
+          >
+            <div class="flex items-center">
+              <i class="fas fa-chart-bar w-4 mr-2"></i>
+              Reports
+            </div>
+            <svg
+              class="dropdown-arrow {% if current_url in report_pages %}rotated{% endif %}"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M19 9l-7 7-7-7"
+              />
+            </svg>
+          </button>
+
+          <div
+            id="reports-menu"
+            class="nav-dropdown-content {% if current_url in report_pages %}show{% endif %}"
+          >
+            <a
+              href="{% url 'reports_list' %}"
+              class="nav-sublink {% if current_url == 'reports_list' %}active{% endif %}"
+              aria-current="{% if current_url == 'reports_list' %}page{% endif %}"
+            >
+              All Reports
+            </a>
+            <a
+              href="{% url 'create_report' %}"
+              class="nav-sublink {% if current_url == 'create_report' %}active{% endif %}"
+              aria-current="{% if current_url == 'create_report' %}page{% endif %}"
+            >
+              Create Report
+            </a>
+          </div>
+        </div>
+        {% endwith %}
+
+        <a
+          href="{% url 'animal_list' %}"
+          class="nav-link {% if current_url == 'animal_list' %}active{% endif %}"
+          aria-current="{% if current_url == 'animal_list' %}page{% endif %}"
+        >
+          <i class="fas fa-paw w-4 mr-2"></i>
+          View Animals
+        </a>
+
+        {% if request.user.is_authenticated %}
+          {% if request.user.role == 'admin' or request.user.role == 'veterinarian' %}
+            <a
+              href="{% url 'add_animal' %}"
+              class="nav-link {% if current_url == 'add_animal' %}active{% endif %}"
+              aria-current="{% if current_url == 'add_animal' %}page{% endif %}"
+            >
+              <i class="fas fa-plus w-4 mr-2"></i>
+              Add Animal
+            </a>
+          {% endif %}
         {% endif %}
-      {% endif %}
 
-      <a href="{% url 'admin_support' branch=branch %}" class="nav-link">
-        <i class="fas fa-life-ring w-4 mr-2"></i>
-        Support
-      </a>
-      <a href="{% url 'admin_care_logs' branch=branch %}" class="nav-link">
-        <i class="fas fa-heart w-4 mr-2"></i>
-        Care Logs
-      </a>
-      <a href="{% url 'admin_incident_logs' branch=branch %}" class="nav-link">
-        <i class="fas fa-exclamation-triangle w-4 mr-2"></i>
-        Incident Logs
-      </a>
-    </nav>
-  </div>
-</aside>
+        <a
+          href="{% url 'admin_support' branch=branch %}"
+          class="nav-link {% if current_url == 'admin_support' %}active{% endif %}"
+          aria-current="{% if current_url == 'admin_support' %}page{% endif %}"
+        >
+          <i class="fas fa-life-ring w-4 mr-2"></i>
+          Support
+        </a>
+
+        <a
+          href="{% url 'admin_care_logs' branch=branch %}"
+          class="nav-link {% if current_url == 'admin_care_logs' %}active{% endif %}"
+          aria-current="{% if current_url == 'admin_care_logs' %}page{% endif %}"
+        >
+          <i class="fas fa-heart w-4 mr-2"></i>
+          Care Logs
+        </a>
+
+        <!-- Training Dropdown -->
+        {% with training_pages='training_dashboard training_sessions training_progression training_reports training_performance' %}
+        <div class="nav-dropdown">
+          <button
+            class="nav-dropdown-btn {% if current_url in training_pages %}active{% endif %}"
+            aria-haspopup="true"
+            aria-controls="training-menu"
+            aria-expanded="{% if current_url in training_pages %}true{% else %}false{% endif %}"
+            type="button"
+            onclick="toggleDropdown(this)"
+          >
+            <div class="flex items-center">
+              <i class="fas fa-graduation-cap w-4 mr-2"></i>
+              Training
+            </div>
+            <svg
+              class="dropdown-arrow {% if current_url in training_pages %}rotated{% endif %}"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M19 9l-7 7-7-7"
+              />
+            </svg>
+          </button>
+
+          <div
+            id="training-menu"
+            class="nav-dropdown-content {% if current_url in training_pages %}show{% endif %}"
+          >
+            <a
+              href="{% url 'training_dashboard' %}#sessions"
+              class="nav-sublink {% if current_url == 'training_sessions' %}active{% endif %}"
+              aria-current="{% if current_url == 'training_sessions' %}page{% endif %}"
+            >
+              Training Sessions
+            </a>
+            <a
+              href="{% url 'training_dashboard' %}#progression"
+              class="nav-sublink {% if current_url == 'training_progression' %}active{% endif %}"
+              aria-current="{% if current_url == 'training_progression' %}page{% endif %}"
+            >
+              Training Progression
+            </a>
+            <a
+              href="{% url 'training_dashboard' %}#reports"
+              class="nav-sublink {% if current_url == 'training_reports' %}active{% endif %}"
+              aria-current="{% if current_url == 'training_reports' %}page{% endif %}"
+            >
+              Training Reports
+            </a>
+            <a
+              href="{% url 'training_dashboard' %}#performance"
+              class="nav-sublink {% if current_url == 'training_performance' %}active{% endif %}"
+              aria-current="{% if current_url == 'training_performance' %}page{% endif %}"
+            >
+              Performance Charts
+            </a>
+          </div>
+        </div>
+        {% endwith %}
+
+        <a
+          href="{% url 'admin_incident_logs' branch=branch %}"
+          class="nav-link {% if current_url == 'admin_incident_logs' %}active{% endif %}"
+          aria-current="{% if current_url == 'admin_incident_logs' %}page{% endif %}"
+        >
+          <i class="fas fa-exclamation-triangle w-4 mr-2"></i>
+          Incident Logs
+        </a>
+
+        <a
+          href="{% url 'inbox' %}"
+          class="nav-link {% if current_url == 'messages' %}active{% endif %}"
+          aria-current="{% if current_url == 'messages' %}page{% endif %}"
+        >
+          <i class="fas fa-envelope w-4 mr-2"></i>
+          Messages
+        </a>
+
+        <a
+          href="{% url 'notifications' branch %}"
+          class="nav-link {% if current_url == 'notifications' %}active{% endif %}"
+          aria-current="{% if current_url == 'notifications' %}page{% endif %}"
+        >
+          <i class="fas fa-bell w-4 mr-2"></i>
+          Notifications
+        </a>
+
+        <a
+          href="{% url 'medical_records' branch %}"
+          class="nav-link {% if current_url == 'medical_records' %}active{% endif %}"
+          aria-current="{% if current_url == 'medical_records' %}page{% endif %}"
+        >
+          <i class="fas fa-file-medical w-4 mr-2"></i>
+          Medical Records
+        </a>
+
+        <a
+          href="{% url 'admin_equipment_logs' branch %}"
+          class="nav-link {% if current_url == 'admin_equipment_logs' %}active{% endif %}"
+          aria-current="{% if current_url == 'admin_equipment_logs' %}page{% endif %}"
+        >
+          <i class="fas fa-tools w-4 mr-2"></i>
+          Equipment Logs
+        </a>
+
+        <a
+          href="{% url 'logout' %}"
+          class="nav-link text-red-600 hover:text-red-700"
+        >
+          <i class="fas fa-sign-out-alt w-4 mr-2"></i>
+          Logout
+        </a>
+      </nav>
+    </div>
+  </aside>
 
   <!-- Main Content -->
   <main class="main-content">
     {% block content %}{% endblock %}
   </main>
 
+  <!-- JavaScript for dropdown functionality -->
+  <script>
+    function toggleDropdown(button) {
+      const dropdown = button.nextElementSibling;
+      const arrow = button.querySelector('.dropdown-arrow');
+      const isOpen = dropdown.classList.contains('show');
+
+      // Close all other dropdowns
+      document.querySelectorAll('.nav-dropdown-content.show').forEach((dd) => {
+        if (dd !== dropdown) {
+          dd.classList.remove('show');
+          dd.previousElementSibling.querySelector('.dropdown-arrow').classList.remove('rotated');
+          dd.previousElementSibling.setAttribute('aria-expanded', 'false');
+        }
+      });
+
+      // Toggle current dropdown
+      if (isOpen) {
+        dropdown.classList.remove('show');
+        arrow.classList.remove('rotated');
+        button.setAttribute('aria-expanded', 'false');
+      } else {
+        dropdown.classList.add('show');
+        arrow.classList.add('rotated');
+        button.setAttribute('aria-expanded', 'true');
+      }
+    }
+
+    // Close dropdowns when clicking outside
+    document.addEventListener('click', function (event) {
+      if (!event.target.closest('.nav-dropdown')) {
+        document.querySelectorAll('.nav-dropdown-content.show').forEach((dropdown) => {
+          dropdown.classList.remove('show');
+          dropdown.previousElementSibling.querySelector('.dropdown-arrow').classList.remove('rotated');
+          dropdown.previousElementSibling.setAttribute('aria-expanded', 'false');
+        });
+      }
+    });
+  </script>
 </body>
 </html>
+
+{% endwith %}
