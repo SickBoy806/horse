@@ -248,3 +248,30 @@ def support_request_view(request, branch):
         'requests': requests,
         'branch': branch_name,  # pass it as 'branch' to match template usage
     })
+
+
+
+@login_required
+def training_sessions_view(request):
+    user = request.user
+
+    # Determine base template
+    if user.role == "superadmin":
+        base_template = "base/base_superadmin.html"
+        sessions = TrainingSession.objects.all().order_by('-date')
+    elif user.role == "admin":
+        base_template = "base/base_admin.html"
+        sessions = TrainingSession.objects.filter(branch=user.branch).order_by('-date')
+    elif user.role == "vet":
+        base_template = "base/base_vet.html"
+        sessions = TrainingSession.objects.filter(branch=user.branch).order_by('-date')
+    else:
+        base_template = "base/base_user.html"
+        sessions = TrainingSession.objects.filter(branch=user.branch).order_by('-date')
+
+    context = {
+        "sessions": sessions,
+        "base_template": base_template,
+    }
+
+    return render(request, "core/training_sessions.html", context)

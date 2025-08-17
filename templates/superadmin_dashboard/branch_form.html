@@ -1,29 +1,84 @@
-% extends "superadmin_dashboard/base_dashboard.html" %}
+{% extends "superadmin_dashboard/base_dashboard.html" %}
+{% load widget_tweaks %}
 
 {% block content %}
-<div class="p-6 max-w-2xl mx-auto">
-  <h2 class="text-2xl font-bold mb-4">{{ title }}</h2>
+<div class="p-6 max-w-4xl mx-auto">
 
-  <form method="post" class="bg-white p-6 rounded-lg shadow space-y-4">
-    {% csrf_token %}
-    <div>
-      <label class="block font-medium">Name</label>
-      {{ form.name|add_class:"w-full mt-1 px-3 py-2 border rounded" }}
-    </div>
+  <!-- Header -->
+  <div class="flex justify-between items-center mb-6">
+    <h2 class="text-2xl font-bold">{{ title }}</h2>
+  </div>
 
-    <div>
-      <label class="block font-medium">Location</label>
-      {{ form.location|add_class:"w-full mt-1 px-3 py-2 border rounded" }}
-    </div>
+  <!-- Breadcrumbs -->
+  <nav class="text-sm text-gray-500 mb-4">
+    <a href="{% url 'superadmin_dashboard' %}" class="hover:underline">Dashboard</a> /
+    <a href="{% url 'superadmin_manage_branches' %}" class="hover:underline">Branches</a> /
+    <span class="font-semibold">{{ title }}</span>
+  </nav>
 
-    <div>
-      <label class="block font-medium">Is Active</label>
-      {{ form.is_active }}
+  <!-- Django Messages -->
+  {% if messages %}
+    <div class="space-y-2 mb-4">
+      {% for message in messages %}
+        <div class="px-4 py-2 rounded
+                    {% if message.tags == 'success' %} bg-green-100 text-green-700
+                    {% elif message.tags == 'error' %} bg-red-100 text-red-700
+                    {% else %} bg-gray-100 text-gray-700 {% endif %}">
+          {{ message }}
+        </div>
+      {% endfor %}
     </div>
+  {% endif %}
 
-    <div class="flex justify-end">
-      <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Save</button>
+  <!-- Branch Form (Add/Edit) -->
+  {% if form %}
+    <div class="bg-white p-6 rounded-lg shadow mb-8 space-y-4">
+      <form method="post" class="space-y-4">
+        {% csrf_token %}
+
+        <!-- Branch Name -->
+        <div>
+          <label class="block font-medium">Name</label>
+          {{ form.name|add_class:"w-full mt-1 px-3 py-2 border rounded" }}
+          <p class="text-sm text-gray-500">Enter the official name of the branch.</p>
+          {% if form.name.errors %}
+            <p class="text-sm text-red-600">{{ form.name.errors.0 }}</p>
+          {% endif %}
+        </div>
+
+        <!-- Branch Location -->
+        <div>
+          <label class="block font-medium">Location</label>
+          {{ form.location|add_class:"w-full mt-1 px-3 py-2 border rounded" }}
+          <p class="text-sm text-gray-500">Specify the city or region of this branch.</p>
+          {% if form.location.errors %}
+            <p class="text-sm text-red-600">{{ form.location.errors.0 }}</p>
+          {% endif %}
+        </div>
+
+        <!-- Active Status Toggle -->
+        <div class="flex items-center space-x-2">
+          <label class="relative inline-flex items-center cursor-pointer">
+            {{ form.is_active|add_class:"sr-only peer" }}
+            <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-blue-600 peer-focus:ring-2 peer-focus:ring-blue-300 transition"></div>
+            <div class="absolute left-0.5 top-0.5 w-5 h-5 bg-white rounded-full shadow transform transition peer-checked:translate-x-5"></div>
+          </label>
+          <span class="font-medium">Active</span>
+        </div>
+
+        <!-- Form Buttons -->
+        <div class="flex justify-end space-x-2">
+          <a href="{% url 'superadmin_manage_branches' %}"
+             class="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400">Cancel</a>
+          <button type="reset"
+                  class="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600">Reset</button>
+          <button type="submit"
+                  class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Save</button>
+        </div>
+      </form>
     </div>
-  </form>
+  {% endif %}
+
 </div>
 {% endblock %}
+-

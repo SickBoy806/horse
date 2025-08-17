@@ -48,6 +48,9 @@ urlpatterns = [
     path('dashboard/vet/<branch>/notifications/', notifications, name='notifications'),
     path('dashboard/admin/<str:branch>/medical-records/', views.admin_medical_records, name='medical_records'),
     path('<str:branch>/equipment-logs/', views.admin_equipment_logs, name='admin_equipment_logs'),
+    path('tasks/create/', views.create_task, name='create_task'),
+    path('reports/generate/', views.generate_report, name='generate_report'),
+    path('settings/', views.settings, name='settings'),
 
 
 

@@ -1,5 +1,5 @@
 from django.urls import path
-
+from . import views
 # SuperAdmin-only views
 from .views import (
     superadmin_dashboard,
@@ -29,6 +29,8 @@ from core.views import (
     message_detail,
     reply_message
 )
+
+from core.models import TrainingRecord
 
 urlpatterns = [
     # Dashboard
@@ -80,4 +82,8 @@ urlpatterns = [
     path('reports/animals/', branch_animal_report, name='branch_animal_report'),
     path('reports/training/', training_report, name='training_report'),
 
+    # TrainingRecord
+    path('training-sessions/', views.training_sessions_view, name='training_sessions'),
+    path('training-reports/', views.training_reports_view, name='training_reports'),
+    path('training-progression/', views.training_progression_view, name='training_progression'),
 ]

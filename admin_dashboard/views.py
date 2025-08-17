@@ -18,9 +18,11 @@ from core.utils import log_action, create_notification, can_access_branch
 
 @login_required
 def admin_dashboard_view(request, branch):
+    # Security check
     if request.user.branch != branch or request.user.role != 'admin':
         return render(request, 'errors/unauthorized.html', status=403)
 
+    # Main stats
     total_users = CustomUser.objects.filter(branch=branch, role__in=['user', 'veterinarian']).count()
     pending_tasks = VetTask.objects.filter(branch=branch, status='pending').count()
     total_animals = Animal.objects.filter(branch=branch).count()
@@ -31,7 +33,7 @@ def admin_dashboard_view(request, branch):
     # Recent equipment logs
     recent_equipment_logs = EquipmentLog.objects.filter(branch=branch).order_by('-created_at')[:5]
 
-    # Unread notifications for admins in this branch
+    # Unread notifications for this admin
     unread_notifications = Notification.objects.filter(
         user__branch=branch,
         is_read=False
@@ -43,7 +45,25 @@ def admin_dashboard_view(request, branch):
         is_read=False
     ).order_by('-timestamp')[:5]
 
-    return render(request, 'admin_dashboard/dashboard.html', {
+    # Combine all recent activities for unified feed
+    recent_activities = sorted(
+        list(recent_equipment_logs) + list(unread_notifications) + list(unread_messages),
+        key=lambda x: getattr(x, 'created_at', getattr(x, 'timestamp', timezone.now())),
+        reverse=True
+    )[:5]
+
+    # Quick stats (example metrics, adjust as needed)
+    quick_stats = [
+        {'label': 'Total Users', 'value': total_users, 'color': 'text-blue-600'},
+        {'label': 'Pending Tasks', 'value': pending_tasks, 'color': 'text-red-600'},
+        {'label': 'Total Animals', 'value': total_animals, 'color': 'text-green-600'},
+        {'label': 'Open Tickets', 'value': open_tickets, 'color': 'text-indigo-600'},
+        {'label': 'Closed Tickets', 'value': closed_tickets, 'color': 'text-gray-600'},
+        {'label': 'Reports Today', 'value': reports_today, 'color': 'text-purple-600'},
+    ]
+
+    context = {
+        'user': request.user,
         'branch': branch,
         'total_users': total_users,
         'pending_tasks': pending_tasks,
@@ -54,8 +74,11 @@ def admin_dashboard_view(request, branch):
         'recent_equipment_logs': recent_equipment_logs,
         'unread_notifications': unread_notifications,
         'unread_messages': unread_messages,
-    })
+        'recent_activities': recent_activities,
+        'quick_stats': quick_stats,
+    }
 
+    return render(request, 'admin_dashboard/dashboard.html', context)
 
 
 # 🔐 Admin Role Check
@@ -346,3 +369,52 @@ def admin_equipment_logs(request, branch):
         'logs': logs,
         'branch': branch,
     })
+
+
+
+@login_required
+def training_sessions_view(request):
+    user = request.user
+
+    # Determine base template
+    if user.role == "superadmin":
+        base_template = "base/base_superadmin.html"
+        sessions = TrainingSession.objects.all().order_by('-date')
+    elif user.role == "admin":
+        base_template = "base/base_admin.html"
+        sessions = TrainingSession.objects.filter(branch=user.branch).order_by('-date')
+    elif user.role == "vet":
+        base_template = "base/base_vet.html"
+        sessions = TrainingSession.objects.filter(branch=user.branch).order_by('-date')
+    else:
+        base_template = "base/base_user.html"
+        sessions = TrainingSession.objects.filter(branch=user.branch).order_by('-date')
+
+    return render(request, "core/training_sessions.html", {
+        "sessions": sessions,
+        "base_template": base_template,
+    })
+
+@login_required
+def create_task(request):
+    if request.method == 'POST':
+        form = TaskForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('admin_dashboard')
+    else:
+        form = TaskForm()
+    return render(request, 'admin_dashboard/create_task.html', {'form': form})
+
+
+@login_required
+def generate_report(request):
+    # Example logic, replace with your actual report generation
+    reports = Report.objects.all()  # or filter by branch, etc.
+    return render(request, 'admin_dashboard/generate_report.html', {'reports': reports})
+
+
+@login_required
+def settings(request):
+    # Example logic: pass any needed context
+    return render(request, 'admin_dashboard/settings.html')

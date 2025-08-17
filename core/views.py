@@ -10,7 +10,7 @@ from core.models import Animal, TrainingRecord
 from .forms import TrainingRecordForm
 from .models import Report  # or adjust the import path as needed
 from core.forms import ReportForm
-
+from core.models import TrainingSession
 
 
 

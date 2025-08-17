@@ -24,7 +24,6 @@ def is_authorized_branch(user, branch_name, role=None):
         return branch_check and user.role.lower() == role.lower()
     return branch_check
 
-
 @login_required
 def vet_dashboard(request, branch):
     branch_obj = get_object_or_404(Branch, name__iexact=branch)
@@ -32,12 +31,10 @@ def vet_dashboard(request, branch):
     total_animals = Animal.objects.filter(branch=branch_obj).count()
     total_tasks = VetTask.objects.filter(branch=branch_obj).count()
     total_medical_records = MedicalRecord.objects.filter(animal__branch=branch_obj).count()
-    total_notifications = Notification.objects.filter(user__branch=branch_obj).count()
+    total_notifications = Notification.objects.filter(user=request.user, is_read=False).count()
 
-    recent_messages = Message.objects.filter(
-        receiver=request.user,
-        receiver__branch=branch_obj
-    ).order_by("-timestamp")[:5]
+
+    recent_messages = Message.objects.filter(receiver=request.user).order_by("-timestamp")[:5]
 
     context = {
         "branch": branch_obj.name,
@@ -49,6 +46,7 @@ def vet_dashboard(request, branch):
     }
 
     return render(request, "veterinarian_dashboard/dashboard.html", context)
+
 
 
 @login_required
@@ -612,4 +610,28 @@ def patient_detail(request, branch, patient_id):
     return render(request, 'veterinarian_dashboard/patient_detail.html', {
         'branch': branch,
         'patient': patient
+    })
+
+
+@login_required
+def training_sessions_view(request):
+    user = request.user
+
+    # Determine base template
+    if user.role == "superadmin":
+        base_template = "base/base_superadmin.html"
+        sessions = TrainingSession.objects.all().order_by('-date')
+    elif user.role == "admin":
+        base_template = "base/base_admin.html"
+        sessions = TrainingSession.objects.filter(branch=user.branch).order_by('-date')
+    elif user.role == "vet":
+        base_template = "base/base_vet.html"
+        sessions = TrainingSession.objects.filter(branch=user.branch).order_by('-date')
+    else:
+        base_template = "base/base_user.html"
+        sessions = TrainingSession.objects.filter(branch=user.branch).order_by('-date')
+
+    return render(request, "core/training_sessions.html", {
+        "sessions": sessions,
+        "base_template": base_template,
     })

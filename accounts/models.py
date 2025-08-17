@@ -3,11 +3,23 @@ from django.db import models
 
 # Define the fixed branches
 BRANCHES = [
+    ('AIR_PORT', 'Dar es Salaam'),
+    ('ARUSHA', 'Arusha'),
+    ('BANDARI', 'Dar es Salaam'),
     ('Dodoma', 'Dodoma'),
+    ('HIMO', 'Kilimanjaro'),
     ('Iringa', 'Iringa'),
-    ('HQ', 'HQ'),
-    ('Tps_Moshi', 'Tps Moshi'),
+    ('KANDA_MAALUM', 'Dar es Salaam'),
+    ('KILIMANJARO', 'Kilimanjaro'),
+    ('MBEYA', 'Mbeya'),
+    ('NAMANGA', 'Arusha'),
+    ('PHQ', 'Dodoma'),
+    ('TARIME', 'Tarime'),
+    ('TUNDUMA', 'Songwe'),
+    ('Tps_Moshi', 'Kilimanjaro'),
+    ('HQ', 'HQ'),  # from your original list
 ]
+
 
 # Define roles as you need
 ROLES = [

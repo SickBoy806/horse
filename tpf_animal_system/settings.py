@@ -9,7 +9,7 @@ SECRET_KEY = 'django-insecure-71)*!4ndu$!+3f4#i%55fnr$t)6e@cl0f@-pteo=o8w+qr$=a9
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -21,6 +21,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django_extensions',
 
 
     # Tailwind CSS
