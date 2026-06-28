@@ -32,10 +32,12 @@ INSTALLED_APPS = [
     # Custom apps
     'accounts',
     'core',
-    # Add other dashboard apps as needed
     'admin_dashboard',
     'veterinarian_dashboard',
     'user_dashboard',
+    'superadmin_dashboard',
+    'staff_dashboard',
+    'task_management',
 ]
 
 # Tailwind config
@@ -71,6 +73,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'core.context_processors.unread_notifications',
             ],
         },
     },

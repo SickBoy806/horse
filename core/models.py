@@ -18,8 +18,6 @@ class Animal(models.Model):
     SPECIES_CHOICES = [
         ('dog', 'Dog'),
         ('horse', 'Horse'),
-        ('cat', 'Cat'),
-        ('other', 'Other'),
     ]
     
     name = models.CharField(max_length=255)

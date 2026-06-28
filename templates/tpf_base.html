@@ -1,0 +1,349 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>{% block page_title %}TPF Animal System{% endblock %}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #f1f5f9;
+      color: #1e293b;
+    }
+
+    .glassmorphism {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(71, 85, 105, 0.1);
+      border-radius: 1rem;
+      box-shadow: 0 8px 32px rgba(51, 65, 85, 0.08);
+    }
+
+    .gradient-bg {
+      background: linear-gradient(135deg, #1e293b 0%, #334155 35%, #475569 70%, #64748b 100%);
+      position: relative;
+    }
+
+    .gradient-bg::before {
+      content: '';
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background:
+        radial-gradient(circle at 20% 80%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(16, 185, 129, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 40% 40%, rgba(139, 92, 246, 0.05) 0%, transparent 50%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .content-wrapper { position: relative; z-index: 1; }
+
+    .card-hover {
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+    }
+    .card-hover::before {
+      content: '';
+      position: absolute;
+      top: 0; left: -100%;
+      width: 100%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.08), transparent);
+      transition: left 0.5s;
+    }
+    .card-hover:hover::before { left: 100%; }
+    .card-hover:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.2);
+    }
+
+    .nav-item {
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      border-radius: 0.75rem;
+      color: #475569;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+    }
+    .nav-item::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0;
+      width: 0; height: 100%;
+      background: linear-gradient(90deg, #3b82f6, #1d4ed8);
+      transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: -1;
+    }
+    .nav-item:hover::before { width: 100%; }
+    .nav-item:hover {
+      color: #ffffff !important;
+      transform: translateX(8px);
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    }
+    .nav-item-logout::before {
+      background: linear-gradient(90deg, #ef4444, #dc2626);
+    }
+    .nav-item-logout:hover {
+      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+    }
+
+    .nav-dropdown-content { display: none; }
+    .nav-dropdown-content.open { display: block; }
+
+    .nav-subitem {
+      display: block;
+      padding: 6px 12px 6px 44px;
+      font-size: 14px;
+      color: #475569;
+      text-decoration: none;
+      border-radius: 0.5rem;
+      transition: all 0.2s;
+      font-weight: 500;
+    }
+    .nav-subitem:hover {
+      background: rgba(59, 130, 246, 0.1);
+      color: #3b82f6;
+    }
+
+    .pulse-glow { animation: professional-glow 3s ease-in-out infinite; }
+    @keyframes professional-glow {
+      0%, 100% { box-shadow: 0 0 20px rgba(59, 130, 246, 0.4); }
+      50% { box-shadow: 0 0 30px rgba(59, 130, 246, 0.6), 0 0 40px rgba(16, 185, 129, 0.2); }
+    }
+
+    .floating { animation: floating 8s ease-in-out infinite; }
+    @keyframes floating {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-6px); }
+    }
+
+    .notification-pulse { animation: notification-pulse 2s ease-in-out infinite; }
+    @keyframes notification-pulse {
+      0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+      50% { transform: scale(1.05); box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+    }
+
+    .logo-gradient {
+      background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 50%, #10b981 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .accent-line { position: relative; }
+    .accent-line::after {
+      content: '';
+      position: absolute;
+      bottom: -3px; left: 0;
+      width: 0; height: 2px;
+      background: linear-gradient(90deg, #3b82f6, #10b981);
+      transition: width 0.3s ease;
+    }
+    .accent-line:hover::after { width: 100%; }
+
+    .mobile-toggle { display: none; }
+
+    @media (max-width: 768px) {
+      #sidebar { display: none; }
+      .mobile-toggle { display: block; }
+      #sidebar.mobile-open { display: block; position: fixed; top: 0; left: 0; bottom: 0; z-index: 50; margin: 0; border-radius: 0; }
+    }
+
+    .status-indicator { position: relative; }
+    .status-indicator::before {
+      content: '';
+      position: absolute;
+      top: 2px; right: 2px;
+      width: 8px; height: 8px;
+      background: #10b981;
+      border-radius: 50%;
+      border: 2px solid white;
+      animation: status-blink 2s infinite;
+    }
+    @keyframes status-blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    .geometric-bg {
+      background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,0.08) 1px, transparent 0);
+      background-size: 22px 22px;
+    }
+
+    .content-text { color: #1e293b !important; line-height: 1.6; }
+    .content-heading { color: #0f172a !important; font-weight: 600; }
+
+    body, p, h1, h2, h3, h4, h5, h6, span, div, a {
+      opacity: 1 !important;
+      visibility: visible !important;
+    }
+    .glassmorphism, .nav-item { opacity: 1 !important; visibility: visible !important; }
+
+    /* Scrollbar for sidebar */
+    #sidebar::-webkit-scrollbar { width: 4px; }
+    #sidebar::-webkit-scrollbar-track { background: transparent; }
+    #sidebar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 2px; }
+  </style>
+  {% block extra_head %}{% endblock %}
+</head>
+
+<body class="gradient-bg min-h-screen geometric-bg">
+<div class="content-wrapper">
+
+  <!-- Mobile toggle -->
+  <button id="toggleSidebar" class="mobile-toggle fixed top-4 left-4 z-50 p-3 bg-white/90 backdrop-blur-md rounded-xl text-slate-800 hover:bg-white transition-all duration-300 shadow-lg">
+    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+    </svg>
+  </button>
+
+  <div class="flex min-h-screen">
+
+    <!-- ── Sidebar ── -->
+    <aside id="sidebar" class="w-72 glassmorphism backdrop-blur-xl p-6 m-4 rounded-2xl shadow-2xl overflow-y-auto flex-shrink-0">
+
+      <!-- Logo -->
+      <div class="text-2xl font-bold mb-8 floating status-indicator flex items-center space-x-3">
+        <img src="{% static 'images/tanzania-police-logo.png' %}" alt="TPF Logo"
+             class="w-14 h-14 object-contain"
+             onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
+        <div class="w-14 h-14 bg-gradient-to-br from-blue-600 to-blue-800 rounded-full items-center justify-center text-white font-bold text-lg shadow-lg flex-shrink-0" style="display:none;">🚔</div>
+        <div class="min-w-0">
+          <span class="logo-gradient block truncate">TPF Animal System</span>
+          <div class="text-sm font-normal text-slate-500 mt-0.5">{% block sidebar_subtitle %}Management Portal{% endblock %}</div>
+        </div>
+      </div>
+
+      <!-- Navigation -->
+      <nav class="space-y-1">
+        {% block sidebar_nav %}{% endblock %}
+
+        <div class="h-px bg-gradient-to-r from-transparent via-slate-300 to-transparent my-4"></div>
+
+        <a href="{% url 'logout' %}" class="nav-item nav-item-logout flex items-center space-x-3 px-4 py-3 text-red-500 hover:text-white relative">
+          <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+          </svg>
+          <span class="font-medium accent-line">Logout</span>
+        </a>
+      </nav>
+    </aside>
+
+    <!-- ── Main content ── -->
+    <div class="flex-1 p-6 min-w-0">
+
+      <!-- Welcome header card -->
+      <div class="glassmorphism backdrop-blur-xl rounded-2xl p-6 mb-6 shadow-2xl card-hover">
+        <div class="flex justify-between items-center flex-wrap gap-4">
+          <div>
+            <h1 class="text-3xl font-bold content-heading mb-2">
+              Welcome back,
+              <span class="logo-gradient">{{ request.user.get_full_name|default:request.user.username }}</span>
+            </h1>
+            <div class="flex items-center flex-wrap gap-3">
+              <p class="content-text flex items-center">
+                <span class="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse flex-shrink-0"></span>
+                {% if request.user.branch %}
+                  📍 Branch: <strong class="ml-1 text-blue-600">{{ request.user.branch.name|title }}</strong>
+                {% else %}
+                  🌐 <strong class="ml-1 text-purple-600">All Branches</strong>
+                {% endif %}
+              </p>
+              <span class="px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wide {% block role_badge_class %}bg-slate-100 text-slate-700{% endblock %}">
+                {% block role_badge %}{{ request.user.role|title }}{% endblock %}
+              </span>
+              <span class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold uppercase tracking-wide">
+                Active
+              </span>
+            </div>
+          </div>
+
+          <div class="flex items-center space-x-4">
+            <div class="text-right hidden sm:block">
+              <div class="text-xs text-slate-500">System Status</div>
+              <div class="text-green-600 font-semibold text-sm flex items-center justify-end">
+                <span class="w-2 h-2 bg-green-500 rounded-full mr-1.5"></span>Online
+              </div>
+            </div>
+
+            <div class="w-14 h-14 bg-gradient-to-br from-blue-500 to-green-500 rounded-full flex items-center justify-center text-white font-bold text-xl pulse-glow shadow-xl flex-shrink-0">
+              {{ request.user.get_full_name.0|upper|default:request.user.username.0|upper }}
+            </div>
+
+            <div class="relative">
+              <a href="{% block notification_url %}#{% endblock %}"
+                 class="text-slate-600 hover:text-blue-600 transition-all duration-300 text-2xl p-2.5 rounded-full bg-white/80 hover:bg-white hover:shadow-lg relative backdrop-blur-sm inline-block">
+                🔔
+                {% if unread_notifications_count > 0 %}
+                <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full notification-pulse shadow font-bold leading-none">
+                  {{ unread_notifications_count }}
+                </span>
+                {% endif %}
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Page content card -->
+      <div class="glassmorphism backdrop-blur-xl rounded-2xl p-8 shadow-2xl min-h-64">
+        {% block content %}{% endblock %}
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+  // Sidebar mobile toggle
+  const toggleBtn = document.getElementById('toggleSidebar');
+  const sidebar   = document.getElementById('sidebar');
+  if (toggleBtn && sidebar) {
+    toggleBtn.addEventListener('click', () => sidebar.classList.toggle('mobile-open'));
+  }
+
+  // GSAP entrance animations
+  if (typeof gsap !== 'undefined') {
+    gsap.set('body', {opacity: 1});
+    gsap.set('.glassmorphism, .nav-item, .card-hover', {opacity: 1});
+    gsap.timeline()
+      .from('.glassmorphism', {
+        duration: 1.0, y: 50, opacity: 0, stagger: 0.12, ease: 'power3.out',
+        onComplete() { gsap.set(this.targets(), {opacity: 1}); }
+      })
+      .from('.nav-item', {
+        duration: 0.7, x: -25, opacity: 0, stagger: 0.04, ease: 'back.out(1.7)',
+        onComplete() { gsap.set(this.targets(), {opacity: 1}); }
+      }, '-=0.7');
+  } else {
+    document.body.style.opacity = '1';
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    document.body.style.opacity = '1';
+    setTimeout(() => {
+      document.querySelectorAll('.glassmorphism, .nav-item, .card-hover, .content-text, .content-heading')
+        .forEach(el => { el.style.opacity = '1'; el.style.visibility = 'visible'; });
+    }, 80);
+  });
+
+  function toggleDropdown(el) {
+    const content = el.nextElementSibling;
+    if (!content) return;
+    const isOpen = content.classList.contains('open');
+    // Close all open dropdowns
+    document.querySelectorAll('.nav-dropdown-content.open').forEach(d => d.classList.remove('open'));
+    if (!isOpen) content.classList.add('open');
+    el.setAttribute('aria-expanded', String(!isOpen));
+  }
+</script>
+{% block extra_scripts %}{% endblock %}
+</body>
+</html>

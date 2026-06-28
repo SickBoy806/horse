@@ -1,0 +1,87 @@
+{% extends base_template %}
+{% block page_title %}Reply — TPF Animal System{% endblock %}
+
+{% block extra_head %}
+<style>
+  .msg-field input, .msg-field textarea {
+    width: 100%; padding: 0.7rem 1rem; border: 1.5px solid #e2e8f0;
+    border-radius: 0.75rem; background: #f8fafc; font-size: 0.875rem;
+    font-family: 'Inter', sans-serif; color: #1e293b;
+    transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+  }
+  .msg-field input:focus, .msg-field textarea:focus {
+    outline: none; border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59,130,246,0.1); background: #fff;
+  }
+  .msg-field textarea { min-height: 120px; resize: vertical; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="glassmorphism rounded-2xl p-6 mb-6">
+  <div class="flex items-center justify-between">
+    <div>
+      <h2 class="content-heading text-2xl">Reply to Message</h2>
+      <p class="content-text text-sm mt-1">Replying to {{ original_message.sender.get_full_name|default:original_message.sender.username }}</p>
+    </div>
+    <a href="{% url 'message_detail' original_message.id %}"
+       class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-600 hover:-translate-y-0.5 transition-all duration-200"
+       style="background: linear-gradient(135deg, #f1f5f9, #e2e8f0); box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+      </svg>
+      Original Message
+    </a>
+  </div>
+</div>
+
+<!-- Original message preview -->
+<div class="glassmorphism rounded-2xl p-5 mb-6 border-l-4 border-blue-400">
+  <p class="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Original Message</p>
+  <p class="text-sm font-semibold text-slate-800">{{ original_message.subject }}</p>
+  <p class="text-xs content-text mt-1">From {{ original_message.sender }} &nbsp;&middot;&nbsp; {{ original_message.timestamp|date:"M d, Y H:i" }}</p>
+  <p class="text-sm text-slate-600 mt-2 line-clamp-3">{{ original_message.content }}</p>
+</div>
+
+<div class="max-w-2xl glassmorphism rounded-2xl overflow-hidden">
+  <div class="px-6 py-4" style="background: linear-gradient(135deg, #1e40af, #2563eb);">
+    <h3 class="text-base font-semibold text-white">Your Reply</h3>
+  </div>
+  <div class="p-6">
+    <form method="post" class="space-y-5">
+      {% csrf_token %}
+
+      <div>
+        <label class="block text-sm font-semibold text-slate-700 mb-1.5">Subject</label>
+        <div class="msg-field">{{ form.subject }}</div>
+        {% if form.subject.errors %}
+          <p class="text-xs text-red-600 mt-1">{{ form.subject.errors.0 }}</p>
+        {% endif %}
+      </div>
+
+      <div>
+        <label class="block text-sm font-semibold text-slate-700 mb-1.5">Message</label>
+        <div class="msg-field">{{ form.content }}</div>
+        {% if form.content.errors %}
+          <p class="text-xs text-red-600 mt-1">{{ form.content.errors.0 }}</p>
+        {% endif %}
+      </div>
+
+      <div class="pt-4 border-t border-slate-100 flex items-center justify-between">
+        <a href="{% url 'inbox' %}" class="text-sm font-semibold text-slate-500 hover:text-slate-700 transition-colors">Cancel</a>
+        <button type="submit"
+                class="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-white text-sm font-semibold hover:-translate-y-0.5 transition-all duration-200"
+                style="background: linear-gradient(135deg, #2563eb, #4f46e5); box-shadow: 0 4px 12px rgba(37,99,235,0.3);">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/>
+          </svg>
+          Send Reply
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% endblock %}

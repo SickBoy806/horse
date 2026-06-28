@@ -14,13 +14,18 @@ def user_login(request):
         if user:
             login(request, user)
             role = user.role
-            branch = user.branch.name.lower()
 
-
-            # Redirect to respective dashboard
             if role == 'superadmin':
                 return redirect('superadmin_dashboard')
-            elif role == 'admin':
+
+            if not user.branch:
+                messages.error(request, "Your account has no branch assigned. Contact an administrator.")
+                logout(request)
+                return redirect('login')
+
+            branch = user.branch.name.lower()
+
+            if role == 'admin':
                 return redirect(f'/dashboard/admin/{branch}/')
             elif role == 'veterinarian':
                 return redirect(f'/dashboard/vet/{branch}/')
@@ -50,7 +55,8 @@ def create_user_view(request):
         if form.is_valid():
             form.save()
             messages.success(request, "User created successfully.")
-            return redirect('superadmin_dashboard' if request.user.role == 'superadmin' else f'/dashboard/admin/{request.user.branch.lower()}/')
+            branch_name = request.user.branch.name.lower() if request.user.branch else ''
+            return redirect('superadmin_dashboard' if request.user.role == 'superadmin' else f'/dashboard/admin/{branch_name}/')
     else:
         form = CustomUserCreationForm()
 

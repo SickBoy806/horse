@@ -1,134 +1,226 @@
-{% extends "base.html" %}
+{% extends base_template %}
+{% block page_title %}Training Dashboard{% endblock %}
 
-<div class="p-6 bg-white shadow rounded-lg border border-gray-200">
-
-    <div class="flex justify-between items-center mb-4">
-        <h2 class="text-2xl font-semibold text-gray-800">Training Dashboard</h2>
-
-        {% if show_add_button %}
-        <a href="{% url 'add_training_record' %}" 
-           class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition">
-            + Add Training Record
-        </a>
-        {% endif %}
-    </div>
-
-    <!-- Dropdown Navigation -->
-    <div class="mb-6">
-        <div class="inline-block relative">
-            <button class="bg-gray-100 text-gray-800 font-semibold py-2 px-4 rounded inline-flex items-center">
-                <span>Training Features</span>
-                <svg class="fill-current w-4 h-4 ml-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                    <path d="M5.516 7.548l4.484 4.484 4.484-4.484L15.484 9l-5.484 5-5.484-5z"/>
-                </svg>
-            </button>
-            <ul class="absolute hidden text-gray-700 pt-1 w-56">
-                <li><a class="rounded-t bg-gray-100 hover:bg-gray-200 py-2 px-4 block whitespace-no-wrap" href="#sessions">Training Sessions</a></li>
-                <li><a class="bg-gray-100 hover:bg-gray-200 py-2 px-4 block whitespace-no-wrap" href="#progression">Training Progression</a></li>
-                <li><a class="rounded-b bg-gray-100 hover:bg-gray-200 py-2 px-4 block whitespace-no-wrap" href="#reports">Training Reports</a></li>
-            </ul>
+{% block content %}
+<!-- Header card -->
+<div class="glassmorphism rounded-2xl p-6 mb-6">
+    <div class="flex items-center justify-between">
+        <div>
+            <h2 class="content-heading text-2xl">Training Dashboard</h2>
+            <p class="content-text text-sm mt-1">
+                {{ request.user.get_full_name|default:request.user.username }}
+                &mdash; <span class="capitalize font-medium">{{ role }}</span>
+            </p>
         </div>
-    </div>
-
-    {% if training_records %}
-    <div id="sessions" class="space-y-4">
-        {% for record in training_records %}
-        <div class="border border-gray-300 rounded-lg p-4 hover:shadow-md transition">
-            <div class="flex justify-between items-center">
-                <h3 class="text-lg font-medium text-gray-900">
-                    {{ record.animal.name }} - 
-                    {% if record.training_tracking %}Tracking{% endif %}
-                    {% if record.training_sniffer %}, Sniffer{% endif %}
-                    {% if record.training_explosives %}, Explosives{% endif %}
-                    {% if record.training_govt_trophies %}, Govt Trophies{% endif %}
-                    {% if record.training_narcotics %}, Narcotics{% endif %}
-                    {% if record.training_other %}, {{ record.training_other }}{% endif %}
-                </h3>
-                <span class="text-gray-500 text-sm">{{ record.date_recorded }}</span>
-            </div>
-
-            <div class="mt-2 text-gray-700 text-sm space-y-1">
-                <p><strong>Place:</strong> {{ record.training_place }}</p>
-                <p><strong>Duration:</strong> {{ record.training_duration }}</p>
-                <p><strong>Time:</strong> {{ record.training_time }}</p>
-                <p><strong>Handler:</strong> {{ record.training_handler }}</p>
-            </div>
-
-            {% if record.sessions.exists %}
-            <details class="mt-3 bg-gray-50 border border-gray-200 rounded p-2">
-                <summary class="cursor-pointer font-semibold text-gray-800">
-                    Training Sessions ({{ record.sessions.count }})
-                </summary>
-                <ul class="mt-2 space-y-2">
-                    {% for session in record.sessions.all %}
-                    <li class="border border-gray-200 rounded p-2 bg-white">
-                        <p><strong>Date:</strong> {{ session.date }}</p>
-                        <p><strong>Description:</strong> {{ session.description }}</p>
-                        {% if session.trainer %}
-                        <p><strong>Trainer:</strong> {{ session.trainer }}</p>
-                        {% endif %}
-                        {% if session.conducted_by %}
-                        <p><strong>Conducted By:</strong> {{ session.conducted_by.get_full_name }}</p>
-                        {% endif %}
-                        {% if session.duration %}
-                        <p><strong>Duration:</strong> {{ session.duration }}</p>
-                        {% endif %}
-                        {% if session.result %}
-                        <p><strong>Result:</strong> {{ session.result }}</p>
-                        {% endif %}
+        <div class="flex items-center gap-3">
+            <!-- Dropdown -->
+            <div class="relative" id="dropdown-wrapper">
+                <button id="dropdown-btn" aria-expanded="false" aria-haspopup="true"
+                        class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-700 transition-all duration-200 hover:-translate-y-0.5"
+                        style="background: linear-gradient(135deg, #f1f5f9, #e2e8f0); box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                    </svg>
+                    Training Features
+                    <svg id="dropdown-arrow" class="w-4 h-4 transition-transform duration-200"
+                         fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                </button>
+                <ul id="dropdown-menu" role="menu"
+                    style="display:none; position:absolute; z-index:50; top:calc(100% + 6px); right:0;
+                           background:rgba(255,255,255,0.98); border:1px solid rgba(226,232,240,0.8);
+                           border-radius:12px; box-shadow:0 8px 32px rgba(0,0,0,0.12);
+                           min-width:200px; padding:6px; list-style:none; backdrop-filter:blur(20px);">
+                    <li role="none">
+                        <a href="{% url 'training_sessions' %}" role="menuitem"
+                           class="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm text-slate-700 font-medium hover:bg-blue-50 hover:text-blue-700 transition-colors">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                            </svg>
+                            Training Sessions
+                        </a>
                     </li>
-                    {% endfor %}
+                    <li role="none">
+                        <a href="{% url 'training_progression' %}" role="menuitem"
+                           class="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm text-slate-700 font-medium hover:bg-blue-50 hover:text-blue-700 transition-colors">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                            </svg>
+                            Training Progression
+                        </a>
+                    </li>
+                    {% if user_clearance >= 3 %}
+                    <li role="none">
+                        <a href="#reports" role="menuitem" class="dropdown-link" data-target="reports"
+                           class="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm text-slate-700 font-medium hover:bg-blue-50 hover:text-blue-700 transition-colors">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                            </svg>
+                            Training Reports
+                        </a>
+                    </li>
+                    {% endif %}
                 </ul>
-            </details>
+            </div>
+            {% if show_add_button %}
+            <a href="{% url 'add_training_record' %}"
+               class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-white text-sm font-semibold transition-all duration-200 hover:-translate-y-0.5"
+               style="background: linear-gradient(135deg, #3b82f6, #6366f1); box-shadow: 0 4px 12px rgba(59,130,246,0.3);">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
+                Add Record
+            </a>
             {% endif %}
         </div>
-        {% endfor %}
     </div>
-
-    <!-- Training Progression Section -->
-    <div id="progression" class="mt-8">
-        <h3 class="text-xl font-semibold text-gray-800 mb-4">Training Progression</h3>
-        <ul class="space-y-2">
-            {% for record in training_records %}
-            <li class="border border-gray-200 rounded p-3 bg-gray-50">
-                <p><strong>{{ record.animal.name }}:</strong> {{ record.training_duration }} at {{ record.training_place }}</p>
-            </li>
-            {% endfor %}
-        </ul>
-    </div>
-
-    <!-- Training Reports Section -->
-    <div id="reports" class="mt-8">
-        <h3 class="text-xl font-semibold text-gray-800 mb-4">Training Reports</h3>
-        {% if training_reports %}
-        <ul class="space-y-2">
-            {% for report in training_reports %}
-            <li class="border border-gray-200 rounded p-3 bg-gray-50 flex justify-between items-center">
-                <span>{{ report.title }} ({{ report.specific_report_type }})</span>
-                {% if report.file %}
-                <a href="{{ report.file.url }}" target="_blank" class="text-blue-600 hover:underline">View</a>
-                {% endif %}
-            </li>
-            {% endfor %}
-        </ul>
-        {% else %}
-        <p class="text-gray-500">No training reports available.</p>
-        {% endif %}
-    </div>
-
-    {% else %}
-    <p class="text-gray-500 text-center mt-6">No training records found.</p>
-    {% endif %}
 </div>
 
+{% if user_clearance == 0 %}
+<div class="glassmorphism rounded-2xl p-8 text-center">
+    <div class="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4"
+         style="background: linear-gradient(135deg, #fef2f2, #fee2e2);">
+        <svg class="w-7 h-7 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+        </svg>
+    </div>
+    <p class="content-heading font-semibold">Access Restricted</p>
+    <p class="content-text text-sm mt-1">You do not have permission to view training records. Contact your administrator.</p>
+</div>
+
+{% else %}
+
+{% if training_records %}
+<!-- Training Records -->
+<div id="sessions" class="space-y-4 scroll-mt-6 mb-6">
+    {% for record in training_records %}
+    <div class="glassmorphism rounded-2xl p-5 card-hover">
+        <div class="flex items-start justify-between mb-3">
+            <h3 class="content-heading font-semibold text-base">
+                {{ record.animal.name }}
+                <span class="ml-2 text-sm font-normal content-text">
+                    {% if record.training_tracking %}Tracking{% endif %}{% if record.training_sniffer %}, Sniffer{% endif %}{% if record.training_explosives %}, Explosives{% endif %}{% if record.training_govt_trophies %}, Govt Trophies{% endif %}{% if record.training_narcotics %}, Narcotics{% endif %}{% if record.training_other %}, {{ record.training_other }}{% endif %}
+                </span>
+            </h3>
+            <span class="text-xs content-text bg-slate-100 px-2.5 py-1 rounded-lg font-medium flex-shrink-0 ml-3">
+                {{ record.date_recorded }}
+            </span>
+        </div>
+        <div class="grid grid-cols-2 gap-x-6 gap-y-1 text-sm content-text mb-3">
+            <p><span class="font-medium text-slate-700">Place:</span> {{ record.training_place }}</p>
+            <p><span class="font-medium text-slate-700">Duration:</span> {{ record.training_duration }}</p>
+            <p><span class="font-medium text-slate-700">Time:</span> {{ record.training_time }}</p>
+            <p><span class="font-medium text-slate-700">Handler:</span> {{ record.training_handler }}</p>
+        </div>
+
+        {% if user_clearance >= 2 and record.sessions.exists %}
+        <details class="mt-3 border-t border-slate-100 pt-3">
+            <summary class="cursor-pointer text-sm font-semibold text-slate-700 hover:text-blue-600 transition-colors select-none">
+                Training Sessions ({{ record.sessions.count }})
+            </summary>
+            <div class="mt-3 space-y-2">
+                {% for session in record.sessions.all %}
+                <div class="rounded-xl p-3 text-sm" style="background: rgba(241,245,249,0.8);">
+                    <div class="flex items-center justify-between mb-1">
+                        <span class="font-semibold text-slate-800">{{ session.date }}</span>
+                        {% if session.result %}
+                        <span class="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700 font-medium">{{ session.result }}</span>
+                        {% endif %}
+                    </div>
+                    <p class="content-text">{{ session.description }}</p>
+                    {% if session.duration %}<p class="content-text mt-0.5"><span class="font-medium">Duration:</span> {{ session.duration }}</p>{% endif %}
+                    {% if session.conducted_by %}<p class="content-text"><span class="font-medium">By:</span> {{ session.conducted_by.get_full_name }}</p>{% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </details>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+
+{% if user_clearance >= 3 %}
+<div id="reports" class="scroll-mt-6">
+    <div class="glassmorphism rounded-2xl p-6">
+        <div class="flex items-center gap-2 mb-4">
+            <h3 class="content-heading font-semibold text-lg">Training Reports</h3>
+            <span class="text-xs px-2.5 py-0.5 rounded-full bg-red-100 text-red-600 font-semibold">Admin</span>
+        </div>
+        {% if training_reports %}
+        <div class="space-y-2">
+            {% for report in training_reports %}
+            <div class="flex items-center justify-between rounded-xl px-4 py-3 card-hover"
+                 style="background: rgba(241,245,249,0.8);">
+                <div>
+                    <p class="text-sm font-semibold text-slate-800">{{ report.title }}</p>
+                    <p class="text-xs content-text">{{ report.get_specific_report_type_display }}</p>
+                </div>
+                {% if report.file %}
+                <a href="{{ report.file.url }}" target="_blank"
+                   class="text-xs font-semibold text-blue-600 hover:text-blue-800 transition-colors">
+                    View &rarr;
+                </a>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="content-text text-sm">No training reports available.</p>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+{% else %}
+<!-- Empty state -->
+<div id="sessions" class="glassmorphism rounded-2xl p-10 text-center scroll-mt-6 mb-6">
+    <div class="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4"
+         style="background: linear-gradient(135deg, #f1f5f9, #e2e8f0);">
+        <svg class="w-7 h-7 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                  d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+        </svg>
+    </div>
+    <p class="content-heading font-semibold">No training records found</p>
+    <p class="content-text text-sm mt-1">
+        {% if role == 'user' or role == 'worker' %}Records appear once an animal is assigned to you.
+        {% elif role == 'veterinarian' %}Records appear once you are set as the assigned vet for an animal.
+        {% else %}No training records exist yet.{% endif %}
+    </p>
+</div>
+{% if user_clearance >= 3 %}
+<div id="reports" class="glassmorphism rounded-2xl p-6 scroll-mt-6">
+    <h3 class="content-heading font-semibold text-lg mb-2">Training Reports</h3>
+    <p class="content-text text-sm">No training reports available.</p>
+</div>
+{% endif %}
+{% endif %}
+
+{% endif %}
+
 <script>
-    // Simple dropdown toggle
-    const dropdownBtn = document.querySelector('.inline-block.relative button');
-    const dropdownMenu = document.querySelector('.inline-block.relative ul');
-
-    dropdownBtn.addEventListener('click', () => {
-        dropdownMenu.classList.toggle('hidden');
+(function () {
+    var btn = document.getElementById('dropdown-btn');
+    var menu = document.getElementById('dropdown-menu');
+    var arrow = document.getElementById('dropdown-arrow');
+    var wrapper = document.getElementById('dropdown-wrapper');
+    var isOpen = false;
+    if (!btn || !menu) return;
+    function openMenu() { menu.style.display = 'block'; btn.setAttribute('aria-expanded','true'); arrow.style.transform='rotate(180deg)'; isOpen=true; }
+    function closeMenu() { menu.style.display = 'none'; btn.setAttribute('aria-expanded','false'); arrow.style.transform='rotate(0deg)'; isOpen=false; }
+    btn.addEventListener('click', function(e) { e.stopPropagation(); isOpen ? closeMenu() : openMenu(); });
+    document.querySelectorAll('.dropdown-link').forEach(function(link) {
+        link.addEventListener('click', function(e) {
+            e.preventDefault(); closeMenu();
+            var t = document.getElementById(this.getAttribute('data-target'));
+            if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
     });
+    document.addEventListener('click', function(e) { if (isOpen && !wrapper.contains(e.target)) closeMenu(); });
+    document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeMenu(); });
+})();
 </script>
-
 {% endblock %}

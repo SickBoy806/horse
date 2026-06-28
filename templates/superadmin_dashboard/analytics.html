@@ -1,87 +1,134 @@
 {% extends "superadmin_dashboard/base_dashboard.html" %}
+{% block page_title %}Analytics — TPF Animal System{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
 
 {% block content %}
-  <div class="p-6">
-    <h1 class="text-2xl font-bold mb-4">Analytics Overview</h1>
 
-    <!-- Chart Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-      <div class="bg-white p-4 rounded-lg shadow">
-        <h2 class="text-lg font-semibold mb-2">Users by Role</h2>
-        <canvas id="roleChart"></canvas>
-      </div>
-      <div class="bg-white p-4 rounded-lg shadow">
-        <h2 class="text-lg font-semibold mb-2">Task Status Overview</h2>
-        <canvas id="taskChart"></canvas>
-      </div>
+<div class="glassmorphism rounded-2xl p-6 mb-6">
+  <h2 class="content-heading text-2xl">Analytics Overview</h2>
+  <p class="content-text text-sm mt-1">System-wide statistics and activity insights</p>
+</div>
+
+<!-- Charts row -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+  <div class="glassmorphism rounded-2xl overflow-hidden">
+    <div class="px-6 py-4" style="background: linear-gradient(135deg, rgba(219,234,254,0.7), rgba(199,210,254,0.4));">
+      <h3 class="text-sm font-bold text-blue-900">Users by Role</h3>
     </div>
-
-    <!-- Summary Table -->
-    <div class="bg-white p-4 rounded-lg shadow mb-6">
-      <h2 class="text-lg font-semibold mb-4">Branch Summary</h2>
-      <table class="min-w-full divide-y divide-gray-200">
-        <thead class="bg-gray-50">
-          <tr>
-            <th class="px-4 py-2 text-left">Branch</th>
-            <th class="px-4 py-2 text-left">Users</th>
-            <th class="px-4 py-2 text-left">Tasks</th>
-            <th class="px-4 py-2 text-left">Reports Today</th>
-            <th class="px-4 py-2 text-left">Active Animals</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for b in branch_summaries %}
-          <tr>
-            <td class="px-4 py-2">{{ b.branch }}</td>
-            <td class="px-4 py-2">{{ b.user_count }}</td>
-            <td class="px-4 py-2">{{ b.task_count }}</td>
-            <td class="px-4 py-2">{{ b.reports_today }}</td>
-            <td class="px-4 py-2">{{ b.animal_count }}</td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+    <div class="p-5">
+      <canvas id="roleChart" style="max-height:220px;"></canvas>
     </div>
+  </div>
+  <div class="glassmorphism rounded-2xl overflow-hidden">
+    <div class="px-6 py-4" style="background: linear-gradient(135deg, rgba(209,250,229,0.7), rgba(167,243,208,0.4));">
+      <h3 class="text-sm font-bold text-green-900">Task Status Overview</h3>
+    </div>
+    <div class="p-5">
+      <canvas id="taskChart" style="max-height:220px;"></canvas>
+    </div>
+  </div>
+</div>
 
-  <!-- Top Users -->
-<div class="bg-white p-4 rounded-lg shadow">
-  <h2 class="text-lg font-semibold mb-4">Top Active Users</h2>
-  <ul class="list-disc pl-6 text-gray-700">
+<!-- Branch Summary -->
+<div class="glassmorphism rounded-2xl overflow-hidden mb-6">
+  <div class="px-6 py-4" style="background: linear-gradient(135deg, rgba(241,245,249,0.9), rgba(226,232,240,0.7));">
+    <h3 class="text-sm font-bold text-slate-700">Branch Summary</h3>
+  </div>
+  <div class="overflow-x-auto">
+    <table class="w-full">
+      <thead>
+        <tr style="background: linear-gradient(135deg, rgba(241,245,249,0.9), rgba(226,232,240,0.9));">
+          <th class="px-6 py-3.5 text-left text-xs font-bold text-slate-600 uppercase tracking-wider">Branch</th>
+          <th class="px-6 py-3.5 text-left text-xs font-bold text-slate-600 uppercase tracking-wider">Users</th>
+          <th class="px-6 py-3.5 text-left text-xs font-bold text-slate-600 uppercase tracking-wider">Tasks</th>
+          <th class="px-6 py-3.5 text-left text-xs font-bold text-slate-600 uppercase tracking-wider">Reports Today</th>
+          <th class="px-6 py-3.5 text-left text-xs font-bold text-slate-600 uppercase tracking-wider">Active Animals</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        {% for b in branch_summaries %}
+        <tr class="card-hover">
+          <td class="px-6 py-4 text-sm font-semibold text-slate-800">{{ b.branch }}</td>
+          <td class="px-6 py-4 text-sm content-text">{{ b.user_count }}</td>
+          <td class="px-6 py-4 text-sm content-text">{{ b.task_count }}</td>
+          <td class="px-6 py-4 text-sm content-text">{{ b.reports_today }}</td>
+          <td class="px-6 py-4 text-sm content-text">{{ b.animal_count }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="5" class="px-6 py-10 text-center content-text text-sm">No branch data available.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Top Users -->
+<div class="glassmorphism rounded-2xl overflow-hidden">
+  <div class="px-6 py-4" style="background: linear-gradient(135deg, rgba(240,253,244,0.8), rgba(220,252,231,0.5));">
+    <h3 class="text-sm font-bold text-green-900">Top Active Users</h3>
+  </div>
+  <ul class="divide-y divide-slate-100">
     {% for u in top_users %}
-    <li>{{ u.user_first_name }} ({{ u.userbranch_name }}) – {{ u.count }} reports</li>
+    <li class="px-6 py-4 flex items-center justify-between card-hover">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
+             style="background: linear-gradient(135deg, #3b82f6, #6366f1);">
+          {{ u.user_first_name|first|upper }}
+        </div>
+        <div>
+          <p class="text-sm font-semibold text-slate-800">{{ u.user_first_name }}</p>
+          <p class="text-xs content-text">{{ u.userbranch_name }}</p>
+        </div>
+      </div>
+      <span class="text-xs font-bold text-blue-600">{{ u.count }} reports</span>
+    </li>
     {% empty %}
-    <li>No activity yet.</li>
+    <li class="px-6 py-10 text-center content-text text-sm">No activity recorded yet.</li>
     {% endfor %}
   </ul>
 </div>
 
-  <!-- Scripts -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script>
-    const roleCtx = document.getElementById("roleChart");
-    new Chart(roleCtx, {
-      type: "pie",
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const chartDefaults = {
+      plugins: { legend: { labels: { font: { family: 'Inter', size: 12 }, color: '#475569' } } },
+      responsive: true, maintainAspectRatio: true,
+    };
+
+    new Chart(document.getElementById("roleChart"), {
+      type: "doughnut",
       data: {
         labels: {{ role_labels|safe }},
-        datasets: [{
-          label: "User Roles",
-          data: {{ role_counts|safe }},
-          backgroundColor: ["#3b82f6", "#facc15", "#10b981", "#ef4444"]
+        datasets: [{ data: {{ role_counts|safe }},
+          backgroundColor: ["#3b82f6","#10b981","#f59e0b","#8b5cf6","#64748b"],
+          borderWidth: 2, borderColor: "#fff"
         }]
-      }
+      },
+      options: { ...chartDefaults, cutout: '60%' }
     });
 
-    const taskCtx = document.getElementById("taskChart");
-    new Chart(taskCtx, {
+    new Chart(document.getElementById("taskChart"), {
       type: "bar",
       data: {
-        labels: ["Pending", "In Progress", "Completed"],
-        datasets: [{
-          label: "Tasks",
-          data: {{ task_status_data|safe }},
-          backgroundColor: ["#f59e0b", "#3b82f6", "#10b981"]
+        labels: ["Pending","In Progress","Completed"],
+        datasets: [{ label: "Tasks", data: {{ task_status_data|safe }},
+          backgroundColor: ["rgba(245,158,11,0.8)","rgba(59,130,246,0.8)","rgba(16,185,129,0.8)"],
+          borderRadius: 6, borderSkipped: false,
         }]
+      },
+      options: {
+        ...chartDefaults,
+        scales: { y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' },
+                       ticks: { color: '#64748b', font: { family: 'Inter' } } },
+                  x: { grid: { display: false }, ticks: { color: '#64748b', font: { family: 'Inter' } } } }
       }
     });
-  </script>
+  });
+</script>
+
 {% endblock %}

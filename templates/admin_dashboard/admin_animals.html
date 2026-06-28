@@ -1,0 +1,61 @@
+{% extends "admin_dashboard/base_admin.html" %}
+{% block page_title %}Animals — TPF Animal System{% endblock %}
+
+{% block content %}
+
+<div class="glassmorphism rounded-2xl p-6 mb-6">
+  <div class="flex items-center justify-between">
+    <div>
+      <h2 class="content-heading text-2xl">Animals</h2>
+      <p class="content-text text-sm mt-1">Branch: {{ branch|title }}</p>
+    </div>
+    <a href="{% url 'add_animal' %}"
+       class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-white text-sm font-semibold hover:-translate-y-0.5 transition-all duration-200"
+       style="background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 4px 12px rgba(16,185,129,0.3);">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+      </svg>
+      Add Animal
+    </a>
+  </div>
+</div>
+
+<div class="glassmorphism rounded-2xl overflow-hidden">
+  <div class="overflow-x-auto">
+    <table class="w-full">
+      <thead>
+        <tr style="background: linear-gradient(135deg, rgba(241,245,249,0.9), rgba(226,232,240,0.9));">
+          <th class="px-6 py-3.5 text-left text-xs font-bold text-slate-600 uppercase tracking-wider">Name</th>
+          <th class="px-6 py-3.5 text-left text-xs font-bold text-slate-600 uppercase tracking-wider">Species</th>
+          <th class="px-6 py-3.5 text-left text-xs font-bold text-slate-600 uppercase tracking-wider">Status</th>
+          <th class="px-6 py-3.5 text-left text-xs font-bold text-slate-600 uppercase tracking-wider">Clearance</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        {% for animal in animals %}
+        <tr class="card-hover">
+          <td class="px-6 py-4 text-sm font-semibold text-slate-800">{{ animal.name }}</td>
+          <td class="px-6 py-4 text-sm content-text">{{ animal.species|default:"—" }}</td>
+          <td class="px-6 py-4">
+            <span class="text-xs px-2.5 py-0.5 rounded-full font-semibold
+              {% if animal.status == 'active' %}bg-green-100 text-green-700
+              {% else %}bg-slate-100 text-slate-600{% endif %}">
+              {{ animal.status|title|default:"Active" }}
+            </span>
+          </td>
+          <td class="px-6 py-4 text-sm content-text">Level {{ animal.clearance_level|default:"1" }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="4" class="px-6 py-14 text-center">
+            <p class="content-heading font-semibold">No animals found</p>
+            <p class="content-text text-sm mt-1">Add animals to this branch using the button above.</p>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}

@@ -1,24 +1,105 @@
 {% extends "admin_dashboard/base_admin.html" %}
+{% block page_title %}{{ ticket.subject }} — TPF Animal System{% endblock %}
+
+{% block extra_head %}
+<style>
+  .reply-field textarea {
+    width: 100%; padding: 0.7rem 1rem; border: 1.5px solid #e2e8f0;
+    border-radius: 0.75rem; background: #f8fafc; font-size: 0.875rem;
+    font-family: 'Inter', sans-serif; color: #1e293b; min-height: 90px; resize: vertical;
+    transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+  }
+  .reply-field textarea:focus {
+    outline: none; border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59,130,246,0.1); background: #fff;
+  }
+</style>
+{% endblock %}
+
 {% block content %}
-<h2 class="text-xl font-bold mb-4">{{ ticket.subject }}</h2>
-<p>{{ ticket.message }}</p>
 
-<h3 class="mt-6 font-semibold">Replies</h3>
-<ul class="space-y-2 mt-2">
-  {% for reply in replies %}
-    <li class="p-2 bg-gray-100 rounded">
-      <strong>{{ reply.user.get_full_name }}</strong>: {{ reply.message }}
+<div class="glassmorphism rounded-2xl p-6 mb-6">
+  <div class="flex items-center justify-between">
+    <div>
+      <h2 class="content-heading text-2xl truncate">{{ ticket.subject }}</h2>
+      <div class="flex items-center gap-3 mt-1">
+        <span class="text-xs px-2.5 py-0.5 rounded-full font-semibold
+          {% if ticket.status == 'open' %}bg-green-100 text-green-700
+          {% elif ticket.status == 'in_progress' %}bg-blue-100 text-blue-700
+          {% else %}bg-slate-100 text-slate-600{% endif %}">
+          {{ ticket.status|title }}
+        </span>
+        <p class="text-xs content-text">{{ ticket.created_at|date:"M d, Y H:i" }}</p>
+      </div>
+    </div>
+    {% if ticket.status != 'closed' %}
+    <a href="{% url 'admin_support_close' branch=branch ticket_id=ticket.id %}"
+       class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-white text-sm font-semibold hover:-translate-y-0.5 transition-all duration-200"
+       style="background: linear-gradient(135deg, #dc2626, #b91c1c); box-shadow: 0 4px 12px rgba(220,38,38,0.25);">
+      Close Ticket
+    </a>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Ticket body -->
+<div class="glassmorphism rounded-2xl p-6 mb-5">
+  <p class="text-xs font-bold text-slate-500 uppercase tracking-wide mb-3">Ticket Message</p>
+  <p class="text-sm text-slate-700 leading-relaxed whitespace-pre-line">{{ ticket.message|default:ticket.description }}</p>
+</div>
+
+<!-- Replies -->
+{% if replies %}
+<div class="glassmorphism rounded-2xl overflow-hidden mb-5">
+  <div class="px-6 py-3.5" style="background: linear-gradient(135deg, rgba(241,245,249,0.9), rgba(226,232,240,0.7));">
+    <h3 class="text-sm font-bold text-slate-700">Replies ({{ replies|length }})</h3>
+  </div>
+  <ul class="divide-y divide-slate-100">
+    {% for reply in replies %}
+    <li class="px-6 py-4">
+      <div class="flex items-center gap-3 mb-2">
+        <div class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
+             style="background: linear-gradient(135deg, #3b82f6, #6366f1);">
+          {{ reply.user.username|first|upper }}
+        </div>
+        <div>
+          <p class="text-sm font-semibold text-slate-800">{{ reply.user.get_full_name|default:reply.user.username }}</p>
+          <p class="text-xs content-text">{{ reply.created_at|date:"M d, Y H:i" }}</p>
+        </div>
+      </div>
+      <p class="text-sm text-slate-700 ml-10">{{ reply.message }}</p>
     </li>
-  {% endfor %}
-</ul>
-
-<form method="post" class="mt-6">
-  {% csrf_token %}
-  {{ form.as_p }}
-  <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Reply</button>
-</form>
-
-{% if ticket.status != "closed" %}
-  <a href="{% url 'admin_support_close' branch=branch ticket_id=ticket.id %}" class="inline-block mt-4 text-red-600">Close Ticket</a>
+    {% endfor %}
+  </ul>
+</div>
 {% endif %}
+
+<!-- Reply form -->
+{% if ticket.status != 'closed' %}
+<div class="glassmorphism rounded-2xl overflow-hidden">
+  <div class="px-6 py-4" style="background: linear-gradient(135deg, #1e40af, #2563eb);">
+    <h3 class="text-base font-semibold text-white">Add Reply</h3>
+  </div>
+  <div class="p-6">
+    <form method="post" class="space-y-4">
+      {% csrf_token %}
+      {% for field in form %}
+      <div>
+        <label class="block text-sm font-semibold text-slate-700 mb-1.5">{{ field.label }}</label>
+        <div class="reply-field">{{ field }}</div>
+        {% if field.errors %}<p class="text-xs text-red-600 mt-1">{{ field.errors.0 }}</p>{% endif %}
+      </div>
+      {% endfor %}
+      <div class="flex justify-end">
+        <button type="submit"
+                class="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-white text-sm font-semibold hover:-translate-y-0.5 transition-all duration-200"
+                style="background: linear-gradient(135deg, #2563eb, #4f46e5); box-shadow: 0 4px 12px rgba(37,99,235,0.3);">
+          Send Reply
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endif %}
+
 {% endblock %}

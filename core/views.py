@@ -11,6 +11,9 @@ from .forms import TrainingRecordForm
 from .models import Report  # or adjust the import path as needed
 from core.forms import ReportForm
 from core.models import TrainingSession
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render
+from .models import TrainingRecord, Report
 
 
 
@@ -100,11 +103,13 @@ def add_animal(request):
         form = AnimalForm(user=request.user)
         formset = TrainingRecordFormSet()
 
-    return render(request, 'core/add_animal.html', {
+    ctx = _role_base_context(request.user)
+    ctx.update({
         'form': form,
         'formset': formset,
-        'branch': branch or 'default-branch'  # Pass branch to template to fix NoReverseMatch
+        'branch': branch.name.lower() if branch else '',
     })
+    return render(request, 'core/add_animal.html', ctx)
 
 
 @login_required
@@ -142,17 +147,17 @@ def animal_list(request):
     page_obj = paginator.get_page(page_number)
 
     # Context for filters
-    context = {
+    context = _role_base_context(user)
+    context.update({
         'page_obj': page_obj,
         'search': search,
         'branch_filter': branch_filter,
         'species_filter': species_filter,
-    }
+        'species_choices': Animal.SPECIES_CHOICES,
+    })
 
     if user.role == 'superadmin':
         context['branches'] = Branch.objects.filter(is_active=True)
-    
-    context['species_choices'] = Animal.SPECIES_CHOICES
 
     return render(request, 'core/animal_list.html', context)
 
@@ -332,7 +337,9 @@ def inbox(request):
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     
-    return render(request, 'core/inbox.html', {'page_obj': page_obj})
+    ctx = _role_base_context(request.user)
+    ctx['page_obj'] = page_obj
+    return render(request, 'core/inbox.html', ctx)
 
 
 @login_required
@@ -350,7 +357,9 @@ def message_detail(request, message_id):
         message.read_at = timezone.now()
         message.save()
 
-    return render(request, 'core/message_detail.html', {'message': message})
+    ctx = _role_base_context(request.user)
+    ctx['message'] = message
+    return render(request, 'core/message_detail.html', ctx)
 
 
 
@@ -378,7 +387,9 @@ def compose_message(request):
     else:
         form = MessageForm(user=request.user)
     
-    return render(request, 'core/compose_message.html', {'form': form})
+    ctx = _role_base_context(request.user)
+    ctx['form'] = form
+    return render(request, 'core/compose_message.html', ctx)
 
 
 @login_required
@@ -418,32 +429,38 @@ def reply_message(request, message_id):
         }
         form = MessageReplyForm(initial=initial_data)
     
-    context = {
-        'form': form, 
-        'original_message': original_message
-    }
-    return render(request, 'core/reply_message.html', context)
+    ctx = _role_base_context(request.user)
+    ctx['form'] = form
+    ctx['original_message'] = original_message
+    return render(request, 'core/reply_message.html', ctx)
 
 
 @login_required
 def sent_messages(request, branch):
-    messages = Message.objects.filter(
+    sent_messages_qs = Message.objects.filter(
         sender=request.user,
-        branch__name__iexact=branch,
-        status='sent'
+        is_deleted=False
     ).order_by('-timestamp')
-    return render(request, 'messages/sent.html', {'messages': messages})
+    return render(request, 'veterinarian_dashboard/messages/sent_messages.html', {'sent_messages': sent_messages_qs, 'branch': branch})
 
 
 @login_required
-def archived_messages(request):
-    messages = Message.objects.filter(recipient=request.user, status='archived').order_by('-created_at')
-    return render(request, 'messages/archived.html', {'messages': messages})
+def archived_messages(request, branch):
+    messages_qs = Message.objects.filter(
+        receiver=request.user,
+        is_archived=True,
+        is_deleted=False
+    ).order_by('-timestamp')
+    return render(request, 'veterinarian_dashboard/archived_messages.html', {'messages': messages_qs, 'branch': branch})
+
 
 @login_required
-def deleted_messages(request):
-    messages = Message.objects.filter(recipient=request.user, status='deleted').order_by('-created_at')
-    return render(request, 'messages/deleted.html', {'messages': messages})
+def deleted_messages(request, branch):
+    messages_qs = Message.objects.filter(
+        receiver=request.user,
+        is_deleted=True
+    ).order_by('-timestamp')
+    return render(request, 'veterinarian_dashboard/deleted_messages.html', {'messages': messages_qs, 'branch': branch})
 
 
 # ------------------------------
@@ -495,6 +512,20 @@ def view_animal_detail(request, animal_id):
 
 
 
+_BASE_TEMPLATE_MAP = {
+    'superadmin': 'superadmin_dashboard/base_dashboard.html',
+    'admin':      'admin_dashboard/base_admin.html',
+    'veterinarian': 'veterinarian_dashboard/base_dashboard.html',
+    'staff':      'staff_dashboard/base_staff.html',
+}
+
+def _role_base_context(user):
+    role = getattr(user, 'role', None)
+    branch = user.branch.name.lower() if user.branch else ''
+    base_template = _BASE_TEMPLATE_MAP.get(role, 'user_dashboard/base_user.html')
+    return {'base_template': base_template, 'branch': branch}
+
+
 @login_required
 def reports_list(request):
     """Show only the reports relevant to the logged-in user's role."""
@@ -511,7 +542,9 @@ def reports_list(request):
     else:
         reports = Report.objects.none()
 
-    return render(request, 'core/reports_list.html', {'reports': reports})
+    ctx = _role_base_context(request.user)
+    ctx['reports'] = reports
+    return render(request, 'core/reports_list.html', ctx)
 
 
 @login_required
@@ -528,7 +561,14 @@ def create_report(request):
     else:
         form = ReportForm(user=request.user)
 
-    return render(request, 'core/create_report.html', {'form': form})
+    ctx = _role_base_context(request.user)
+    ctx['form'] = form
+    return render(request, 'core/create_report.html', ctx)
+
+from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
+from django.db import models
+from .models import TrainingRecord, Report
 
 
 @login_required
@@ -536,32 +576,213 @@ def training_dashboard(request):
     user = request.user
     role = getattr(user, 'role', None)
 
-    # Determine which animals to show based on role
-    if role in ['trainer', 'worker', 'veterinarian']:
-        training_records = TrainingRecord.objects.filter(
-            animal__branch=user.branch
-        ).prefetch_related('sessions')
-        show_add_button = True
-    elif role in ['admin', 'superadmin']:
-        training_records = TrainingRecord.objects.all().prefetch_related('sessions')
-        show_add_button = True if role == 'admin' else False
-    else:
+    CLEARANCE = {
+        'user':         2,
+        'worker':       2,
+        'veterinarian': 2,
+        'trainer':      2,
+        'admin':        3,
+        'superadmin':   3,
+    }
+    user_clearance = CLEARANCE.get(role, 0)
+
+    if user_clearance == 0:
         training_records = TrainingRecord.objects.none()
         show_add_button = False
 
-    # Optionally fetch reports related to training
-    training_reports = Report.objects.filter(
-        specific_report_type__in=[
-            'training_progress', 'training_log', 'performance_eval',
-            'behavior_assessment', 'missed_training', 'training_schedule',
-            'special_skills', 'daily_care'
-        ]
-    )
+    elif role in ('worker', 'user'):
+        # See only records for animals explicitly assigned to them
+        training_records = (
+            TrainingRecord.objects
+            .filter(animal__assigned_users=user)
+            .prefetch_related('sessions')
+            .distinct()
+        )
+        show_add_button = False
 
-    context = {
+    elif role == 'veterinarian':
+        # See only records for animals where they are the assigned vet
+        training_records = (
+            TrainingRecord.objects
+            .filter(animal__assigned_vet=user)
+            .prefetch_related('sessions')
+            .distinct()
+        )
+        show_add_button = True
+
+    elif role == 'trainer':
+        # See assigned animals + all animals in their branch
+        training_records = (
+            TrainingRecord.objects
+            .filter(
+                models.Q(animal__assigned_users=user) |
+                models.Q(animal__branch=user.branch)
+            )
+            .prefetch_related('sessions')
+            .distinct()
+        )
+        show_add_button = True
+
+    else:
+        # admin / superadmin — see everything
+        training_records = (
+            TrainingRecord.objects
+            .all()
+            .prefetch_related('sessions')
+        )
+        show_add_button = True
+
+    if user_clearance >= 3:
+        training_reports = Report.objects.filter(
+            specific_report_type__in=[
+                'training_progress',
+                'training_log',
+                'performance_eval',
+                'behavior_assessment',
+                'missed_training',
+                'training_schedule',
+                'special_skills',
+                'daily_care',
+            ]
+        )
+    else:
+        training_reports = Report.objects.none()
+
+    context = _role_base_context(user)
+    context.update({
         'role': role,
+        'user_clearance': user_clearance,
         'training_records': training_records,
         'training_reports': training_reports,
         'show_add_button': show_add_button,
+    })
+
+    return render(
+        request,
+        'core/universal_training_dashboard.html',
+        context
+    )
+
+@login_required
+def training_sessions(request):
+    user = request.user
+    role = getattr(user, 'role', None)
+
+    CLEARANCE = {
+        'user':         1,
+        'worker':       1,
+        'veterinarian': 2,
+        'trainer':      2,
+        'admin':        3,
+        'superadmin':   3,
     }
-    return render(request, 'training/universal_training_dashboard.html', context)
+    user_clearance = CLEARANCE.get(role, 0)
+
+    if user_clearance == 0:
+        sessions = TrainingSession.objects.none()
+
+    elif role in ('worker', 'user'):
+        sessions = (
+            TrainingSession.objects
+            .filter(training_record__animal__assigned_users=user)
+            .select_related('training_record__animal', 'conducted_by')
+            .distinct()
+        )
+
+    elif role == 'veterinarian':
+        sessions = (
+            TrainingSession.objects
+            .filter(training_record__animal__assigned_vet=user)
+            .select_related('training_record__animal', 'conducted_by')
+            .distinct()
+        )
+
+    elif role == 'trainer':
+        sessions = (
+            TrainingSession.objects
+            .filter(
+                models.Q(training_record__animal__assigned_users=user) |
+                models.Q(training_record__animal__branch=user.branch)
+            )
+            .select_related('training_record__animal', 'conducted_by')
+            .distinct()
+        )
+
+    else:
+        sessions = (
+            TrainingSession.objects
+            .all()
+            .select_related('training_record__animal', 'conducted_by')
+        )
+
+    context = _role_base_context(user)
+    context.update({
+        'role': role,
+        'user_clearance': user_clearance,
+        'sessions': sessions,
+    })
+
+    return render(request, 'core/training_sessions.html', context)
+
+
+@login_required
+def training_progression(request):
+    user = request.user
+    role = getattr(user, 'role', None)
+
+    CLEARANCE = {
+        'user':         1,
+        'worker':       1,
+        'veterinarian': 2,
+        'trainer':      2,
+        'admin':        3,
+        'superadmin':   3,
+    }
+    user_clearance = CLEARANCE.get(role, 0)
+
+    if user_clearance == 0:
+        records = TrainingRecord.objects.none()
+
+    elif role in ('worker', 'user'):
+        records = (
+            TrainingRecord.objects
+            .filter(animal__assigned_users=user)
+            .prefetch_related('sessions')
+            .distinct()
+        )
+
+    elif role == 'veterinarian':
+        records = (
+            TrainingRecord.objects
+            .filter(animal__assigned_vet=user)
+            .prefetch_related('sessions')
+            .distinct()
+        )
+
+    elif role == 'trainer':
+        records = (
+            TrainingRecord.objects
+            .filter(
+                models.Q(animal__assigned_users=user) |
+                models.Q(animal__branch=user.branch)
+            )
+            .prefetch_related('sessions')
+            .distinct()
+        )
+
+    else:
+        records = (
+            TrainingRecord.objects
+            .all()
+            .prefetch_related('sessions')
+        )
+
+    context = _role_base_context(user)
+    context.update({
+        'role': role,
+        'user_clearance': user_clearance,
+        'records': records,
+    })
+
+    return render(request, 'core/training_progression.html', context)
+

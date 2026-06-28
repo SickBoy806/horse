@@ -1,0 +1,43 @@
+{% extends "superadmin_dashboard/base_dashboard.html" %}
+{% block page_title %}Create Task — TPF Animal System{% endblock %}
+{% block content %}
+
+<div class="glassmorphism rounded-2xl p-6 mb-6">
+    <div class="flex items-center justify-between">
+        <div>
+            <h2 class="content-heading text-2xl">Create Task</h2>
+            <p class="content-text text-sm mt-1">Assign a new task to staff or veterinarians</p>
+        </div>
+        <a href="{% url 'superadmin_pending_tasks' %}"
+           class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-600 hover:-translate-y-0.5 transition-all duration-200"
+           style="background: linear-gradient(135deg, #f1f5f9, #e2e8f0); box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+            </svg>
+            Pending Tasks
+        </a>
+    </div>
+</div>
+
+<div class="glassmorphism rounded-2xl overflow-hidden">
+    <div class="px-6 py-4" style="background: linear-gradient(135deg, #1e40af, #2563eb);">
+        <h3 class="text-base font-semibold text-white">Task Details</h3>
+    </div>
+    <div class="p-6">
+        <div class="flex flex-col items-center justify-center py-10 text-center">
+            <div class="w-14 h-14 rounded-2xl flex items-center justify-center mb-4"
+                 style="background: linear-gradient(135deg, #dbeafe, #bfdbfe);">
+                <svg class="w-7 h-7 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                          d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                </svg>
+            </div>
+            <p class="content-heading font-semibold text-base">Task creation form</p>
+            <p class="content-text text-sm mt-1 max-w-sm">
+                Connect this view to the task management module to enable creating tasks from here.
+            </p>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

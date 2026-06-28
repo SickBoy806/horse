@@ -5,13 +5,11 @@ from django.utils import timezone
 User = get_user_model()
 
 def log_action(user, action, message, ip_address=None):
-    """
-    Log user actions to the system log
-    """
     SystemLog.objects.create(
         user=user,
         role=user.role,
-        branch=user.branch,
+        branch=user.branch.name if user.branch else '',
+        branch_fk=user.branch,
         action=action,
         message=message,
         ip_address=ip_address

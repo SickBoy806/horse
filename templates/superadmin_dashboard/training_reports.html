@@ -1,0 +1,69 @@
+{% extends "superadmin_dashboard/base_dashboard.html" %}
+{% block page_title %}Training Reports — TPF Animal System{% endblock %}
+{% block content %}
+
+<div class="glassmorphism rounded-2xl p-6 mb-6">
+    <div class="flex items-center justify-between">
+        <div>
+            <h2 class="content-heading text-2xl">Training Reports</h2>
+            <p class="content-text text-sm mt-1">All submitted training-related reports across branches</p>
+        </div>
+    </div>
+</div>
+
+<div class="glassmorphism rounded-2xl overflow-hidden">
+    {% if reports %}
+    <div class="overflow-x-auto">
+        <table class="w-full">
+            <thead>
+                <tr style="background: linear-gradient(135deg, rgba(241,245,249,0.9), rgba(226,232,240,0.9));">
+                    <th class="px-6 py-3.5 text-left text-xs font-bold text-slate-600 uppercase tracking-wider">Title</th>
+                    <th class="px-6 py-3.5 text-left text-xs font-bold text-slate-600 uppercase tracking-wider">Type</th>
+                    <th class="px-6 py-3.5 text-left text-xs font-bold text-slate-600 uppercase tracking-wider">Branch</th>
+                    <th class="px-6 py-3.5 text-left text-xs font-bold text-slate-600 uppercase tracking-wider">Created</th>
+                    <th class="px-6 py-3.5 text-left text-xs font-bold text-slate-600 uppercase tracking-wider">File</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+                {% for report in reports %}
+                <tr class="card-hover">
+                    <td class="px-6 py-4 text-sm font-semibold text-slate-800">{{ report.title }}</td>
+                    <td class="px-6 py-4">
+                        <span class="text-xs px-2.5 py-0.5 rounded-full font-semibold"
+                              style="background: rgba(219,234,254,0.8); color: #1d4ed8;">
+                            {{ report.get_specific_report_type_display|default:report.specific_report_type }}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 text-sm content-text">{{ report.branch|default:"—" }}</td>
+                    <td class="px-6 py-4 text-sm content-text">{{ report.date_created|date:"M d, Y" }}</td>
+                    <td class="px-6 py-4">
+                        {% if report.file %}
+                        <a href="{{ report.file.url }}" target="_blank"
+                           class="text-sm font-semibold text-blue-600 hover:text-blue-800 transition-colors">
+                            Download &rarr;
+                        </a>
+                        {% else %}
+                        <span class="text-xs content-text">No file</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="flex flex-col items-center justify-center py-16 text-center">
+        <div class="w-14 h-14 rounded-2xl flex items-center justify-center mb-4"
+             style="background: linear-gradient(135deg, #f1f5f9, #e2e8f0);">
+            <svg class="w-7 h-7 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                      d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+        </div>
+        <p class="content-heading font-semibold">No training reports found</p>
+        <p class="content-text text-sm mt-1">Training reports submitted across branches will appear here.</p>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}

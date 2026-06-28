@@ -1,42 +1,75 @@
 {% extends "superadmin_dashboard/base_dashboard.html" %}
+{% block page_title %}Users & Roles — TPF Animal System{% endblock %}
 
 {% block content %}
-<div class="p-6">
-  <div class="flex justify-between items-center mb-4">
-    <h1 class="text-2xl font-bold">Manage Users & Roles</h1>
-    <a href="{% url 'superadmin_user_add' %}" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">+ Add User</a>
-  </div>
 
-  <div class="overflow-x-auto bg-white shadow rounded-lg">
-    <table class="min-w-full text-left text-sm border">
-      <thead class="bg-gray-50 text-gray-600 font-semibold">
-        <tr>
-          <th class="px-4 py-2">Username</th>
-          <th class="px-4 py-2">Name</th>
-          <th class="px-4 py-2">Email</th>
-          <th class="px-4 py-2">Branch</th>
-          <th class="px-4 py-2">Role</th>
-          <th class="px-4 py-2">Actions</th>
+<div class="glassmorphism rounded-2xl p-6 mb-6">
+  <div class="flex items-center justify-between">
+    <div>
+      <h2 class="content-heading text-2xl">Users &amp; Roles</h2>
+      <p class="content-text text-sm mt-1">Manage all system users across branches</p>
+    </div>
+    <a href="{% url 'superadmin_user_add' %}"
+       class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-white text-sm font-semibold hover:-translate-y-0.5 transition-all duration-200"
+       style="background: linear-gradient(135deg, #3b82f6, #6366f1); box-shadow: 0 4px 12px rgba(59,130,246,0.3);">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+      </svg>
+      Add User
+    </a>
+  </div>
+</div>
+
+<div class="glassmorphism rounded-2xl overflow-hidden">
+  <div class="overflow-x-auto">
+    <table class="w-full">
+      <thead>
+        <tr style="background: linear-gradient(135deg, rgba(241,245,249,0.9), rgba(226,232,240,0.9));">
+          <th class="px-6 py-3.5 text-left text-xs font-bold text-slate-600 uppercase tracking-wider">Username</th>
+          <th class="px-6 py-3.5 text-left text-xs font-bold text-slate-600 uppercase tracking-wider">Full Name</th>
+          <th class="px-6 py-3.5 text-left text-xs font-bold text-slate-600 uppercase tracking-wider">Email</th>
+          <th class="px-6 py-3.5 text-left text-xs font-bold text-slate-600 uppercase tracking-wider">Branch</th>
+          <th class="px-6 py-3.5 text-left text-xs font-bold text-slate-600 uppercase tracking-wider">Role</th>
+          <th class="px-6 py-3.5 text-left text-xs font-bold text-slate-600 uppercase tracking-wider">Actions</th>
         </tr>
       </thead>
-      <tbody>
+      <tbody class="divide-y divide-slate-100">
         {% for user in users %}
-        <tr class="border-t hover:bg-gray-100">
-          <td class="px-4 py-2">{{ user.username }}</td>
-          <td class="px-4 py-2">{{ user.first_name }} {{ user.last_name }}</td>
-          <td class="px-4 py-2">{{ user.email }}</td>
-          <td class="px-4 py-2">{{ user.branch }}</td>
-          <td class="px-4 py-2 capitalize">{{ user.role }}</td>
-          <td class="px-4 py-2 space-x-2">
-            <a href="{% url 'superadmin_user_edit' user.id %}" class="text-blue-600 hover:underline">Edit</a>
-            <a href="{% url 'superadmin_user_delete' user.id %}" class="text-red-600 hover:underline">Delete</a>
+        <tr class="card-hover">
+          <td class="px-6 py-4 text-sm font-semibold text-slate-800">{{ user.username }}</td>
+          <td class="px-6 py-4 text-sm content-text">{{ user.first_name }} {{ user.last_name }}</td>
+          <td class="px-6 py-4 text-sm content-text">{{ user.email|default:"—" }}</td>
+          <td class="px-6 py-4 text-sm content-text">{{ user.branch|default:"All Branches" }}</td>
+          <td class="px-6 py-4">
+            <span class="text-xs px-2.5 py-0.5 rounded-full font-semibold
+              {% if user.role == 'superadmin' %}bg-purple-100 text-purple-700
+              {% elif user.role == 'admin' %}bg-blue-100 text-blue-700
+              {% elif user.role == 'veterinarian' %}bg-green-100 text-green-700
+              {% elif user.role == 'staff' %}bg-amber-100 text-amber-700
+              {% else %}bg-slate-100 text-slate-600{% endif %}">
+              {{ user.role|title }}
+            </span>
+          </td>
+          <td class="px-6 py-4">
+            <div class="flex items-center gap-3">
+              <a href="{% url 'superadmin_user_edit' user.id %}"
+                 class="text-xs font-semibold text-blue-600 hover:text-blue-800 transition-colors">Edit</a>
+              <a href="{% url 'superadmin_user_delete' user.id %}"
+                 class="text-xs font-semibold text-red-500 hover:text-red-700 transition-colors">Delete</a>
+            </div>
           </td>
         </tr>
         {% empty %}
-        <tr><td colspan="6" class="text-center py-6">No users found.</td></tr>
+        <tr>
+          <td colspan="6" class="px-6 py-14 text-center">
+            <p class="content-heading font-semibold">No users found</p>
+            <p class="content-text text-sm mt-1">Add your first user using the button above.</p>
+          </td>
+        </tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
 </div>
+
 {% endblock %}

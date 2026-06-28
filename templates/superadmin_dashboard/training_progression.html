@@ -1,0 +1,61 @@
+{% extends "superadmin_dashboard/base_dashboard.html" %}
+{% block page_title %}Training Progression — TPF Animal System{% endblock %}
+{% block content %}
+
+<div class="glassmorphism rounded-2xl p-6 mb-6">
+    <div class="flex items-center justify-between">
+        <div>
+            <h2 class="content-heading text-2xl">Training Progression</h2>
+            <p class="content-text text-sm mt-1">All training sessions across the organisation</p>
+        </div>
+    </div>
+</div>
+
+{% if sessions %}
+<div class="space-y-4">
+    {% for session in sessions %}
+    <div class="glassmorphism rounded-2xl p-5 card-hover">
+        <div class="flex items-start justify-between mb-3">
+            <h3 class="content-heading font-semibold text-base">
+                {% if session.training_record and session.training_record.animal %}
+                    {{ session.training_record.animal.name }}
+                {% else %}
+                    Session #{{ session.id }}
+                {% endif %}
+            </h3>
+            <span class="text-xs content-text bg-slate-100 px-2.5 py-1 rounded-lg font-medium flex-shrink-0 ml-3">
+                {{ session.date }}
+            </span>
+        </div>
+        <div class="space-y-1 text-sm content-text">
+            <p><span class="font-semibold text-slate-700">Description:</span> {{ session.description }}</p>
+            {% if session.conducted_by %}
+            <p><span class="font-semibold text-slate-700">Conducted By:</span> {{ session.conducted_by.get_full_name }}</p>
+            {% endif %}
+            {% if session.duration %}
+            <p><span class="font-semibold text-slate-700">Duration:</span> {{ session.duration }}</p>
+            {% endif %}
+            {% if session.result %}
+            <p class="flex items-center gap-2">
+                <span class="font-semibold text-slate-700">Result:</span>
+                <span class="text-xs px-2.5 py-0.5 rounded-full bg-green-100 text-green-700 font-medium">{{ session.result }}</span>
+            </p>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="glassmorphism rounded-2xl p-10 text-center">
+    <div class="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4"
+         style="background: linear-gradient(135deg, #f1f5f9, #e2e8f0);">
+        <svg class="w-7 h-7 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+        </svg>
+    </div>
+    <p class="content-heading font-semibold">No training sessions found</p>
+    <p class="content-text text-sm mt-1">Training sessions logged by vets and trainers will appear here.</p>
+</div>
+{% endif %}
+
+{% endblock %}

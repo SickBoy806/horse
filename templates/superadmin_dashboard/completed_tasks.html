@@ -1,0 +1,57 @@
+{% extends "superadmin_dashboard/base_dashboard.html" %}
+{% block page_title %}Completed Tasks — TPF Animal System{% endblock %}
+{% block content %}
+
+<div class="glassmorphism rounded-2xl p-6 mb-6">
+    <h2 class="content-heading text-2xl">Completed Tasks</h2>
+    <p class="content-text text-sm mt-1">Tasks marked as completed across all branches</p>
+</div>
+
+<div class="glassmorphism rounded-2xl overflow-hidden">
+    {% if tasks %}
+    <div class="overflow-x-auto">
+        <table class="w-full">
+            <thead>
+                <tr style="background: linear-gradient(135deg, rgba(241,245,249,0.9), rgba(226,232,240,0.9));">
+                    <th class="px-6 py-3.5 text-left text-xs font-bold text-slate-600 uppercase tracking-wider">Task</th>
+                    <th class="px-6 py-3.5 text-left text-xs font-bold text-slate-600 uppercase tracking-wider">Branch</th>
+                    <th class="px-6 py-3.5 text-left text-xs font-bold text-slate-600 uppercase tracking-wider">Assigned To</th>
+                    <th class="px-6 py-3.5 text-left text-xs font-bold text-slate-600 uppercase tracking-wider">Completed</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+                {% for task in tasks %}
+                <tr class="card-hover">
+                    <td class="px-6 py-4">
+                        <p class="text-sm font-semibold text-slate-800">{{ task.title }}</p>
+                        {% if task.description %}
+                        <p class="text-xs content-text mt-0.5 truncate max-w-xs">{{ task.description }}</p>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4 text-sm content-text">{{ task.branch|default:"—" }}</td>
+                    <td class="px-6 py-4 text-sm content-text">{{ task.assigned_to|default:"—" }}</td>
+                    <td class="px-6 py-4">
+                        <span class="text-xs px-2.5 py-0.5 rounded-full font-semibold bg-green-100 text-green-700">
+                            Completed
+                        </span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="flex flex-col items-center justify-center py-16 text-center">
+        <div class="w-14 h-14 rounded-2xl flex items-center justify-center mb-4"
+             style="background: linear-gradient(135deg, #dcfce7, #bbf7d0);">
+            <svg class="w-7 h-7 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+        </div>
+        <p class="content-heading font-semibold">No completed tasks yet</p>
+        <p class="content-text text-sm mt-1">Completed tasks will appear here.</p>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}

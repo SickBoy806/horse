@@ -1,0 +1,43 @@
+{% extends "admin_dashboard/base_admin.html" %}
+{% block page_title %}Medical Records — TPF Animal System{% endblock %}
+
+{% block content %}
+
+<div class="glassmorphism rounded-2xl p-6 mb-6">
+  <h2 class="content-heading text-2xl">Medical Records</h2>
+  <p class="content-text text-sm mt-1">Branch: {{ branch }}</p>
+</div>
+
+<div class="glassmorphism rounded-2xl overflow-hidden">
+  <div class="overflow-x-auto">
+    <table class="w-full">
+      <thead>
+        <tr style="background: linear-gradient(135deg, rgba(241,245,249,0.9), rgba(226,232,240,0.9));">
+          <th class="px-6 py-3.5 text-left text-xs font-bold text-slate-600 uppercase tracking-wider">Animal</th>
+          <th class="px-6 py-3.5 text-left text-xs font-bold text-slate-600 uppercase tracking-wider">Condition</th>
+          <th class="px-6 py-3.5 text-left text-xs font-bold text-slate-600 uppercase tracking-wider">Treated By</th>
+          <th class="px-6 py-3.5 text-left text-xs font-bold text-slate-600 uppercase tracking-wider">Date</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        {% for record in records %}
+        <tr class="card-hover">
+          <td class="px-6 py-4 text-sm font-semibold text-slate-800">{{ record.animal.name }}</td>
+          <td class="px-6 py-4 text-sm content-text">{{ record.condition|default:"—" }}</td>
+          <td class="px-6 py-4 text-sm content-text">{{ record.veterinarian.get_full_name|default:"—" }}</td>
+          <td class="px-6 py-4 text-xs content-text font-mono">{{ record.date|date:"M d, Y" }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="4" class="px-6 py-14 text-center">
+            <p class="content-heading font-semibold">No records found</p>
+            <p class="content-text text-sm mt-1">Medical records for animals in this branch will appear here.</p>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}

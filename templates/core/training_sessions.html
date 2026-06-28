@@ -1,34 +1,91 @@
-{% extends "base.html" %}
-
+{% extends base_template %}
 {% block page_title %}Training Sessions{% endblock %}
 
 {% block content %}
-<div class="p-6 bg-gray-100 min-h-screen">
-    <h2 class="text-2xl font-semibold mb-4">Training Sessions</h2>
 
-    {% if sessions %}
-        <table class="min-w-full bg-white shadow rounded-lg overflow-hidden">
-            <thead class="bg-gray-50">
-                <tr>
-                    <th class="px-4 py-2 text-left">Title</th>
-                    <th class="px-4 py-2 text-left">Date</th>
-                    <th class="px-4 py-2 text-left">Location</th>
-                    <th class="px-4 py-2 text-left">Description</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-100">
-                {% for session in sessions %}
-                    <tr>
-                        <td class="px-4 py-2">{{ session.title }}</td>
-                        <td class="px-4 py-2">{{ session.date }}</td>
-                        <td class="px-4 py-2">{{ session.location }}</td>
-                        <td class="px-4 py-2">{{ session.description }}</td>
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    {% else %}
-        <p class="text-center text-gray-500 mt-4">No training sessions available.</p>
-    {% endif %}
+<div class="glassmorphism rounded-2xl p-6 mb-6">
+    <div class="flex items-center justify-between">
+        <div>
+            <h2 class="content-heading text-2xl">Training Sessions</h2>
+            <p class="content-text text-sm mt-1">
+                {{ request.user.get_full_name|default:request.user.username }}
+                &mdash; <span class="capitalize font-medium">{{ role }}</span>
+            </p>
+        </div>
+        <a href="{% url 'training_dashboard' %}"
+           class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-600 transition-all duration-200 hover:-translate-y-0.5"
+           style="background: linear-gradient(135deg, #f1f5f9, #e2e8f0); box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+            </svg>
+            Back to Dashboard
+        </a>
+    </div>
 </div>
+
+{% if user_clearance == 0 %}
+<div class="glassmorphism rounded-2xl p-8 text-center">
+    <div class="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4"
+         style="background: linear-gradient(135deg, #fef2f2, #fee2e2);">
+        <svg class="w-7 h-7 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+        </svg>
+    </div>
+    <p class="content-heading font-semibold">Access Restricted</p>
+    <p class="content-text text-sm mt-1">You do not have permission to view training sessions.</p>
+</div>
+
+{% elif sessions %}
+<div class="space-y-4">
+    {% for session in sessions %}
+    <div class="glassmorphism rounded-2xl p-5 card-hover">
+        <div class="flex items-start justify-between mb-3">
+            <h3 class="content-heading font-semibold text-base">
+                {{ session.training_record.animal.name }}
+            </h3>
+            <span class="text-xs content-text bg-slate-100 px-2.5 py-1 rounded-lg font-medium flex-shrink-0 ml-3">
+                {{ session.date }}
+            </span>
+        </div>
+        <div class="space-y-1 text-sm content-text">
+            <p><span class="font-semibold text-slate-700">Description:</span> {{ session.description }}</p>
+            {% if session.trainer %}
+            <p><span class="font-semibold text-slate-700">Trainer:</span> {{ session.trainer }}</p>
+            {% endif %}
+            {% if session.conducted_by %}
+            <p><span class="font-semibold text-slate-700">Conducted By:</span> {{ session.conducted_by.get_full_name }}</p>
+            {% endif %}
+            {% if session.duration %}
+            <p><span class="font-semibold text-slate-700">Duration:</span> {{ session.duration }}</p>
+            {% endif %}
+            {% if session.result %}
+            <p class="flex items-center gap-2">
+                <span class="font-semibold text-slate-700">Result:</span>
+                <span class="text-xs px-2.5 py-0.5 rounded-full bg-green-100 text-green-700 font-medium">{{ session.result }}</span>
+            </p>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% else %}
+<div class="glassmorphism rounded-2xl p-10 text-center">
+    <div class="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4"
+         style="background: linear-gradient(135deg, #f1f5f9, #e2e8f0);">
+        <svg class="w-7 h-7 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+        </svg>
+    </div>
+    <p class="content-heading font-semibold">No training sessions found</p>
+    <p class="content-text text-sm mt-1">
+        {% if role == 'user' or role == 'worker' %}Sessions appear once an animal is assigned to you.
+        {% elif role == 'veterinarian' %}Sessions appear once you are set as the assigned vet for an animal.
+        {% else %}No sessions recorded yet.{% endif %}
+    </p>
+</div>
+{% endif %}
+
 {% endblock %}

@@ -10,161 +10,111 @@ from core.models import MedicalRecord
 from .forms import CustomUserForm, AssignTaskForm, VetTaskForm, SupportTicketForm, TicketReplyForm
 from accounts.models import CustomUser
 from core.models import (
-    VetTask, Animal, DailyActivityReport, AnimalLog, 
-    SupportTicket, TicketReply, EmergencyIncident, Branch, Message
+    VetTask, Animal, DailyActivityReport, AnimalLog,
+    SupportTicket, TicketReply, EmergencyIncident, Branch, Message,
+    EquipmentLog, Report,
 )
 from core.utils import log_action, create_notification, can_access_branch
 
 
-@login_required
-def admin_dashboard_view(request, branch):
-    # Security check
-    if request.user.branch != branch or request.user.role != 'admin':
-        return render(request, 'errors/unauthorized.html', status=403)
-
-    # Main stats
-    total_users = CustomUser.objects.filter(branch=branch, role__in=['user', 'veterinarian']).count()
-    pending_tasks = VetTask.objects.filter(branch=branch, status='pending').count()
-    total_animals = Animal.objects.filter(branch=branch).count()
-    reports_today = DailyActivityReport.objects.filter(branch=branch, date__date=timezone.now().date()).count()
-    open_tickets = SupportTicket.objects.filter(branch=branch, status='open').count()
-    closed_tickets = SupportTicket.objects.filter(branch=branch, status='closed').count()
-
-    # Recent equipment logs
-    recent_equipment_logs = EquipmentLog.objects.filter(branch=branch).order_by('-created_at')[:5]
-
-    # Unread notifications for this admin
-    unread_notifications = Notification.objects.filter(
-        user__branch=branch,
-        is_read=False
-    ).order_by('-created_at')[:5]
-
-    # Unread messages for this admin
-    unread_messages = Message.objects.filter(
-        receiver=request.user,
-        is_read=False
-    ).order_by('-timestamp')[:5]
-
-    # Combine all recent activities for unified feed
-    recent_activities = sorted(
-        list(recent_equipment_logs) + list(unread_notifications) + list(unread_messages),
-        key=lambda x: getattr(x, 'created_at', getattr(x, 'timestamp', timezone.now())),
-        reverse=True
-    )[:5]
-
-    # Quick stats (example metrics, adjust as needed)
-    quick_stats = [
-        {'label': 'Total Users', 'value': total_users, 'color': 'text-blue-600'},
-        {'label': 'Pending Tasks', 'value': pending_tasks, 'color': 'text-red-600'},
-        {'label': 'Total Animals', 'value': total_animals, 'color': 'text-green-600'},
-        {'label': 'Open Tickets', 'value': open_tickets, 'color': 'text-indigo-600'},
-        {'label': 'Closed Tickets', 'value': closed_tickets, 'color': 'text-gray-600'},
-        {'label': 'Reports Today', 'value': reports_today, 'color': 'text-purple-600'},
-    ]
-
-    context = {
-        'user': request.user,
-        'branch': branch,
-        'total_users': total_users,
-        'pending_tasks': pending_tasks,
-        'total_animals': total_animals,
-        'reports_today': reports_today,
-        'open_tickets': open_tickets,
-        'closed_tickets': closed_tickets,
-        'recent_equipment_logs': recent_equipment_logs,
-        'unread_notifications': unread_notifications,
-        'unread_messages': unread_messages,
-        'recent_activities': recent_activities,
-        'quick_stats': quick_stats,
-    }
-
-    return render(request, 'admin_dashboard/dashboard.html', context)
-
-
-# 🔐 Admin Role Check
 def is_admin(user):
     return user.is_authenticated and user.role == 'admin'
 
-# 📊 Admin Dashboard
 @login_required
 def admin_dashboard(request, branch):
     if request.user.branch.name.lower() != branch.lower():
-
         return render(request, 'errors/unauthorized.html', status=403)
 
+    branch_obj = request.user.branch
     context = {
-        'branch': request.user.branch.name.title()
-
+        'branch': branch_obj.name.title(),
+        'total_users': CustomUser.objects.filter(branch=branch_obj).count(),
+        'pending_tasks': VetTask.objects.filter(branch=branch_obj, status='pending').count(),
+        'total_animals': Animal.objects.filter(branch=branch_obj).count(),
+        'reports_today': DailyActivityReport.objects.filter(
+            branch=branch_obj, date=timezone.now().date()
+        ).count(),
+        'open_tickets': SupportTicket.objects.filter(
+            created_by__branch=branch_obj, status='open'
+        ).count(),
+        'closed_tickets': SupportTicket.objects.filter(
+            created_by__branch=branch_obj, status='closed'
+        ).count(),
     }
     return render(request, 'admin_dashboard/dashboard.html', context)
 
 # 👤 Create User
 @login_required
 def create_user(request, branch):
-    if request.user.branch.lower() != branch.lower():
+    if request.user.branch.name.lower() != branch.lower():
         return render(request, 'errors/unauthorized.html', status=403)
 
     if request.method == 'POST':
-        form = CreateUserForm(request.POST)
+        form = CustomUserForm(request.POST)
         if form.is_valid():
             user = form.save(commit=False)
-            user.set_password(form.cleaned_data['password'])
-            user.branch = request.user.branch  # force same branch
+            user.branch = request.user.branch
             user.save()
             return redirect('admin_dashboard', branch=branch)
     else:
-        form = CreateUserForm()
+        form = CustomUserForm()
 
     return render(request, 'admin_dashboard/create_user.html', {
         'form': form,
-        'branch': request.user.branch.title()
+        'branch': request.user.branch.name.title()
     })
 
 # ✅ Assign Task
+@login_required
 def task_assign(request, branch):
-    if request.user.branch != branch or request.user.role != 'admin':
+    if request.user.role != 'admin' or request.user.branch.name.lower() != branch.lower():
         return render(request, 'errors/unauthorized.html', status=403)
 
+    branch_obj = request.user.branch
     form = VetTaskForm(request.POST or None, branch=branch)
     if request.method == 'POST' and form.is_valid():
         task = form.save(commit=False)
         task.assigned_by = request.user
-        task.branch = branch
+        task.branch = branch_obj
         task.save()
         return redirect('admin_task_list', branch=branch)
 
-    return render(request, 'admin_dashboard/task_form.html', {'form': form, 'branch': branch})
+    return render(request, 'admin_dashboard/task_form.html', {'form': form, 'branch': branch, 'title': 'Assign Task'})
 
 # List Tasks
+@login_required
 def task_list(request, branch):
-    if request.user.branch != branch or request.user.role != 'admin':
+    if request.user.role != 'admin' or request.user.branch.name.lower() != branch.lower():
         return render(request, 'errors/unauthorized.html', status=403)
 
-    tasks = VetTask.objects.filter(branch=branch).order_by('-created_at')
+    branch_obj = request.user.branch
+    tasks = VetTask.objects.filter(branch=branch_obj).order_by('-created_at')
     return render(request, 'admin_dashboard/task_list.html', {'tasks': tasks, 'branch': branch})
 
 # Task Detail
+@login_required
 def task_detail(request, branch, task_id):
-    task = get_object_or_404(VetTask, id=task_id, branch=branch)
-    if request.user.branch != branch or request.user.role != 'admin':
+    if request.user.role != 'admin' or request.user.branch.name.lower() != branch.lower():
         return render(request, 'errors/unauthorized.html', status=403)
 
+    branch_obj = request.user.branch
+    task = get_object_or_404(VetTask, id=task_id, branch=branch_obj)
     return render(request, 'admin_dashboard/task_detail.html', {'task': task, 'branch': branch})
 
 # ✅ Approve Activities
 @login_required
 def approve_activities(request, branch):
-    if not is_admin(request.user) or request.user.branch.lower() != branch.lower():
+    if not is_admin(request.user) or request.user.branch.name.lower() != branch.lower():
         return HttpResponseForbidden("Unauthorized access")
 
     return render(request, 'admin_dashboard/approve_activities.html', {
-        'branch': request.user.branch.title()
+        'branch': request.user.branch.name.title()
     })
 
 # ✅ Admin Reports (placeholder)
 @login_required
 def admin_reports(request, branch):
-    if not is_admin(request.user) or request.user.branch.lower() != branch.lower():
+    if not is_admin(request.user) or request.user.branch.name.lower() != branch.lower():
         return HttpResponseForbidden("Unauthorized access")
 
     return HttpResponse(f"Admin reports for branch: {branch} (placeholder view)")
@@ -172,7 +122,7 @@ def admin_reports(request, branch):
 # ✅ Animal List (placeholder)
 @login_required
 def animal_list(request, branch):
-    if not is_admin(request.user) or request.user.branch.lower() != branch.lower():
+    if not is_admin(request.user) or request.user.branch.name.lower() != branch.lower():
         return HttpResponseForbidden("Unauthorized access")
 
     return HttpResponse(f"Animal list for branch: {branch} (placeholder view)")
@@ -194,7 +144,7 @@ def admin_user_list(request, branch):
 
 # Add user
 def user_add(request, branch):
-    if request.user.role != 'admin' and request.user.branch.lower() != branch.lower():
+    if request.user.role != 'admin' and request.user.branch.name.lower() != branch.lower():
         return render(request, 'errors/unauthorized.html', status=403)
 
     form = CustomUserForm(request.POST or None)
@@ -209,7 +159,7 @@ def user_add(request, branch):
 
 # Edit user
 def user_edit(request, branch, user_id):
-    if request.user.role != 'admin' and request.user.branch.lower() != branch.lower():
+    if request.user.role != 'admin' and request.user.branch.name.lower() != branch.lower():
         return render(request, 'errors/unauthorized.html', status=403)
 
     user = get_object_or_404(CustomUser, id=user_id, branch__iexact=branch)
@@ -228,7 +178,7 @@ def user_edit(request, branch, user_id):
 # Delete user
 @login_required
 def user_delete(request, branch, user_id):
-    if request.user.role != 'admin' and request.user.branch.lower() != branch.lower():
+    if request.user.role != 'admin' and request.user.branch.name.lower() != branch.lower():
         return render(request, 'errors/unauthorized.html', status=403)
 
     user = get_object_or_404(CustomUser, id=user_id, branch=branch)
@@ -242,12 +192,11 @@ def user_delete(request, branch, user_id):
         'branch': branch
     })
 
-# View daily reports
 def reports_view(request, branch):
-    if request.user.role != 'admin' and request.user.branch.lower() != branch.lower():
+    if request.user.role != 'admin' and request.user.branch.name.lower() != branch.lower():
         return render(request, 'errors/unauthorized.html', status=403)
-
-    reports = ReportActivity.objects.filter(branch=branch).order_by('-date')
+    branch_obj = Branch.objects.filter(name__iexact=branch).first()
+    reports = DailyActivityReport.objects.filter(branch=branch_obj).order_by('-date') if branch_obj else []
     return render(request, 'admin_dashboard/admin_reports.html', {'reports': reports, 'branch': branch})
 
 # View animal care logs
@@ -261,10 +210,10 @@ def incident_logs_view(request, branch):
     return render(request, 'admin_dashboard/incident_logs.html', {'logs': logs, 'branch': branch})
 
 def admin_incident_logs(request, branch):
-    if request.user.role != 'admin' and request.user.branch.lower() != branch.lower():
+    if request.user.role != 'admin' and request.user.branch.name.lower() != branch.lower():
         return render(request, 'errors/unauthorized.html', status=403)
 
-    incidents = EmergencyIncident.objects.filter(animal__branch=branch).order_by('-date_reported')
+    incidents = EmergencyIncident.objects.filter(animal__branch=request.user.branch).order_by('-date_reported')
     return render(request, 'admin_dashboard/incident_logs.html', {
         'branch': branch,
         'incidents': incidents
@@ -272,23 +221,30 @@ def admin_incident_logs(request, branch):
 
 @login_required
 def admin_care_logs(request, branch):
-    if request.user.role != 'admin' and request.user.branch.lower() != branch.lower():
+    if request.user.role != 'admin' and request.user.branch.name.lower() != branch.lower():
         return render(request, 'errors/unauthorized.html', status=403)
 
-    logs = AnimalLog.objects.filter(animal__branch=branch).order_by('-date')
+    logs = AnimalLog.objects.filter(animal__branch=request.user.branch).order_by('-date')
     return render(request, 'admin_dashboard/care_logs.html', {
         'branch': branch,
         'logs': logs,
     })
 
 def admin_support(request, branch):
-    if request.user.role != 'admin' and request.user.branch.lower() != branch.lower():
+    if request.user.role != 'admin' and request.user.branch.name.lower() != branch.lower():
         return render(request, 'errors/unauthorized.html', status=403)
+    tickets = SupportTicket.objects.filter(
+        created_by__branch__name__iexact=branch
+    ).order_by('-created_at')
+    return render(request, 'admin_dashboard/support_list.html', {'tickets': tickets, 'branch': branch})
 
 
 @login_required
+@login_required
 def admin_animals(request, branch):
-    animals = Animal.objects.filter(branch=branch)
+    if request.user.role != 'admin' or request.user.branch.name.lower() != branch.lower():
+        return render(request, 'errors/unauthorized.html', status=403)
+    animals = Animal.objects.filter(branch=request.user.branch)
     return render(request, 'admin_dashboard/admin_animals.html', {
         'animals': animals,
         'branch': branch
@@ -296,10 +252,10 @@ def admin_animals(request, branch):
 
 @login_required
 def support_ticket_list(request, branch):
-    if request.user.role != 'admin' or request.user.branch != branch:
+    if request.user.role != 'admin' or request.user.branch.name.lower() != branch.lower():
         return HttpResponseForbidden("Unauthorized")
 
-    tickets = SupportTicket.objects.filter(created_by__branch=branch).order_by('-created_at')
+    tickets = SupportTicket.objects.filter(created_by__branch=request.user.branch).order_by('-created_at')
     return render(request, 'admin_dashboard/support_list.html', {'tickets': tickets, 'branch': branch})
 
 @login_required
@@ -335,27 +291,34 @@ def close_support_ticket(request, branch, ticket_id):
     return redirect('admin_support_detail', branch=branch, ticket_id=ticket.id)
 
 
+@login_required
 def notifications(request, branch):
-    # Fetch notifications for this branch
-    notifications_list = Notification.objects.filter(branch__name=branch)
+    if request.user.role != 'admin' or request.user.branch.name.lower() != branch.lower():
+        return render(request, 'errors/unauthorized.html', status=403)
+
+    from core.models import Notification
+    notifs = Notification.objects.filter(user=request.user).order_by('-created_at')[:50]
+    msgs = Message.objects.filter(receiver=request.user).order_by('-timestamp')[:50]
+    # Mark all as read
+    Notification.objects.filter(user=request.user, is_read=False).update(is_read=True)
+    Message.objects.filter(receiver=request.user, is_read=False).update(is_read=True)
     return render(request, 'admin_dashboard/notifications.html', {
         'branch': branch,
-        'notifications': notifications_list
+        'notifs': notifs,
+        'msgs': msgs,
     })
 
 
-def admin_medical_records(request, branch_slug):
-    # Get branch
-    branch = Branch.objects.get(name__iexact=branch_slug)
+@login_required
+def admin_medical_records(request, branch):
+    if request.user.role != 'admin' or request.user.branch.name.lower() != branch.lower():
+        return render(request, 'errors/unauthorized.html', status=403)
 
-    # Filter records for animals in this branch
-    records = MedicalRecord.objects.filter(animal__branch=branch)
-
-    context = {
+    records = MedicalRecord.objects.filter(animal__branch=request.user.branch)
+    return render(request, 'admin_dashboard/medical_records_list.html', {
         'records': records,
-        'branch': branch.name,
-    }
-    return render(request, 'admin_dashboard/medical_records_list.html', context)
+        'branch': branch,
+    })
 
 
 # admin_dashboard/views.py
@@ -364,7 +327,7 @@ def admin_equipment_logs(request, branch):
     if request.user.role != 'admin' or request.user.branch.name.lower() != branch.lower():
         return HttpResponseForbidden("Unauthorized access")
 
-    logs = EquipmentLog.objects.filter(branch__name__iexact=branch).order_by('-created_at')
+    logs = EquipmentLog.objects.filter(user__branch__name__iexact=branch).order_by('-timestamp')
     return render(request, 'admin_dashboard/equipment_logs.html', {
         'logs': logs,
         'branch': branch,
@@ -377,18 +340,8 @@ def training_sessions_view(request):
     user = request.user
 
     # Determine base template
-    if user.role == "superadmin":
-        base_template = "base/base_superadmin.html"
-        sessions = TrainingSession.objects.all().order_by('-date')
-    elif user.role == "admin":
-        base_template = "base/base_admin.html"
-        sessions = TrainingSession.objects.filter(branch=user.branch).order_by('-date')
-    elif user.role == "vet":
-        base_template = "base/base_vet.html"
-        sessions = TrainingSession.objects.filter(branch=user.branch).order_by('-date')
-    else:
-        base_template = "base/base_user.html"
-        sessions = TrainingSession.objects.filter(branch=user.branch).order_by('-date')
+    base_template = "admin_dashboard/base_admin.html"
+    sessions = TrainingSession.objects.filter(branch=user.branch).order_by('-date')
 
     return render(request, "core/training_sessions.html", {
         "sessions": sessions,
@@ -397,24 +350,25 @@ def training_sessions_view(request):
 
 @login_required
 def create_task(request):
-    if request.method == 'POST':
-        form = TaskForm(request.POST)
-        if form.is_valid():
-            form.save()
-            return redirect('admin_dashboard')
-    else:
-        form = TaskForm()
-    return render(request, 'admin_dashboard/create_task.html', {'form': form})
+    branch = request.user.branch.name.lower() if request.user.branch else ''
+    form = VetTaskForm(request.POST or None, branch=branch)
+    if request.method == 'POST' and form.is_valid():
+        task = form.save(commit=False)
+        task.assigned_by = request.user
+        task.branch = request.user.branch
+        task.save()
+        return redirect('admin_dashboard', branch=branch)
+    return render(request, 'admin_dashboard/task_form.html', {'form': form, 'branch': branch, 'title': 'Create Task'})
 
 
 @login_required
 def generate_report(request):
-    # Example logic, replace with your actual report generation
-    reports = Report.objects.all()  # or filter by branch, etc.
-    return render(request, 'admin_dashboard/generate_report.html', {'reports': reports})
+    branch_obj = request.user.branch
+    reports = Report.objects.filter(branch=branch_obj).order_by('-created_at') if branch_obj else []
+    return render(request, 'admin_dashboard/admin_reports.html', {'reports': reports, 'branch': getattr(branch_obj, 'name', '')})
 
 
 @login_required
 def settings(request):
-    # Example logic: pass any needed context
-    return render(request, 'admin_dashboard/settings.html')
+    branch = request.user.branch.name.lower() if request.user.branch else ''
+    return render(request, 'admin_dashboard/settings.html', {'branch': branch})

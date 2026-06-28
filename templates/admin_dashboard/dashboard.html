@@ -1,296 +1,95 @@
 {% extends "admin_dashboard/base_admin.html" %}
+{% block page_title %}Admin Dashboard — TPF Animal System{% endblock %}
+
 {% block content %}
 
-<div class="p-6">
-  <!-- Header Section -->
-  <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-    <div class="flex justify-between items-center">
+<div class="glassmorphism rounded-2xl p-6 mb-6">
+  <div class="flex items-center justify-between flex-wrap gap-4">
+    <div>
+      <h2 class="content-heading text-2xl">Admin Dashboard</h2>
+      <p class="content-text text-sm mt-1">
+        Branch: <span class="font-semibold text-blue-700">{{ branch }}</span>
+      </p>
+    </div>
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white"
+           style="background: linear-gradient(135deg, #2563eb, #4f46e5);">
+        {{ user.first_name|first|default:user.username|first|upper }}
+      </div>
       <div>
-        <h1 class="text-2xl font-bold text-gray-900 mb-2">Welcome back,</h1>
-        <div class="flex items-center space-x-4">
-          <div class="flex items-center text-sm text-gray-600">
-            <span class="status-indicator status-online"></span>
-            <span>Branch: <span class="text-blue-600 font-semibold px-2 py-1 bg-blue-50 rounded-full text-xs">{{ branch|title }}</span></span>
-          </div>
-          <div class="flex items-center text-sm text-gray-600">
-            <span class="status-indicator status-active"></span>
-            <span class="font-medium">Active Session</span>
-          </div>
-          <div class="flex items-center text-xs text-gray-500">
-            <i class="fas fa-clock mr-1"></i>
-            <span id="current-time"></span>
-          </div>
-        </div>
+        <p class="text-sm font-semibold text-slate-800">{{ user.get_full_name|default:user.username }}</p>
+        <p class="text-xs content-text">Administrator</p>
       </div>
-
-      <!-- User Profile & Controls -->
-      <div class="flex items-center space-x-4">
-        <div class="text-right">
-          <div class="text-sm font-medium text-gray-900">{{ user.get_full_name|default:user.username }}</div>
-          <div class="text-xs text-gray-500">Administrator</div>
-        </div>
-        <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
-          {{ user.first_name.0|default:user.username.0|upper }}
-        </div>
-        <div class="flex items-center space-x-2">
-          <span class="status-indicator status-online"></span>
-          <span class="text-sm text-green-600 font-medium">System Status</span>
-        </div>
-        <button onclick="logout()" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm font-medium flex items-center transition-colors">
-          <i class="fas fa-sign-out-alt mr-1"></i>
-          Logout
-        </button>
-        <button class="p-2 text-gray-400 hover:text-gray-600 transition-colors">
-          <i class="fas fa-bell"></i>
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Main Stats Cards -->
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 text-center">
-      <div class="text-3xl font-bold text-gray-900 mb-2">{{ pending_tasks|default:"0" }}</div>
-      <div class="text-gray-600 mb-1">
-        {% if pending_tasks > 0 %}
-          Pending tasks require attention.
-        {% else %}
-          No tasks today.
-        {% endif %}
-      </div>
-      <div class="text-xs text-gray-400">Tasks</div>
-    </div>
-
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 text-center">
-      <div class="text-3xl font-bold text-gray-900 mb-2">{{ total_animals|default:"0" }}</div>
-      <div class="text-gray-600 mb-1">
-        {% if total_animals > 0 %}
-          Animals under care.
-        {% else %}
-          No animals assigned.
-        {% endif %}
-      </div>
-      <div class="text-xs text-gray-400">Animals</div>
-    </div>
-
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 text-center">
-      <div class="text-3xl font-bold text-gray-900 mb-2">{{ open_tickets|default:"0" }}</div>
-      <div class="text-gray-600 mb-1">
-        {% if open_tickets > 0 %}
-          Open support tickets.
-        {% else %}
-          No new notifications.
-        {% endif %}
-      </div>
-      <div class="text-xs text-gray-400">Notifications</div>
-    </div>
-  </div>
-
-  <!-- Quick Actions Section -->
-  <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
-    <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-      <i class="fas fa-bolt text-yellow-500 mr-2"></i>
-      Quick Actions
-    </h3>
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      <button onclick="window.location.href='{% url 'add_animal' %}'" class="bg-blue-500 hover:bg-blue-600 text-white py-3 px-4 rounded-lg font-medium transition-colors duration-200 flex items-center justify-center">
-        <i class="fas fa-plus mr-2"></i>
-        Add Animal
-      </button>
-      <button onclick="window.location.href='{% url 'create_task' %}'" class="bg-blue-500 hover:bg-blue-600 text-white py-3 px-4 rounded-lg font-medium transition-colors duration-200 flex items-center justify-center">
-        <i class="fas fa-clipboard-check mr-2"></i>
-        New Task
-      </button>
-      <button onclick="window.location.href='{% url 'generate_report' %}'" class="bg-blue-500 hover:bg-blue-600 text-white py-3 px-4 rounded-lg font-medium transition-colors duration-200 flex items-center justify-center">
-        <i class="fas fa-file-alt mr-2"></i>
-        Generate Report
-      </button>
-      <button onclick="window.location.href='{% url 'settings' %}'" class="bg-blue-500 hover:bg-blue-600 text-white py-3 px-4 rounded-lg font-medium transition-colors duration-200 flex items-center justify-center">
-        <i class="fas fa-cog mr-2"></i>
-        Settings
-      </button>
-    </div>
-  </div>
-
-  <!-- Enhanced Dashboard Cards -->
-  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6 mb-8" id="admin-cards">
-    <!-- Total Users -->
-    <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 card card-hover">
-      <div class="flex items-center justify-between mb-4">
-        <div class="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center">
-          <i class="fas fa-users text-blue-600 text-xl"></i>
-        </div>
-        <div class="text-right">
-          <div class="text-2xl font-bold text-gray-900">{{ total_users|default:"0" }}</div>
-          <div class="text-xs text-green-600 flex items-center justify-end">
-            <i class="fas fa-arrow-up mr-1"></i>
-            +5%
-          </div>
-        </div>
-      </div>
-      <div class="text-sm font-medium text-gray-600">Total Users</div>
-      <div class="text-xs text-gray-500 mt-1">from last month</div>
-    </div>
-
-    <!-- Pending Tasks -->
-    <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 card card-hover">
-      <div class="flex items-center justify-between mb-4">
-        <div class="w-12 h-12 bg-yellow-50 rounded-lg flex items-center justify-center">
-          <i class="fas fa-clock text-yellow-600 text-xl"></i>
-        </div>
-        <div class="text-right">
-          <div class="text-2xl font-bold text-gray-900">{{ pending_tasks|default:"0" }}</div>
-          <div class="text-xs text-red-600 flex items-center justify-end">
-            <i class="fas fa-exclamation-circle mr-1"></i>
-            Urgent
-          </div>
-        </div>
-      </div>
-      <div class="text-sm font-medium text-gray-600">Pending Tasks</div>
-      <div class="text-xs text-gray-500 mt-1">Requires attention</div>
-    </div>
-
-    <!-- Total Animals -->
-    <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 card card-hover">
-      <div class="flex items-center justify-between mb-4">
-        <div class="w-12 h-12 bg-green-50 rounded-lg flex items-center justify-center">
-          <i class="fas fa-paw text-green-600 text-xl"></i>
-        </div>
-        <div class="text-right">
-          <div class="text-2xl font-bold text-gray-900">{{ total_animals|default:"0" }}</div>
-          <div class="text-xs text-green-600 flex items-center justify-end">
-            <i class="fas fa-heart mr-1"></i>
-            Healthy
-          </div>
-        </div>
-      </div>
-      <div class="text-sm font-medium text-gray-600">Animals</div>
-      <div class="text-xs text-gray-500 mt-1">All healthy</div>
-    </div>
-
-    <!-- Open Tickets -->
-    <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 card card-hover">
-      <div class="flex items-center justify-between mb-4">
-        <div class="w-12 h-12 bg-indigo-50 rounded-lg flex items-center justify-center">
-          <i class="fas fa-ticket-alt text-indigo-600 text-xl"></i>
-        </div>
-        <div class="text-right">
-          <div class="text-2xl font-bold text-gray-900">{{ open_tickets|default:"0" }}</div>
-          <div class="text-xs text-blue-600 flex items-center justify-end">
-            <i class="fas fa-clock mr-1"></i>
-            2.5hrs
-          </div>
-        </div>
-      </div>
-      <div class="text-sm font-medium text-gray-600">Open Tickets</div>
-      <div class="text-xs text-gray-500 mt-1">Avg response time</div>
-    </div>
-
-    <!-- Closed Tickets -->
-    <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 card card-hover">
-      <div class="flex items-center justify-between mb-4">
-        <div class="w-12 h-12 bg-gray-50 rounded-lg flex items-center justify-center">
-          <i class="fas fa-check-circle text-gray-600 text-xl"></i>
-        </div>
-        <div class="text-right">
-          <div class="text-2xl font-bold text-gray-900">{{ closed_tickets|default:"0" }}</div>
-          <div class="text-xs text-green-600 flex items-center justify-end">
-            <i class="fas fa-check mr-1"></i>
-            95%
-          </div>
-        </div>
-      </div>
-      <div class="text-sm font-medium text-gray-600">Closed Tickets</div>
-      <div class="text-xs text-gray-500 mt-1">Satisfaction rate</div>
-    </div>
-
-    <!-- Daily Reports -->
-    <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 card card-hover">
-      <div class="flex items-center justify-between mb-4">
-        <div class="w-12 h-12 bg-red-50 rounded-lg flex items-center justify-center">
-          <i class="fas fa-file-alt text-red-600 text-xl"></i>
-        </div>
-        <div class="text-right">
-          <div class="text-2xl font-bold text-gray-900">{{ reports_today|default:"0" }}</div>
-          <div class="text-xs text-gray-500 flex items-center justify-end">
-            <i class="fas fa-calendar-day mr-1"></i>
-            Today
-          </div>
-        </div>
-      </div>
-      <div class="text-sm font-medium text-gray-600">Daily Reports</div>
-      <div class="text-xs text-gray-500 mt-1">Today's submissions</div>
-    </div>
-  </div>
-
-  <!-- Recent Activity -->
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-  <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-    <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-      <i class="fas fa-activity text-blue-500 mr-2"></i>
-      Recent Activity
-    </h3>
-    <div class="space-y-3">
-      {% for activity in recent_activities %}
-      <div class="flex items-center p-3 bg-gray-50 rounded-lg">
-        <!-- Color-coded status indicator -->
-        <div class="w-2 h-2 {{ activity.status_color }} rounded-full mr-3"></div>
-        <div class="flex-1">
-          <div class="text-sm font-medium">{{ activity.message }}</div>
-          <div class="text-xs text-gray-500">{{ activity.timestamp|timesince }} ago</div>
-        </div>
-      </div>
-      {% empty %}
-      <p class="text-sm text-gray-400">No recent activity</p>
-      {% endfor %}
-    </div>
-  </div>
-
-  <!-- Quick Stats -->
-  <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-    <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-      <i class="fas fa-chart-pie text-purple-500 mr-2"></i>
-      Quick Stats
-    </h3>
-    <div class="space-y-4">
-      {% for stat in quick_stats %}
-      <div class="flex justify-between items-center">
-        <span class="text-gray-600">{{ stat.label }}</span>
-        <span class="{{ stat.color }} font-semibold">{{ stat.value }}</span>
-      </div>
-      {% endfor %}
     </div>
   </div>
 </div>
 
-<!-- Scripts & Styles -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-  gsap.fromTo(".card", {y:30, opacity:0, scale:0.95}, {duration:0.8, y:0, opacity:1, scale:1, stagger:0.1, ease:"power2.out", delay:0.2});
-  gsap.fromTo("h1", {y:20, opacity:0}, {duration:0.6, y:0, opacity:1, ease:"power2.out"});
-  gsap.fromTo("button", {y:20, opacity:0}, {duration:0.6, y:0, opacity:1, stagger:0.1, ease:"power2.out", delay:0.3});
-  function updateTime() {
-    const now = new Date();
-    document.getElementById('current-time').textContent = now.toLocaleTimeString('en-US',{hour12:true,hour:'2-digit',minute:'2-digit'});
-  }
-  updateTime();
-  setInterval(updateTime, 1000);
-});
+<!-- Stats row -->
+<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
+  <div class="glassmorphism rounded-2xl p-5">
+    <p class="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1">Users</p>
+    <p class="text-2xl font-bold text-blue-700">{{ total_users|default:"0" }}</p>
+  </div>
+  <div class="glassmorphism rounded-2xl p-5">
+    <p class="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1">Pending Tasks</p>
+    <p class="text-2xl font-bold text-amber-600">{{ pending_tasks|default:"0" }}</p>
+  </div>
+  <div class="glassmorphism rounded-2xl p-5">
+    <p class="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1">Animals</p>
+    <p class="text-2xl font-bold text-green-700">{{ total_animals|default:"0" }}</p>
+  </div>
+  <div class="glassmorphism rounded-2xl p-5">
+    <p class="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1">Open Tickets</p>
+    <p class="text-2xl font-bold text-indigo-700">{{ open_tickets|default:"0" }}</p>
+  </div>
+  <div class="glassmorphism rounded-2xl p-5">
+    <p class="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1">Closed Tickets</p>
+    <p class="text-2xl font-bold text-slate-700">{{ closed_tickets|default:"0" }}</p>
+  </div>
+  <div class="glassmorphism rounded-2xl p-5">
+    <p class="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1">Reports Today</p>
+    <p class="text-2xl font-bold text-purple-700">{{ reports_today|default:"0" }}</p>
+  </div>
+</div>
 
-function logout() {
-  if (confirm('Are you sure you want to logout?')) {
-    window.location.href = "{% url 'logout' %}";
-  }
-}
-</script>
-
-<style>
-.card-hover { transition: all 0.3s ease; }
-.status-indicator { width: 6px; height: 6px; border-radius: 50%; display:inline-block; margin-right:6px; }
-.status-online { background-color: #10b981; }
-.status-warning { background-color: #f59e0b; }
-.status-active { background-color: #3b82f6; }
-</style>
+<!-- Quick Actions -->
+<div class="glassmorphism rounded-2xl p-6 mb-6">
+  <h3 class="text-sm font-bold text-slate-700 uppercase tracking-wide mb-4">Quick Actions</h3>
+  <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+    <a href="{% url 'add_animal' %}"
+       class="flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-white text-sm font-semibold hover:-translate-y-0.5 transition-all duration-200"
+       style="background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 4px 10px rgba(16,185,129,0.25);">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+      </svg>
+      Add Animal
+    </a>
+    <a href="{% url 'create_task' %}"
+       class="flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-white text-sm font-semibold hover:-translate-y-0.5 transition-all duration-200"
+       style="background: linear-gradient(135deg, #3b82f6, #6366f1); box-shadow: 0 4px 10px rgba(59,130,246,0.25);">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+      </svg>
+      New Task
+    </a>
+    <a href="{% url 'create_report' %}"
+       class="flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-white text-sm font-semibold hover:-translate-y-0.5 transition-all duration-200"
+       style="background: linear-gradient(135deg, #8b5cf6, #7c3aed); box-shadow: 0 4px 10px rgba(139,92,246,0.25);">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+      </svg>
+      Report
+    </a>
+    <a href="{% url 'inbox' %}"
+       class="flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-white text-sm font-semibold hover:-translate-y-0.5 transition-all duration-200"
+       style="background: linear-gradient(135deg, #f59e0b, #d97706); box-shadow: 0 4px 10px rgba(245,158,11,0.25);">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+      </svg>
+      Messages
+    </a>
+  </div>
+</div>
 
 {% endblock %}

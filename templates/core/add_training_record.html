@@ -1,0 +1,163 @@
+{% extends base_template %}
+{% load widget_tweaks %}
+{% block page_title %}Add Training Record — TPF Animal System{% endblock %}
+
+{% block extra_head %}
+<style>
+  .form-field {
+    width: 100%; padding: 0.7rem 1rem; border: 1.5px solid #e2e8f0;
+    border-radius: 0.75rem; background: #f8fafc; font-size: 0.875rem;
+    font-family: 'Inter', sans-serif; color: #1e293b;
+    transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+  }
+  .form-field:focus {
+    outline: none; border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59,130,246,0.1); background: #fff;
+  }
+  select.form-field {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 0.75rem center; background-repeat: no-repeat;
+    background-size: 1.25em; padding-right: 2.5rem; appearance: none;
+  }
+  .checkbox-row { display: flex; align-items: center; gap: 0.5rem; }
+  .checkbox-row input[type="checkbox"] { width: 1rem; height: 1rem; accent-color: #2563eb; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="glassmorphism rounded-2xl p-6 mb-6">
+  <div class="flex items-center justify-between">
+    <div>
+      <h2 class="content-heading text-2xl">Add Training Record</h2>
+      <p class="content-text text-sm mt-1">Record a new training session for an animal</p>
+    </div>
+    <button onclick="history.back()"
+            class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-slate-600 text-sm font-semibold border border-slate-200 hover:bg-slate-50 transition-colors">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12h18M3 12l6-6m-6 6l6 6"/>
+      </svg>
+      Back
+    </button>
+  </div>
+</div>
+
+{% if messages %}
+<div class="mb-5 space-y-2">
+  {% for message in messages %}
+  <div class="px-4 py-3 rounded-xl text-sm font-medium
+    {% if message.tags == 'success' %}bg-green-50 border border-green-200 text-green-700
+    {% else %}bg-red-50 border border-red-200 text-red-700{% endif %}">
+    {{ message }}
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<form method="POST" class="space-y-5">
+  {% csrf_token %}
+
+  <!-- Animal Selection -->
+  <div class="glassmorphism rounded-2xl overflow-hidden">
+    <div class="px-6 py-4" style="background: linear-gradient(135deg, #1e40af, #2563eb);">
+      <h3 class="text-base font-semibold text-white">Select Animal</h3>
+    </div>
+    <div class="p-6">
+      <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">Animal *</label>
+      <select name="animal" required class="form-field">
+        <option value="">— Choose an animal —</option>
+        {% for animal in animals %}
+          <option value="{{ animal.id }}">{{ animal.name }} ({{ animal.species|title }} · #{{ animal.force_number }})</option>
+        {% empty %}
+          <option disabled>No animals in your branch</option>
+        {% endfor %}
+      </select>
+    </div>
+  </div>
+
+  <!-- Training Types -->
+  <div class="glassmorphism rounded-2xl overflow-hidden">
+    <div class="px-6 py-4" style="background: linear-gradient(135deg, #065f46, #059669);">
+      <h3 class="text-base font-semibold text-white">Training Types</h3>
+    </div>
+    <div class="p-6">
+      <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+        <label class="checkbox-row cursor-pointer select-none">
+          {{ form.training_tracking }}
+          <span class="text-sm font-medium text-slate-700">Tracking</span>
+        </label>
+        <label class="checkbox-row cursor-pointer select-none">
+          {{ form.training_sniffer }}
+          <span class="text-sm font-medium text-slate-700">Sniffer</span>
+        </label>
+        <label class="checkbox-row cursor-pointer select-none">
+          {{ form.training_explosives }}
+          <span class="text-sm font-medium text-slate-700">Explosives</span>
+        </label>
+        <label class="checkbox-row cursor-pointer select-none">
+          {{ form.training_govt_trophies }}
+          <span class="text-sm font-medium text-slate-700">Govt Trophies</span>
+        </label>
+        <label class="checkbox-row cursor-pointer select-none">
+          {{ form.training_narcotics }}
+          <span class="text-sm font-medium text-slate-700">Narcotics</span>
+        </label>
+      </div>
+      <div class="mt-4">
+        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">Other Training</label>
+        {{ form.training_other|add_class:"form-field" }}
+      </div>
+    </div>
+  </div>
+
+  <!-- Training Details -->
+  <div class="glassmorphism rounded-2xl overflow-hidden">
+    <div class="px-6 py-4" style="background: linear-gradient(135deg, #4f46e5, #7c3aed);">
+      <h3 class="text-base font-semibold text-white">Training Details</h3>
+    </div>
+    <div class="p-6">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+
+        <div>
+          <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">Training Place *</label>
+          {{ form.training_place|add_class:"form-field" }}
+          {% if form.training_place.errors %}<p class="text-xs text-red-600 mt-1">{{ form.training_place.errors.0 }}</p>{% endif %}
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">Duration *</label>
+          {{ form.training_duration|add_class:"form-field" }}
+          {% if form.training_duration.errors %}<p class="text-xs text-red-600 mt-1">{{ form.training_duration.errors.0 }}</p>{% endif %}
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">Training Time *</label>
+          {{ form.training_time|add_class:"form-field" }}
+          {% if form.training_time.errors %}<p class="text-xs text-red-600 mt-1">{{ form.training_time.errors.0 }}</p>{% endif %}
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">Handler *</label>
+          {{ form.training_handler|add_class:"form-field" }}
+          {% if form.training_handler.errors %}<p class="text-xs text-red-600 mt-1">{{ form.training_handler.errors.0 }}</p>{% endif %}
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Submit -->
+  <div class="flex justify-end pt-2">
+    <button type="submit"
+            class="inline-flex items-center gap-2 px-8 py-3 rounded-xl text-white text-sm font-semibold hover:-translate-y-0.5 transition-all duration-200"
+            style="background: linear-gradient(135deg, #2563eb, #4f46e5); box-shadow: 0 4px 12px rgba(37,99,235,0.3);">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+      </svg>
+      Save Training Record
+    </button>
+  </div>
+
+</form>
+
+{% endblock %}

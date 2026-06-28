@@ -26,6 +26,9 @@ def is_authorized_branch(user, branch_name, role=None):
 
 @login_required
 def vet_dashboard(request, branch):
+    if request.user.role != 'veterinarian' or not request.user.branch or request.user.branch.name.lower() != branch.lower():
+        return render(request, 'errors/unauthorized.html', status=403)
+
     branch_obj = get_object_or_404(Branch, name__iexact=branch)
 
     total_animals = Animal.objects.filter(branch=branch_obj).count()
@@ -492,7 +495,7 @@ def reply_message(request, branch, message_id):
 
 @login_required
 def report_emergency_view(request, branch):
-    if not is_authorized_branch(request.user, branch, role='veterinarian'):
+    if not request.user.branch or request.user.branch.name.lower() != branch.lower():
         return render(request, 'errors/unauthorized.html', status=403)
 
     branch_obj = get_object_or_404(Branch, name__iexact=branch)
@@ -635,3 +638,29 @@ def training_sessions_view(request):
         "sessions": sessions,
         "base_template": base_template,
     })
+
+@login_required
+def add_training_record(request):
+    from core.forms import TrainingRecordForm
+    from core.models import Animal
+    from core.views import _role_base_context
+
+    ctx = _role_base_context(request.user)
+    branch = request.user.branch
+
+    if request.method == 'POST':
+        form = TrainingRecordForm(request.POST)
+        if form.is_valid():
+            record = form.save(commit=False)
+            animal_id = request.POST.get('animal')
+            record.animal = get_object_or_404(Animal, id=animal_id, branch=branch)
+            record.save()
+            from django.contrib import messages as msg
+            msg.success(request, "Training record saved successfully.")
+            return redirect(request.META.get('HTTP_REFERER', '/'))
+    else:
+        form = TrainingRecordForm()
+
+    animals = Animal.objects.filter(branch=branch) if branch else Animal.objects.none()
+    ctx.update({'form': form, 'animals': animals})
+    return render(request, 'core/add_training_record.html', ctx)

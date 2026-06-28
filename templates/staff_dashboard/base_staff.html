@@ -1,0 +1,31 @@
+{% extends "tpf_base.html" %}
+{% load static %}
+
+{% block page_title %}Staff Dashboard — TPF Animal System{% endblock %}
+{% block sidebar_subtitle %}Staff Portal{% endblock %}
+{% block role_badge_class %}bg-amber-100 text-amber-800{% endblock %}
+{% block role_badge %}Staff{% endblock %}
+{% block notification_url %}#{% endblock %}
+
+{% block sidebar_nav %}
+  <a href="{% url 'staff_dashboard' branch=branch %}" class="nav-item flex items-center space-x-3 px-4 py-3 relative">
+    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+    </svg>
+    <span class="font-medium accent-line">Dashboard</span>
+  </a>
+
+  <a href="{% url 'animal_list' %}" class="nav-item flex items-center space-x-3 px-4 py-3 relative">
+    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
+    </svg>
+    <span class="font-medium accent-line">View Animals</span>
+  </a>
+
+  <a href="{% url 'inbox' %}" class="nav-item flex items-center space-x-3 px-4 py-3 relative">
+    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+    </svg>
+    <span class="font-medium accent-line">Messages</span>
+  </a>
+{% endblock %}

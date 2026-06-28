@@ -1,91 +1,125 @@
 {% extends "superadmin_dashboard/base_dashboard.html" %}
 {% load static %}
+{% block page_title %}Permissions — TPF Animal System{% endblock %}
+
 {% block content %}
-<div class="p-6 bg-gray-100 min-h-screen">
-  <h1 class="text-2xl font-bold mb-6">User Permissions Panel</h1>
 
-  <!-- Flash Messages -->
-  {% if messages %}
-    <div class="mb-4">
-      {% for message in messages %}
-        <div class="bg-green-100 text-green-800 p-3 rounded shadow mb-2">
-          {{ message }}
-        </div>
-      {% endfor %}
+<div class="glassmorphism rounded-2xl p-6 mb-6">
+  <h2 class="content-heading text-2xl">User Permissions</h2>
+  <p class="content-text text-sm mt-1">Manage account access, roles, and status</p>
+</div>
+
+{% if messages %}
+  <div class="mb-5 space-y-2">
+    {% for message in messages %}
+    <div class="glassmorphism rounded-xl px-4 py-3 text-sm font-medium
+                {% if message.tags == 'success' %}text-green-700 border border-green-200
+                {% else %}text-red-700 border border-red-200{% endif %}">
+      {{ message }}
     </div>
-  {% endif %}
+    {% endfor %}
+  </div>
+{% endif %}
 
-  <!-- Filters -->
-  <form method="get" class="mb-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
-    <select name="branch" class="px-4 py-2 rounded border-gray-300 shadow">
+<!-- Filters -->
+<div class="glassmorphism rounded-2xl p-5 mb-6">
+  <form method="get" class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+    <select name="branch"
+            class="px-4 py-2.5 rounded-xl border text-sm font-medium text-slate-700 bg-slate-50 border-slate-200 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100">
       <option value="">All Branches</option>
       {% for b in branches %}
         <option value="{{ b }}" {% if branch_filter == b %}selected{% endif %}>{{ b }}</option>
       {% endfor %}
     </select>
-
-    <select name="role" class="px-4 py-2 rounded border-gray-300 shadow">
+    <select name="role"
+            class="px-4 py-2.5 rounded-xl border text-sm font-medium text-slate-700 bg-slate-50 border-slate-200 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100">
       <option value="">All Roles</option>
       <option value="user" {% if role_filter == 'user' %}selected{% endif %}>User</option>
       <option value="veterinarian" {% if role_filter == 'veterinarian' %}selected{% endif %}>Veterinarian</option>
       <option value="admin" {% if role_filter == 'admin' %}selected{% endif %}>Admin</option>
+      <option value="staff" {% if role_filter == 'staff' %}selected{% endif %}>Staff</option>
     </select>
-
-    <select name="status" class="px-4 py-2 rounded border-gray-300 shadow">
+    <select name="status"
+            class="px-4 py-2.5 rounded-xl border text-sm font-medium text-slate-700 bg-slate-50 border-slate-200 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100">
       <option value="">All Status</option>
       <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active</option>
       <option value="locked" {% if status_filter == 'locked' %}selected{% endif %}>Locked</option>
     </select>
-
-    <button type="submit" class="sm:col-span-3 bg-blue-600 text-white px-6 py-2 mt-2 rounded hover:bg-blue-700">Filter</button>
+    <button type="submit"
+            class="sm:col-span-3 py-2.5 rounded-xl text-white text-sm font-semibold transition-all hover:-translate-y-0.5 duration-200"
+            style="background: linear-gradient(135deg, #3b82f6, #6366f1); box-shadow: 0 4px 12px rgba(59,130,246,0.3);">
+      Apply Filters
+    </button>
   </form>
+</div>
 
-  <!-- User Table -->
-  <div class="overflow-x-auto bg-white rounded shadow">
-    <table class="min-w-full text-left text-sm">
-      <thead class="bg-gray-100 border-b">
-        <tr>
-          <th class="px-4 py-3 font-semibold">Name</th>
-          <th class="px-4 py-3 font-semibold">Email</th>
-          <th class="px-4 py-3 font-semibold">Role</th>
-          <th class="px-4 py-3 font-semibold">Branch</th>
-          <th class="px-4 py-3 font-semibold">Status</th>
-          <th class="px-4 py-3 font-semibold">Actions</th>
+<!-- Table -->
+<div class="glassmorphism rounded-2xl overflow-hidden">
+  <div class="overflow-x-auto">
+    <table class="w-full">
+      <thead>
+        <tr style="background: linear-gradient(135deg, rgba(241,245,249,0.9), rgba(226,232,240,0.9));">
+          <th class="px-6 py-3.5 text-left text-xs font-bold text-slate-600 uppercase tracking-wider">Name</th>
+          <th class="px-6 py-3.5 text-left text-xs font-bold text-slate-600 uppercase tracking-wider">Email</th>
+          <th class="px-6 py-3.5 text-left text-xs font-bold text-slate-600 uppercase tracking-wider">Role</th>
+          <th class="px-6 py-3.5 text-left text-xs font-bold text-slate-600 uppercase tracking-wider">Branch</th>
+          <th class="px-6 py-3.5 text-left text-xs font-bold text-slate-600 uppercase tracking-wider">Status</th>
+          <th class="px-6 py-3.5 text-left text-xs font-bold text-slate-600 uppercase tracking-wider">Actions</th>
         </tr>
       </thead>
-      <tbody>
+      <tbody class="divide-y divide-slate-100">
         {% for user in users %}
-          <tr class="border-b hover:bg-gray-50">
-            <td class="px-4 py-3">{{ user.get_full_name }}</td>
-            <td class="px-4 py-3">{{ user.email }}</td>
-            <td class="px-4 py-3">{{ user.role|title }}</td>
-            <td class="px-4 py-3">{{ user.branch }}</td>
-            <td class="px-4 py-3">
-              {% if user.is_active %}
-                <span class="text-green-600 font-semibold">Active</span>
-              {% else %}
-                <span class="text-red-600 font-semibold">Locked</span>
-              {% endif %}
-            </td>
-            <td class="px-4 py-3 space-x-2">
+        <tr class="card-hover">
+          <td class="px-6 py-4 text-sm font-semibold text-slate-800">{{ user.get_full_name|default:user.username }}</td>
+          <td class="px-6 py-4 text-sm content-text">{{ user.email|default:"—" }}</td>
+          <td class="px-6 py-4">
+            <span class="text-xs px-2.5 py-0.5 rounded-full font-semibold
+              {% if user.role == 'admin' %}bg-blue-100 text-blue-700
+              {% elif user.role == 'veterinarian' %}bg-green-100 text-green-700
+              {% elif user.role == 'staff' %}bg-amber-100 text-amber-700
+              {% else %}bg-slate-100 text-slate-600{% endif %}">
+              {{ user.role|title }}
+            </span>
+          </td>
+          <td class="px-6 py-4 text-sm content-text">{{ user.branch|default:"—" }}</td>
+          <td class="px-6 py-4">
+            {% if user.is_active %}
+              <span class="inline-flex items-center gap-1 text-xs font-semibold text-green-700">
+                <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>Active
+              </span>
+            {% else %}
+              <span class="inline-flex items-center gap-1 text-xs font-semibold text-red-600">
+                <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span>Locked
+              </span>
+            {% endif %}
+          </td>
+          <td class="px-6 py-4">
+            <div class="flex items-center gap-3 flex-wrap">
               {% if user.role != 'veterinarian' %}
-                <a href="{% url 'promote_to_vet' user.id %}" class="text-blue-600 hover:underline">Promote</a>
+              <a href="{% url 'promote_to_vet' user.id %}"
+                 class="text-xs font-semibold text-blue-600 hover:text-blue-800 transition-colors">Promote to Vet</a>
               {% endif %}
               {% if user.is_active %}
-                <a href="{% url 'lock_account' user.id %}" class="text-red-600 hover:underline">Lock</a>
+              <a href="{% url 'lock_account' user.id %}"
+                 class="text-xs font-semibold text-red-500 hover:text-red-700 transition-colors">Lock</a>
               {% else %}
-                <a href="{% url 'unlock_account' user.id %}" class="text-green-600 hover:underline">Unlock</a>
+              <a href="{% url 'unlock_account' user.id %}"
+                 class="text-xs font-semibold text-green-600 hover:text-green-800 transition-colors">Unlock</a>
               {% endif %}
-              <a href="#" class="text-yellow-600 hover:underline">Reset Password</a>
-            </td>
-          </tr>
+            </div>
+          </td>
+        </tr>
         {% empty %}
-          <tr>
-            <td colspan="6" class="text-center py-4 text-gray-500">No users found for the selected filters.</td>
-          </tr>
+        <tr>
+          <td colspan="6" class="px-6 py-14 text-center">
+            <p class="content-heading font-semibold">No users match your filters</p>
+            <p class="content-text text-sm mt-1">Try adjusting the filter criteria above.</p>
+          </td>
+        </tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
 </div>
+
 {% endblock %}

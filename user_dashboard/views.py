@@ -228,25 +228,25 @@ def equipment_log_view(request, branch):
 @login_required
 def support_request_view(request, branch):
     user = request.user
-    branch_name = branch  # URL param branch (string)
 
-    if user.role == 'superadmin':
-        requests = SupportRequest.objects.all()
-    elif user.role == 'admin':
-        # Admin sees all requests in their branch
-        requests = SupportRequest.objects.filter(branch=user.branch)
+    if request.method == 'POST':
+        form = SupportRequestForm(request.POST)
+        if form.is_valid():
+            ticket = form.save(commit=False)
+            ticket.created_by = user
+            ticket.branch = user.branch
+            ticket.save()
+            messages.success(request, "Support request submitted successfully.")
+            return redirect('support_request_view', branch=branch)
     else:
-        # Normal user sees requests created by or assigned to them in their branch
-        requests = SupportRequest.objects.filter(
-            Q(created_by=user) | Q(assigned_to=user),
-            branch=user.branch
-        )
+        form = SupportRequestForm()
 
-    requests = requests.order_by('-created_at')
+    tickets = SupportRequest.objects.filter(created_by=user).order_by('-created_at')
 
     return render(request, 'user_dashboard/support_request_list.html', {
-        'requests': requests,
-        'branch': branch_name,  # pass it as 'branch' to match template usage
+        'form': form,
+        'tickets': tickets,
+        'branch': branch,
     })
 
 

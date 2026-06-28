@@ -1,16 +1,36 @@
 {% extends "admin_dashboard/base_admin.html" %}
+{% block page_title %}Incident Logs — TPF Animal System{% endblock %}
+
 {% block content %}
-<div class="p-6">
-  <h2 class="text-2xl font-bold mb-4">Incident Logs - {{ branch }}</h2>
+
+<div class="glassmorphism rounded-2xl p-6 mb-6">
+  <h2 class="content-heading text-2xl">Incident Logs</h2>
+  <p class="content-text text-sm mt-1">Branch: {{ branch|title }}</p>
+</div>
+
+<div class="space-y-4">
   {% for incident in incidents %}
-    <div class="bg-red-100 p-4 mb-2 rounded shadow">
-      <p><strong>Animal:</strong> {{ incident.animal.name }}</p>
-      <p><strong>Reported By:</strong> {{ incident.reported_by }}</p>
-      <p><strong>Description:</strong> {{ incident.description }}</p>
-      <p><strong>Date:</strong> {{ incident.date_reported }}</p>
+  <div class="glassmorphism rounded-2xl p-5 border-l-4 border-red-400 card-hover">
+    <div class="flex items-start justify-between gap-4">
+      <div class="min-w-0">
+        <p class="text-sm font-bold text-slate-800">{{ incident.animal.name }}</p>
+        <p class="text-xs content-text mt-0.5">
+          Reported by: {{ incident.reported_by }}
+          &nbsp;&middot;&nbsp; {{ incident.date_reported|date:"M d, Y" }}
+        </p>
+        <p class="text-sm text-slate-700 mt-2">{{ incident.description }}</p>
+      </div>
+      <span class="flex-shrink-0 text-xs px-2.5 py-0.5 rounded-full font-semibold bg-red-100 text-red-700">
+        Incident
+      </span>
     </div>
+  </div>
   {% empty %}
-    <p>No incident logs found.</p>
+  <div class="glassmorphism rounded-2xl px-6 py-16 text-center">
+    <p class="content-heading font-semibold">No incidents recorded</p>
+    <p class="content-text text-sm mt-1">Emergency incidents will appear here when reported.</p>
+  </div>
   {% endfor %}
 </div>
+
 {% endblock %}

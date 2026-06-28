@@ -1,38 +1,53 @@
-<!-- templates/superadmin_dashboard/system_logs.html -->
-
 {% extends "superadmin_dashboard/base_dashboard.html" %}
+{% block page_title %}System Logs — TPF Animal System{% endblock %}
 
 {% block content %}
-<div class="p-6">
-  <h1 class="text-2xl font-bold mb-6">📜 System Logs</h1>
 
-  <div class="overflow-x-auto bg-white shadow rounded-lg">
-    <table class="min-w-full text-sm text-left border">
-      <thead class="bg-gray-50 text-gray-600 font-semibold">
-        <tr>
-          <th class="px-4 py-2">User</th>
-          <th class="px-4 py-2">Role</th>
-          <th class="px-4 py-2">Branch</th>
-          <th class="px-4 py-2">Action</th>
-          <th class="px-4 py-2">Message</th>
-          <th class="px-4 py-2">Time</th>
+<div class="glassmorphism rounded-2xl p-6 mb-6">
+  <h2 class="content-heading text-2xl">System Logs</h2>
+  <p class="content-text text-sm mt-1">Complete audit trail of system activity</p>
+</div>
+
+<div class="glassmorphism rounded-2xl overflow-hidden">
+  <div class="overflow-x-auto">
+    <table class="w-full">
+      <thead>
+        <tr style="background: linear-gradient(135deg, rgba(241,245,249,0.9), rgba(226,232,240,0.9));">
+          <th class="px-6 py-3.5 text-left text-xs font-bold text-slate-600 uppercase tracking-wider">User</th>
+          <th class="px-6 py-3.5 text-left text-xs font-bold text-slate-600 uppercase tracking-wider">Role</th>
+          <th class="px-6 py-3.5 text-left text-xs font-bold text-slate-600 uppercase tracking-wider">Branch</th>
+          <th class="px-6 py-3.5 text-left text-xs font-bold text-slate-600 uppercase tracking-wider">Action</th>
+          <th class="px-6 py-3.5 text-left text-xs font-bold text-slate-600 uppercase tracking-wider">Message</th>
+          <th class="px-6 py-3.5 text-left text-xs font-bold text-slate-600 uppercase tracking-wider">Time</th>
         </tr>
       </thead>
-      <tbody>
+      <tbody class="divide-y divide-slate-100">
         {% for log in logs %}
-        <tr class="border-t">
-          <td class="px-4 py-2">{{ log.user.username }}</td>
-          <td class="px-4 py-2">{{ log.role|title }}</td>
-          <td class="px-4 py-2">{{ log.branch }}</td>
-          <td class="px-4 py-2 text-blue-600 font-semibold">{{ log.get_action_display }}</td>
-          <td class="px-4 py-2">{{ log.message }}</td>
-          <td class="px-4 py-2 text-gray-500">{{ log.timestamp|date:"Y-m-d H:i" }}</td>
+        <tr class="card-hover">
+          <td class="px-6 py-4 text-sm font-semibold text-slate-800">{{ log.user.username }}</td>
+          <td class="px-6 py-4">
+            <span class="text-xs px-2 py-0.5 rounded-full font-semibold bg-slate-100 text-slate-600">
+              {{ log.role|title }}
+            </span>
+          </td>
+          <td class="px-6 py-4 text-sm content-text">{{ log.branch|default:"—" }}</td>
+          <td class="px-6 py-4">
+            <span class="text-xs font-bold text-blue-600">{{ log.get_action_display }}</span>
+          </td>
+          <td class="px-6 py-4 text-sm content-text max-w-xs truncate">{{ log.message }}</td>
+          <td class="px-6 py-4 text-xs content-text font-mono">{{ log.timestamp|date:"Y-m-d H:i" }}</td>
         </tr>
         {% empty %}
-        <tr><td colspan="6" class="px-4 py-6 text-center">No system logs found.</td></tr>
+        <tr>
+          <td colspan="6" class="px-6 py-14 text-center">
+            <p class="content-heading font-semibold">No logs found</p>
+            <p class="content-text text-sm mt-1">System activity will appear here once recorded.</p>
+          </td>
+        </tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
 </div>
+
 {% endblock %}

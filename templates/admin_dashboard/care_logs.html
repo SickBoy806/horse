@@ -1,15 +1,38 @@
 {% extends "admin_dashboard/base_admin.html" %}
+{% block page_title %}Care Logs — TPF Animal System{% endblock %}
+
 {% block content %}
-<h2 class="text-2xl font-bold mb-4">Animal Care Logs</h2>
+
+<div class="glassmorphism rounded-2xl p-6 mb-6">
+  <h2 class="content-heading text-2xl">Animal Care Logs</h2>
+  <p class="content-text text-sm mt-1">Branch: {{ branch|title }}</p>
+</div>
 
 <div class="space-y-4">
   {% for log in logs %}
-    <div class="bg-white p-4 shadow rounded">
-      <p><strong>{{ log.animal.name }}</strong> | {{ log.user.full_name }} | {{ log.date|date:"Y-m-d H:i" }}</p>
-      <p class="mt-1 text-gray-700">{{ log.details }}</p>
+  <div class="glassmorphism rounded-2xl p-5 card-hover">
+    <div class="flex items-start justify-between gap-4">
+      <div class="min-w-0">
+        <p class="text-sm font-bold text-slate-800">{{ log.animal.name }}</p>
+        <p class="text-xs content-text mt-0.5">
+          {{ log.user.get_full_name|default:log.user.username }}
+          &nbsp;&middot;&nbsp; {{ log.date|date:"M d, Y H:i" }}
+        </p>
+        {% if log.details %}
+        <p class="text-sm text-slate-700 mt-2">{{ log.details }}</p>
+        {% endif %}
+      </div>
+      <span class="flex-shrink-0 text-xs px-2.5 py-0.5 rounded-full font-semibold bg-green-100 text-green-700">
+        Care
+      </span>
     </div>
+  </div>
   {% empty %}
-    <p>No care logs found.</p>
+  <div class="glassmorphism rounded-2xl px-6 py-16 text-center">
+    <p class="content-heading font-semibold">No care logs found</p>
+    <p class="content-text text-sm mt-1">Care activity for animals in this branch will appear here.</p>
+  </div>
   {% endfor %}
 </div>
+
 {% endblock %}

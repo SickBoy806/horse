@@ -1,5 +1,6 @@
 from django.urls import path
 from veterinarian_dashboard.views import vet_animal_list_wrapper
+
 from core.views import (
     add_animal,
     view_animal_detail,
@@ -41,18 +42,18 @@ from .views import (
     notification_count_api,
     unread_message_count,
     patient_detail,
+    add_training_record,   # ✅ FIX ADDED HERE
 )
 
 urlpatterns = [
+
     # Dashboard
     path('<str:branch>/', vet_dashboard, name='vet_dashboard'),
 
-    # Animals (core views)
-    # path('<str:branch>/animals/', animal_list, name='animal_list'),
+    # Animals
     path('<str:branch>/animals/add/', add_animal, name='add_animal'),
     path('<str:branch>/animals/<int:animal_id>/', view_animal_detail, name='view_animal_detail'),
     path('<str:branch>/animals/', vet_animal_list_wrapper, name='animal_list'),
-
 
     # Animal Logs
     path('<str:branch>/animal-logs/', animal_logs, name='animal_logs'),
@@ -99,11 +100,14 @@ urlpatterns = [
     # Notifications
     path('<str:branch>/notifications/', notifications_view, name='notifications'),
 
-    # Equipment logs & emergencies
+    # Equipment & emergencies
     path('<str:branch>/equipment-logs/', equipment_log_view, name='equipment_logs'),
-    path('<str:branch>/report-emergency/', report_emergency_view, name='report_emergency'),
+    path('<str:branch>/report-emergency/', report_emergency_view, name='vet_report_emergency'),
 
-    # APIs (non-branch scoped)
+    # APIs
     path('api/notifications/count/', notification_count_api, name='notification_count_api'),
     path('api/unread-messages/', unread_message_count, name='unread_message_count'),
+
+    # Training
+    path('dashboard/training/add/', add_training_record, name='add_training_record'),  # ✅ FIXED
 ]

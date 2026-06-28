@@ -1,0 +1,39 @@
+{% extends "superadmin_dashboard/base_dashboard.html" %}
+{% block page_title %}Animal Report — TPF Animal System{% endblock %}
+{% block content %}
+
+<div class="glassmorphism rounded-2xl p-6 mb-6">
+    <h2 class="content-heading text-2xl">Branch Animal Report</h2>
+    <p class="content-text text-sm mt-1">Animal count summary per branch</p>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+    {% for item in branch_data %}
+    <div class="glassmorphism rounded-2xl p-5 card-hover">
+        <div class="flex items-start justify-between mb-4">
+            <div>
+                <h3 class="content-heading font-semibold text-base">{{ item.branch.name }}</h3>
+                {% if item.branch.location %}<p class="content-text text-xs mt-0.5">{{ item.branch.location }}</p>{% endif %}
+            </div>
+            <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                 style="background: linear-gradient(135deg, #dbeafe, #bfdbfe);">
+                <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                </svg>
+            </div>
+        </div>
+        <div class="rounded-xl py-3 text-center" style="background: rgba(219,234,254,0.5);">
+            <p class="text-2xl font-bold text-blue-700">{{ item.count }}</p>
+            <p class="text-xs text-blue-600 font-medium mt-0.5">Animals Registered</p>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-span-3 glassmorphism rounded-2xl p-10 text-center">
+        <p class="content-heading font-semibold">No animal data</p>
+        <p class="content-text text-sm mt-1">Animals will appear here once registered.</p>
+    </div>
+    {% endfor %}
+</div>
+
+{% endblock %}

@@ -1,0 +1,72 @@
+{% extends "superadmin_dashboard/base_dashboard.html" %}
+{% block page_title %}Pending Tasks — TPF Animal System{% endblock %}
+{% block content %}
+
+<div class="glassmorphism rounded-2xl p-6 mb-6">
+    <div class="flex items-center justify-between">
+        <div>
+            <h2 class="content-heading text-2xl">Pending Tasks</h2>
+            <p class="content-text text-sm mt-1">Tasks awaiting action across all branches</p>
+        </div>
+        <a href="{% url 'superadmin_create_task' %}"
+           class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-white text-sm font-semibold hover:-translate-y-0.5 transition-all duration-200"
+           style="background: linear-gradient(135deg, #3b82f6, #6366f1); box-shadow: 0 4px 12px rgba(59,130,246,0.3);">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+            New Task
+        </a>
+    </div>
+</div>
+
+<div class="glassmorphism rounded-2xl overflow-hidden">
+    {% if tasks %}
+    <div class="overflow-x-auto">
+        <table class="w-full">
+            <thead>
+                <tr style="background: linear-gradient(135deg, rgba(241,245,249,0.9), rgba(226,232,240,0.9));">
+                    <th class="px-6 py-3.5 text-left text-xs font-bold text-slate-600 uppercase tracking-wider">Task</th>
+                    <th class="px-6 py-3.5 text-left text-xs font-bold text-slate-600 uppercase tracking-wider">Branch</th>
+                    <th class="px-6 py-3.5 text-left text-xs font-bold text-slate-600 uppercase tracking-wider">Assigned To</th>
+                    <th class="px-6 py-3.5 text-left text-xs font-bold text-slate-600 uppercase tracking-wider">Due</th>
+                    <th class="px-6 py-3.5 text-left text-xs font-bold text-slate-600 uppercase tracking-wider">Status</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+                {% for task in tasks %}
+                <tr class="card-hover">
+                    <td class="px-6 py-4">
+                        <p class="text-sm font-semibold text-slate-800">{{ task.title }}</p>
+                        {% if task.description %}
+                        <p class="text-xs content-text mt-0.5 truncate max-w-xs">{{ task.description }}</p>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4 text-sm content-text">{{ task.branch|default:"—" }}</td>
+                    <td class="px-6 py-4 text-sm content-text">{{ task.assigned_to|default:"—" }}</td>
+                    <td class="px-6 py-4 text-sm content-text">{{ task.due_date|date:"M d, Y"|default:"—" }}</td>
+                    <td class="px-6 py-4">
+                        <span class="text-xs px-2.5 py-0.5 rounded-full font-semibold bg-amber-100 text-amber-700">
+                            Pending
+                        </span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="flex flex-col items-center justify-center py-16 text-center">
+        <div class="w-14 h-14 rounded-2xl flex items-center justify-center mb-4"
+             style="background: linear-gradient(135deg, #fef9c3, #fef08a);">
+            <svg class="w-7 h-7 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                      d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+            </svg>
+        </div>
+        <p class="content-heading font-semibold">No pending tasks</p>
+        <p class="content-text text-sm mt-1">All tasks are up to date.</p>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}

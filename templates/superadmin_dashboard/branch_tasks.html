@@ -1,0 +1,51 @@
+{% extends "superadmin_dashboard/base_dashboard.html" %}
+{% block page_title %}Branch Tasks — TPF Animal System{% endblock %}
+{% block content %}
+
+<div class="glassmorphism rounded-2xl p-6 mb-6">
+    <h2 class="content-heading text-2xl">Branch Task Overview</h2>
+    <p class="content-text text-sm mt-1">Task summary per branch across the organisation</p>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+    {% for item in branch_data %}
+    <div class="glassmorphism rounded-2xl p-5 card-hover">
+        <div class="flex items-start justify-between mb-4">
+            <div>
+                <h3 class="content-heading font-semibold text-base">{{ item.branch.name }}</h3>
+                {% if item.branch.location %}
+                <p class="content-text text-xs mt-0.5">{{ item.branch.location }}</p>
+                {% endif %}
+            </div>
+            <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                 style="background: linear-gradient(135deg, #dbeafe, #bfdbfe);">
+                <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                </svg>
+            </div>
+        </div>
+        <div class="grid grid-cols-3 gap-3">
+            <div class="text-center rounded-xl py-2.5" style="background: rgba(241,245,249,0.8);">
+                <p class="text-lg font-bold text-slate-800">{{ item.total }}</p>
+                <p class="text-xs content-text font-medium">Total</p>
+            </div>
+            <div class="text-center rounded-xl py-2.5" style="background: rgba(254,243,199,0.8);">
+                <p class="text-lg font-bold text-amber-700">{{ item.pending }}</p>
+                <p class="text-xs text-amber-600 font-medium">Pending</p>
+            </div>
+            <div class="text-center rounded-xl py-2.5" style="background: rgba(220,252,231,0.8);">
+                <p class="text-lg font-bold text-green-700">{{ item.completed }}</p>
+                <p class="text-xs text-green-600 font-medium">Done</p>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-span-3 glassmorphism rounded-2xl p-10 text-center">
+        <p class="content-heading font-semibold">No branches found</p>
+        <p class="content-text text-sm mt-1">Add branches first from the Manage Branches section.</p>
+    </div>
+    {% endfor %}
+</div>
+
+{% endblock %}

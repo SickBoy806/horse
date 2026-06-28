@@ -1,22 +1,80 @@
 {% extends "user_dashboard/base_user.html" %}
-{% block content %}
-<h2 class="text-2xl font-bold mb-4">Assigned Animals</h2>
+{% block page_title %}Assigned Animals — TPF Animal System{% endblock %}
 
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+{% block content %}
+
+<div class="glassmorphism rounded-2xl p-6 mb-6">
+  <h2 class="content-heading text-2xl">Assigned Animals</h2>
+  <p class="content-text text-sm mt-1">Animals currently assigned to you</p>
+</div>
+
+{% if animals %}
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
   {% for animal in animals %}
-    <div class="bg-white rounded-xl shadow p-4">
-      {% if animal.photo %}
-        <img src="{{ animal.photo.url }}" alt="{{ animal.name }}" class="rounded w-full h-40 object-cover mb-2">
-      {% else %}
-        <div class="h-40 bg-gray-200 flex items-center justify-center text-gray-500">No Photo</div>
-      {% endif %}
-      <h3 class="text-xl font-semibold">{{ animal.name }}</h3>
-      <p class="text-gray-600 capitalize">{{ animal.species }}</p>
-      <p class="text-sm text-gray-500">Age: {{ animal.age }}</p>
-      <p class="text-sm text-gray-400">Branch: {{ animal.branch }}</p>
+  <div class="glassmorphism rounded-2xl overflow-hidden card-hover">
+
+    {% if animal.photo %}
+      <img src="{{ animal.photo.url }}" alt="{{ animal.name }}"
+           class="w-full h-44 object-cover">
+    {% else %}
+      <div class="w-full h-44 flex flex-col items-center justify-center"
+           style="background: linear-gradient(135deg, #dbeafe, #ede9fe);">
+        <svg class="w-10 h-10 text-blue-400 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+        </svg>
+        <span class="text-xs text-blue-500 font-medium">No Photo</span>
+      </div>
+    {% endif %}
+
+    <div class="p-5">
+      <div class="flex items-start justify-between mb-3">
+        <div>
+          <h3 class="text-base font-bold text-slate-800">{{ animal.name }}</h3>
+          <p class="text-sm content-text capitalize">{{ animal.species|default:"Unknown species" }}</p>
+        </div>
+        <span class="text-xs px-2.5 py-0.5 rounded-full font-semibold
+          {% if animal.status == 'active' %}bg-green-100 text-green-700
+          {% else %}bg-slate-100 text-slate-600{% endif %}">
+          {{ animal.status|title|default:"Active" }}
+        </span>
+      </div>
+
+      <div class="space-y-1.5 text-sm">
+        {% if animal.age %}
+        <div class="flex items-center gap-2">
+          <span class="content-text w-14 text-xs font-semibold uppercase tracking-wide">Age</span>
+          <span class="text-slate-700 font-medium">{{ animal.age }}</span>
+        </div>
+        {% endif %}
+        {% if animal.clearance_level %}
+        <div class="flex items-center gap-2">
+          <span class="content-text w-14 text-xs font-semibold uppercase tracking-wide">Level</span>
+          <span class="text-slate-700 font-medium">Clearance {{ animal.clearance_level }}</span>
+        </div>
+        {% endif %}
+        <div class="flex items-center gap-2">
+          <span class="content-text w-14 text-xs font-semibold uppercase tracking-wide">Branch</span>
+          <span class="text-slate-700 font-medium">{{ animal.branch|title }}</span>
+        </div>
+      </div>
     </div>
-  {% empty %}
-    <p class="text-gray-600">You have not been assigned any animals.</p>
+  </div>
   {% endfor %}
 </div>
+
+{% else %}
+<div class="glassmorphism rounded-2xl px-6 py-16 text-center">
+  <div class="inline-flex items-center justify-center w-14 h-14 rounded-full mb-4"
+       style="background: linear-gradient(135deg, #dbeafe, #ede9fe);">
+    <svg class="w-7 h-7 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+            d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+    </svg>
+  </div>
+  <p class="content-heading font-semibold text-lg">No animals assigned</p>
+  <p class="content-text text-sm mt-1">Animals assigned to you by your supervisor will appear here.</p>
+</div>
+{% endif %}
+
 {% endblock %}

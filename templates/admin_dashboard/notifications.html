@@ -1,0 +1,82 @@
+{% extends "admin_dashboard/base_admin.html" %}
+{% block page_title %}Notifications — TPF Animal System{% endblock %}
+
+{% block content %}
+
+<div class="glassmorphism rounded-2xl p-6 mb-6">
+  <h2 class="content-heading text-2xl">Notifications</h2>
+  <p class="content-text text-sm mt-1">Branch: {{ branch|title }}</p>
+</div>
+
+<!-- System Notifications -->
+<div class="glassmorphism rounded-2xl overflow-hidden mb-6">
+  <div class="px-6 py-4" style="background: linear-gradient(135deg, #1e40af, #2563eb);">
+    <h3 class="text-base font-semibold text-white">System Notifications</h3>
+  </div>
+  {% if notifs %}
+  <ul class="divide-y divide-slate-100">
+    {% for n in notifs %}
+    <li class="px-6 py-4 card-hover">
+      <div class="flex items-start gap-3">
+        <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
+             style="background: linear-gradient(135deg, #dbeafe, #bfdbfe);">
+          <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+          </svg>
+        </div>
+        <div class="min-w-0 flex-1">
+          <p class="text-sm font-semibold text-slate-800">{{ n.title }}</p>
+          <p class="text-xs content-text mt-0.5">{{ n.message }}</p>
+          <p class="text-xs content-text mt-1">{{ n.created_at|date:"M d, Y H:i" }}</p>
+        </div>
+        {% if n.link %}
+        <a href="{{ n.link }}" class="flex-shrink-0 text-xs text-blue-600 hover:underline">View</a>
+        {% endif %}
+      </div>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <div class="px-6 py-10 text-center">
+    <p class="content-heading font-semibold">No notifications</p>
+    <p class="content-text text-sm mt-1">You're all caught up.</p>
+  </div>
+  {% endif %}
+</div>
+
+<!-- Messages -->
+<div class="glassmorphism rounded-2xl overflow-hidden">
+  <div class="px-6 py-4" style="background: linear-gradient(135deg, #065f46, #059669);">
+    <h3 class="text-base font-semibold text-white">Messages</h3>
+  </div>
+  {% if msgs %}
+  <ul class="divide-y divide-slate-100">
+    {% for m in msgs %}
+    <li class="px-6 py-4 card-hover">
+      <div class="flex items-start gap-3">
+        <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
+             style="background: linear-gradient(135deg, #d1fae5, #a7f3d0);">
+          <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+          </svg>
+        </div>
+        <div class="min-w-0 flex-1">
+          <p class="text-sm font-semibold text-slate-800">{{ m.subject }}</p>
+          <p class="text-xs content-text mt-0.5">From: {{ m.sender.get_full_name|default:m.sender.username }}</p>
+          <p class="text-xs content-text mt-1">{{ m.timestamp|date:"M d, Y H:i" }}</p>
+        </div>
+      </div>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <div class="px-6 py-10 text-center">
+    <p class="content-heading font-semibold">No messages</p>
+    <p class="content-text text-sm mt-1">Your inbox is empty.</p>
+  </div>
+  {% endif %}
+</div>
+
+{% endblock %}

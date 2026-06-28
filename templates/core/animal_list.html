@@ -1,81 +1,162 @@
-{% extends "base.html" %}
+{% extends base_template %}
+{% block page_title %}Animals — TPF Animal System{% endblock %}
+
+{% block extra_head %}
+<style>
+  .filter-field {
+    width: 100%; padding: 0.6rem 1rem; border: 1.5px solid #e2e8f0;
+    border-radius: 0.75rem; background: #f8fafc; font-size: 0.875rem;
+    font-family: 'Inter', sans-serif; color: #1e293b;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    appearance: none;
+  }
+  .filter-field:focus {
+    outline: none; border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59,130,246,0.1); background: #fff;
+  }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="p-6 bg-gray-100 min-h-screen">
 
-{% if request.user.branch %}
-  <a href="{% url 'user_dashboard' branch=request.user.branch.name %}"
-     class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 mb-6 inline-block">
-    Back to Dashboard
-  </a>
-{% endif %}
+<div class="glassmorphism rounded-2xl p-6 mb-6">
+  <div class="flex items-center justify-between">
+    <div>
+      <h2 class="content-heading text-2xl">Animals</h2>
+      <p class="content-text text-sm mt-1">
+        {% if branch %}Branch: {{ branch|title }}{% else %}All branches{% endif %}
+      </p>
+    </div>
+    {% if request.user.branch %}
+      {% if request.user.role == 'admin' %}
+        {% with dash_url=request.user.branch.name|lower %}
+        <a href="{% url 'admin_dashboard' branch=dash_url %}"
+        {% endwith %}
+      {% elif request.user.role == 'veterinarian' %}
+        {% with dash_url=request.user.branch.name|lower %}
+        <a href="{% url 'vet_dashboard' branch=dash_url %}"
+        {% endwith %}
+      {% elif request.user.role == 'user' or request.user.role == 'staff' %}
+        {% with dash_url=request.user.branch.name|lower %}
+        <a href="{% url 'user_dashboard' branch=dash_url %}"
+        {% endwith %}
+      {% else %}
+        <a href="#"
+      {% endif %}
+         class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-white text-sm font-semibold hover:-translate-y-0.5 transition-all duration-200"
+         style="background: linear-gradient(135deg, #2563eb, #4f46e5); box-shadow: 0 4px 12px rgba(37,99,235,0.3);">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12h18M3 12l6-6m-6 6l6 6"/>
+        </svg>
+        Dashboard
+      </a>
+    {% endif %}
+  </div>
+</div>
 
+<!-- Filters -->
+<div class="glassmorphism rounded-2xl p-5 mb-6">
+  <form method="get" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    {% if branches %}
+    <div>
+      <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">Branch</label>
+      <select name="branch" class="filter-field">
+        <option value="">All Branches</option>
+        {% for b in branches %}
+          <option value="{{ b.name }}" {% if b.name == branch_filter %}selected{% endif %}>{{ b.name|title }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    {% endif %}
 
-  <h1 class="text-2xl font-bold mb-6">Animal List</h1>
+    <div>
+      <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">Species</label>
+      <select name="species" class="filter-field">
+        <option value="">All Species</option>
+        {% for val, label in species_choices %}
+          <option value="{{ val }}" {% if val == species_filter %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
 
-  <!-- Filter Form -->
-  <form method="get" class="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-    <select name="branch" class="px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
-      <option value="">All Branches</option>
-      {% for b in branches %}
-        <option value="{{ b }}" {% if b == branch_filter %}selected{% endif %}>{{ b }}</option>
-      {% endfor %}
-    </select>
+    <div>
+      <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">Search</label>
+      <input type="text" name="q" value="{{ search|default:'' }}" placeholder="Name, number…"
+             class="filter-field">
+    </div>
 
-    <select name="species" class="px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
-      <option value="">All Species</option>
-      {% for s in species_list %}
-        <option value="{{ s }}" {% if s == species_filter %}selected{% endif %}>{{ s }}</option>
-      {% endfor %}
-    </select>
-
-    <button type="submit"
-            class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition duration-200">
-      Filter
-    </button>
+    <div class="flex items-end">
+      <button type="submit"
+              class="w-full py-2.5 rounded-xl text-white text-sm font-semibold transition-all duration-200 hover:-translate-y-0.5"
+              style="background: linear-gradient(135deg, #2563eb, #4f46e5); box-shadow: 0 4px 12px rgba(37,99,235,0.25);">
+        Apply Filters
+      </button>
+    </div>
   </form>
+</div>
 
-  <!-- Animal Table -->
-  <div class="overflow-x-auto bg-white shadow rounded">
-    <table class="min-w-full text-sm divide-y divide-gray-200">
-      <thead class="bg-gray-100">
-        <tr>
-          <th class="px-4 py-2 text-left font-medium text-gray-700">Photo</th>
-          <th class="px-4 py-2 text-left font-medium text-gray-700">Name</th>
-          <th class="px-4 py-2 text-left font-medium text-gray-700">Species</th>
-          <th class="px-4 py-2 text-left font-medium text-gray-700">Branch</th>
-          <th class="px-4 py-2 text-left font-medium text-gray-700">Assigned Users</th>
-          <th class="px-4 py-2 text-left font-medium text-gray-700">Actions</th>
+<!-- Table -->
+<div class="glassmorphism rounded-2xl overflow-hidden">
+  <div class="overflow-x-auto">
+    <table class="w-full">
+      <thead>
+        <tr style="background: linear-gradient(135deg, rgba(241,245,249,0.9), rgba(226,232,240,0.9));">
+          <th class="px-6 py-3.5 text-left text-xs font-bold text-slate-600 uppercase tracking-wider">Photo</th>
+          <th class="px-6 py-3.5 text-left text-xs font-bold text-slate-600 uppercase tracking-wider">Name</th>
+          <th class="px-6 py-3.5 text-left text-xs font-bold text-slate-600 uppercase tracking-wider">Species</th>
+          <th class="px-6 py-3.5 text-left text-xs font-bold text-slate-600 uppercase tracking-wider">Branch</th>
+          <th class="px-6 py-3.5 text-left text-xs font-bold text-slate-600 uppercase tracking-wider">Status</th>
+          <th class="px-6 py-3.5 text-left text-xs font-bold text-slate-600 uppercase tracking-wider">Assigned To</th>
+          <th class="px-6 py-3.5 text-left text-xs font-bold text-slate-600 uppercase tracking-wider"></th>
         </tr>
       </thead>
-      <tbody class="divide-y divide-gray-100">
+      <tbody class="divide-y divide-slate-100">
         {% for animal in page_obj %}
-        <tr class="hover:bg-gray-50">
-          <td class="px-4 py-2">
+        <tr class="card-hover">
+          <td class="px-6 py-3">
             {% if animal.photo %}
               <img src="{{ animal.photo.url }}" alt="{{ animal.name }}"
-                   class="w-12 h-12 object-cover rounded border" />
+                   class="w-11 h-11 object-cover rounded-lg border border-slate-200">
             {% else %}
-              <span class="text-gray-400 text-xs italic">No Image</span>
+              <div class="w-11 h-11 rounded-lg flex items-center justify-center"
+                   style="background: linear-gradient(135deg, #dbeafe, #ede9fe);">
+                <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                        d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                </svg>
+              </div>
             {% endif %}
           </td>
-          <td class="px-4 py-2 font-semibold text-gray-900">{{ animal.name }}</td>
-          <td class="px-4 py-2 text-gray-700">{{ animal.species }}</td>
-          <td class="px-4 py-2 text-gray-700">{{ animal.branch }}</td>
-          <td class="px-4 py-2">
-            {% for user in animal.assigned_users.all %}
-              <span class="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs mr-1">{{ user.get_full_name }}</span>
+          <td class="px-6 py-4 text-sm font-semibold text-slate-800">{{ animal.name }}</td>
+          <td class="px-6 py-4 text-sm content-text capitalize">{{ animal.species|default:"—" }}</td>
+          <td class="px-6 py-4 text-sm content-text">{{ animal.branch|title|default:"—" }}</td>
+          <td class="px-6 py-4">
+            <span class="text-xs px-2.5 py-0.5 rounded-full font-semibold
+              {% if animal.status == 'active' %}bg-green-100 text-green-700
+              {% else %}bg-slate-100 text-slate-600{% endif %}">
+              {{ animal.status|title|default:"Active" }}
+            </span>
+          </td>
+          <td class="px-6 py-4">
+            {% for u in animal.assigned_users.all %}
+              <span class="inline-block text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 font-medium mr-1 mb-0.5">
+                {{ u.get_full_name|default:u.username }}
+              </span>
             {% empty %}
-              <span class="text-gray-400 text-xs italic">None</span>
+              <span class="text-xs content-text">—</span>
             {% endfor %}
           </td>
-          <td class="px-4 py-2">
-            <a href="{% url 'view_animal_detail' animal.id %}" class="text-blue-600 hover:underline">View</a>
+          <td class="px-6 py-4">
+            <a href="{% url 'view_animal_detail' animal.id %}"
+               class="text-xs font-semibold text-blue-600 hover:text-blue-800 transition-colors">View</a>
           </td>
         </tr>
         {% empty %}
         <tr>
-          <td colspan="6" class="text-center py-4 text-gray-500">No animals found.</td>
+          <td colspan="7" class="px-6 py-14 text-center">
+            <p class="content-heading font-semibold">No animals found</p>
+            <p class="content-text text-sm mt-1">Try adjusting your filters.</p>
+          </td>
         </tr>
         {% endfor %}
       </tbody>
@@ -84,18 +165,26 @@
 
   <!-- Pagination -->
   {% if page_obj.has_other_pages %}
-  <div class="mt-6 flex justify-center items-center space-x-2">
-    {% if page_obj.has_previous %}
-      <a href="?page={{ page_obj.previous_page_number }}&branch={{ branch_filter }}&species={{ species_filter }}"
-         class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 transition duration-150">&laquo; Prev</a>
-    {% endif %}
-    <span class="px-4 py-2 text-gray-700">{{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
-    {% if page_obj.has_next %}
-      <a href="?page={{ page_obj.next_page_number }}&branch={{ branch_filter }}&species={{ species_filter }}"
-         class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 transition duration-150">Next &raquo;</a>
-    {% endif %}
+  <div class="px-6 py-4 border-t border-slate-100 flex items-center justify-between">
+    <p class="text-xs content-text">
+      Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+    </p>
+    <div class="flex items-center gap-2">
+      {% if page_obj.has_previous %}
+      <a href="?page={{ page_obj.previous_page_number }}&branch={{ branch_filter }}&species={{ species_filter }}&q={{ search }}"
+         class="px-3 py-1.5 text-xs font-semibold rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50 transition-colors">
+        &laquo; Prev
+      </a>
+      {% endif %}
+      {% if page_obj.has_next %}
+      <a href="?page={{ page_obj.next_page_number }}&branch={{ branch_filter }}&species={{ species_filter }}&q={{ search }}"
+         class="px-3 py-1.5 text-xs font-semibold rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50 transition-colors">
+        Next &raquo;
+      </a>
+      {% endif %}
+    </div>
   </div>
   {% endif %}
-
 </div>
+
 {% endblock %}

@@ -89,13 +89,23 @@ def superadmin_dashboard(request):
     species_counts = [s['count'] for s in species_data]
 
     # ----------------------------
+    # Extra command-centre metrics
+    # ----------------------------
+    open_tickets   = SupportTicket.objects.filter(status='open').count()
+    pending_tasks  = VetTask.objects.filter(status='pending').count()
+    active_branches = Branch.objects.filter(is_active=True).count()
+
+    # ----------------------------
     # Context
     # ----------------------------
     context = {
         'total_users': total_users,
         'total_animals': total_animals,
         'total_branches': total_branches,
+        'active_branches': active_branches,
         'reports_today': reports_today,
+        'open_tickets': open_tickets,
+        'pending_tasks': pending_tasks,
         'role_labels': role_labels,
         'role_counts': role_counts,
         'task_status_data': task_status_data,
@@ -116,8 +126,14 @@ def superadmin_manage_branches(request):
     if not is_superadmin(request.user):
         return render(request, 'errors/unauthorized.html', status=403)
 
+    q = request.GET.get('q', '').strip()
     branches = Branch.objects.all().order_by('name')
-    return render(request, 'superadmin_dashboard/manage_branches.html', {'branches': branches})
+    if q:
+        branches = branches.filter(name__icontains=q)
+    return render(request, 'superadmin_dashboard/manage_branches.html', {
+        'branches': branches,
+        'search_query': q,
+    })
 
 
 @login_required
@@ -126,7 +142,7 @@ def superadmin_manage_users(request):
         return render(request, 'errors/unauthorized.html', status=403)
 
     users = CustomUser.objects.all().order_by('branch', 'role', 'username')
-    return render(request, 'superadmin_dashboard/admin_user_list.html', {'users': users})
+    return render(request, 'superadmin_dashboard/user_list.html', {'users': users})
 
 
 @login_required
@@ -178,7 +194,7 @@ def superadmin_user_delete(request, user_id):
         user.delete()
         return redirect('superadmin_manage_users')
 
-    return render(request, 'superadmin_dashboard/user_confirm_delete.html', {'user': user})
+    return render(request, 'superadmin_dashboard/user_confirm-delete.html', {'user': user})
 
 
 @login_required
@@ -203,10 +219,10 @@ def superadmin_analytics(request):
     branch_summaries = []
     all_branches = Branch.objects.filter(is_active=True)
     for branch in all_branches:
-        user_count = CustomUser.objects.filter(branch=branch.name).count()
+        user_count = CustomUser.objects.filter(branch=branch).count()
         task_count = VetTask.objects.filter(branch=branch).count()
         reports = DailyActivityReport.objects.filter(branch=branch, date=today).count()
-        animals = Animal.objects.filter(branch=branch, is_active=True).count()
+        animals = Animal.objects.filter(branch=branch).count()
 
         branch_summaries.append({
             'branch': branch.name,
@@ -358,104 +374,116 @@ def unlock_account(request, user_id):
     return redirect('superadmin_permissions')
 
 def superadmin_create_task(request):
-    # Placeholder logic for now
     return render(request, 'superadmin_dashboard/create_task.html')
 
 def superadmin_pending_tasks(request):
-    return render(request, 'superadmin_dashboard/pending_tasks.html')
+    tasks = VetTask.objects.filter(status='pending').select_related('branch').order_by('-id')
+    return render(request, 'superadmin_dashboard/pending_tasks.html', {'tasks': tasks, 'status_label': 'Pending'})
 
 def superadmin_completed_tasks(request):
-    return render(request, 'superadmin_dashboard/completed_tasks.html')
+    tasks = VetTask.objects.filter(status='completed').select_related('branch').order_by('-id')
+    return render(request, 'superadmin_dashboard/completed_tasks.html', {'tasks': tasks, 'status_label': 'Completed'})
 
 def superadmin_branch_tasks(request):
-    return render(request, 'superadmin_dashboard/branch_tasks.html')
+    branches = Branch.objects.all().order_by('name')
+    branch_data = []
+    for b in branches:
+        branch_data.append({
+            'branch': b,
+            'total': VetTask.objects.filter(branch=b).count(),
+            'pending': VetTask.objects.filter(branch=b, status='pending').count(),
+            'completed': VetTask.objects.filter(branch=b, status='completed').count(),
+        })
+    return render(request, 'superadmin_dashboard/branch_tasks.html', {'branch_data': branch_data})
 
 def superadmin_task_logs(request):
-    return render(request, 'superadmin_dashboard/task_logs.html')
+    logs = SystemLog.objects.filter(action__icontains='task').order_by('-timestamp')[:100]
+    return render(request, 'superadmin_dashboard/task_logs.html', {'logs': logs})
 
 # --- Reports ---
 def branch_medical_report(request):
-    return render(request, 'superadmin_dashboard/branch_medical_report.html')
+    from core.models import MedicalRecord
+    branches = Branch.objects.all().order_by('name')
+    data = [{'branch': b, 'count': MedicalRecord.objects.filter(animal__branch=b).count()} for b in branches]
+    return render(request, 'superadmin_dashboard/branch_medical_report.html', {'branch_data': data})
 
 def branch_equipment_report(request):
-    return render(request, 'superadmin_dashboard/branch_equipment_report.html')
+    from core.models import EquipmentLog
+    branches = Branch.objects.all().order_by('name')
+    data = [{'branch': b, 'count': EquipmentLog.objects.filter(user__branch=b).count()} for b in branches]
+    return render(request, 'superadmin_dashboard/branch_equipment_report.html', {'branch_data': data})
 
 def branch_task_report(request):
-    return render(request, 'superadmin_dashboard/branch_task_report.html')
+    branches = Branch.objects.all().order_by('name')
+    data = [{'branch': b, 'total': VetTask.objects.filter(branch=b).count(),
+             'pending': VetTask.objects.filter(branch=b, status='pending').count(),
+             'completed': VetTask.objects.filter(branch=b, status='completed').count()} for b in branches]
+    return render(request, 'superadmin_dashboard/branch_task_report.html', {'branch_data': data})
 
 def branch_support_report(request):
-    return render(request, 'superadmin_dashboard/branch_support_report.html')
+    branches = Branch.objects.all().order_by('name')
+    data = [{'branch': b, 'count': SupportTicket.objects.filter(branch=b).count()} for b in branches]
+    return render(request, 'superadmin_dashboard/branch_support_report.html', {'branch_data': data})
 
 def branch_animal_report(request):
-    return render(request, 'superadmin_dashboard/branch_animal_report.html')
+    branches = Branch.objects.all().order_by('name')
+    data = [{'branch': b, 'count': Animal.objects.filter(branch=b).count()} for b in branches]
+    return render(request, 'superadmin_dashboard/branch_animal_report.html', {'branch_data': data})
 
 def training_report(request):
-    return render(request, 'superadmin_dashboard/training_report.html')
+    from core.models import Report
+    reports = Report.objects.filter(
+        specific_report_type__in=['training_progress', 'training_log', 'performance_eval',
+                                   'behavior_assessment', 'missed_training', 'training_schedule', 'special_skills']
+    ).order_by('-date_created')
+    return render(request, 'superadmin_dashboard/training_report.html', {'reports': reports})
 
 
 
 @login_required
 def training_sessions_view(request):
-    user = request.user
-
-    # Determine base template
-    if user.role == "superadmin":
-        base_template = "base/base_superadmin.html"
-        sessions = TrainingSession.objects.all().order_by('-date')
-    elif user.role == "admin":
-        base_template = "base/base_admin.html"
-        sessions = TrainingSession.objects.filter(branch=user.branch).order_by('-date')
-    elif user.role == "vet":
-        base_template = "base/base_vet.html"
-        sessions = TrainingSession.objects.filter(branch=user.branch).order_by('-date')
-    else:
-        base_template = "base/base_user.html"
-        sessions = TrainingSession.objects.filter(branch=user.branch).order_by('-date')
-
+    sessions = TrainingSession.objects.all().order_by('-date')
     return render(request, "core/training_sessions.html", {
         "sessions": sessions,
-        "base_template": base_template,
+        "base_template": "superadmin_dashboard/base_dashboard.html",
+        "role": "superadmin",
+        "user_clearance": 3,
     })
 
 
 @login_required
 def training_reports_view(request):
-    reports = TrainingReport.objects.all().order_by('-date')
-    return render(request, 'superadmin_dashboard/training_reports.html', {
-        'reports': reports
-    })
-
+    if not is_superadmin(request.user):
+        return render(request, 'errors/unauthorized.html', status=403)
+    from core.models import Report
+    reports = Report.objects.filter(
+        specific_report_type__in=[
+            'training_progress', 'training_log', 'performance_eval',
+            'behavior_assessment', 'missed_training', 'training_schedule',
+            'special_skills',
+        ]
+    ).order_by('-date_created')
+    return render(request, 'superadmin_dashboard/training_reports.html', {'reports': reports})
 
 
 @login_required
 def training_progression_view(request):
-    progression = TrainingProgression.objects.all().order_by('-date')
-    return render(request, 'superadmin_dashboard/training_progression.html', {
-        'progression': progression
-    })
+    if not is_superadmin(request.user):
+        return render(request, 'errors/unauthorized.html', status=403)
+    from core.models import TrainingSession
+    sessions = TrainingSession.objects.all().select_related(
+        'training_record__animal', 'conducted_by'
+    ).order_by('-date')
+    return render(request, 'superadmin_dashboard/training_progression.html', {'sessions': sessions})
 
-
-from django.shortcuts import render
-from core.models import TrainingSession  # make sure this model exists
 
 @login_required
 def training_dashboard(request):
-    # Fetch all training sessions
     sessions = TrainingSession.objects.all().order_by('-date')
-
-    # Determine which base template to extend
-    role = request.user.role
-    if role == "superadmin":
-        base_template = "base/base_superadmin.html"
-    elif role == "admin":
-        base_template = "base/base_admin.html"
-    elif role == "vet":
-        base_template = "base/base_vet.html"
-    else:
-        base_template = "base/base_user.html"
-
     context = {
         "sessions": sessions,
-        "base_template": base_template,
+        "base_template": "superadmin_dashboard/base_dashboard.html",
+        "role": "superadmin",
+        "user_clearance": 3,
     }
     return render(request, "core/universal_training_dashboard.html", context)

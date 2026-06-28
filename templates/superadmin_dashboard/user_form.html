@@ -1,23 +1,93 @@
 {% extends "superadmin_dashboard/base_dashboard.html" %}
+{% block page_title %}{{ title }} — TPF Animal System{% endblock %}
+
+{% block extra_head %}
+<style>
+  .field-wrapper input, .field-wrapper select, .field-wrapper textarea {
+    width: 100%; padding: 0.7rem 1rem; border: 1.5px solid #e2e8f0;
+    border-radius: 0.75rem; background: #f8fafc; font-size: 0.875rem;
+    font-family: 'Inter', sans-serif; color: #1e293b;
+    transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+  }
+  .field-wrapper input:focus, .field-wrapper select:focus, .field-wrapper textarea:focus {
+    outline: none; border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59,130,246,0.1); background: #fff;
+  }
+  .field-wrapper textarea { min-height: 90px; resize: vertical; }
+  .field-wrapper select {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 0.75rem center; background-repeat: no-repeat;
+    background-size: 1.25em; padding-right: 2.5rem; appearance: none;
+  }
+  .field-wrapper input[type="checkbox"] { width:1rem; height:1rem; }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="p-6 max-w-lg mx-auto">
-  <h1 class="text-2xl font-bold mb-6">{{ title }}</h1>
-  <form method="post" novalidate>
-    {% csrf_token %}
-    {{ form.non_field_errors }}
-    <div class="space-y-4">
-      {% for field in form %}
-        <div>
-          <label class="block mb-1 font-semibold" for="{{ field.id_for_label }}">{{ field.label }}</label>
-          {{ field }}
-          {% if field.errors %}
-            <p class="text-red-600 text-sm">{{ field.errors }}</p>
-          {% endif %}
-        </div>
-      {% endfor %}
+
+<div class="glassmorphism rounded-2xl p-6 mb-6">
+  <div class="flex items-center justify-between">
+    <div>
+      <h2 class="content-heading text-2xl">{{ title }}</h2>
+      <p class="content-text text-sm mt-1">Fill in the user details below</p>
     </div>
-    <button type="submit" class="btn btn-primary mt-4">Submit</button>
-  </form>
+    <a href="{% url 'superadmin_manage_users' %}"
+       class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-600 hover:-translate-y-0.5 transition-all duration-200"
+       style="background: linear-gradient(135deg, #f1f5f9, #e2e8f0); box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+      </svg>
+      All Users
+    </a>
+  </div>
 </div>
+
+<div class="glassmorphism rounded-2xl overflow-hidden">
+  <div class="px-6 py-4" style="background: linear-gradient(135deg, #1e40af, #2563eb);">
+    <h3 class="text-base font-semibold text-white">User Information</h3>
+  </div>
+  <div class="p-6">
+    {% if form.non_field_errors %}
+    <div class="mb-5 p-4 rounded-xl border flex items-start gap-3" style="background:#fef2f2; border-color:#fecaca;">
+      <svg class="h-5 w-5 text-red-400 flex-shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor">
+        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+      </svg>
+      <div class="text-sm text-red-700">{{ form.non_field_errors }}</div>
+    </div>
+    {% endif %}
+
+    <form method="post" novalidate class="space-y-5">
+      {% csrf_token %}
+      {% for field in form %}
+      <div>
+        <label class="block text-sm font-semibold text-slate-700 mb-1.5" for="{{ field.id_for_label }}">
+          {{ field.label }}
+          {% if field.field.required %}<span class="text-red-500 ml-0.5">*</span>{% endif %}
+        </label>
+        <div class="field-wrapper">{{ field }}</div>
+        {% if field.errors %}
+        <p class="text-xs text-red-600 mt-1.5">{{ field.errors.0 }}</p>
+        {% endif %}
+        {% if field.help_text %}
+        <p class="text-xs text-slate-400 mt-1">{{ field.help_text }}</p>
+        {% endif %}
+      </div>
+      {% endfor %}
+
+      <div class="pt-4 border-t border-slate-100 flex items-center justify-between">
+        <a href="{% url 'superadmin_manage_users' %}"
+           class="text-sm font-semibold text-slate-500 hover:text-slate-700 transition-colors">Cancel</a>
+        <button type="submit"
+                class="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-white text-sm font-semibold hover:-translate-y-0.5 transition-all duration-200"
+                style="background: linear-gradient(135deg, #2563eb, #4f46e5); box-shadow: 0 4px 12px rgba(37,99,235,0.3);">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+          </svg>
+          Save User
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
 {% endblock %}

@@ -1,0 +1,55 @@
+{% extends "superadmin_dashboard/base_dashboard.html" %}
+{% block page_title %}Task Report — TPF Animal System{% endblock %}
+{% block content %}
+
+<div class="glassmorphism rounded-2xl p-6 mb-6">
+    <h2 class="content-heading text-2xl">Branch Task Report</h2>
+    <p class="content-text text-sm mt-1">Task completion breakdown per branch</p>
+</div>
+
+<div class="glassmorphism rounded-2xl overflow-hidden">
+    {% if branch_data %}
+    <div class="overflow-x-auto">
+        <table class="w-full">
+            <thead>
+                <tr style="background: linear-gradient(135deg, rgba(241,245,249,0.9), rgba(226,232,240,0.9));">
+                    <th class="px-6 py-3.5 text-left text-xs font-bold text-slate-600 uppercase tracking-wider">Branch</th>
+                    <th class="px-6 py-3.5 text-center text-xs font-bold text-slate-600 uppercase tracking-wider">Total</th>
+                    <th class="px-6 py-3.5 text-center text-xs font-bold text-slate-600 uppercase tracking-wider">Pending</th>
+                    <th class="px-6 py-3.5 text-center text-xs font-bold text-slate-600 uppercase tracking-wider">Completed</th>
+                    <th class="px-6 py-3.5 text-center text-xs font-bold text-slate-600 uppercase tracking-wider">Completion %</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+                {% for item in branch_data %}
+                <tr class="card-hover">
+                    <td class="px-6 py-4">
+                        <p class="text-sm font-semibold text-slate-800">{{ item.branch.name }}</p>
+                        {% if item.branch.location %}<p class="text-xs content-text">{{ item.branch.location }}</p>{% endif %}
+                    </td>
+                    <td class="px-6 py-4 text-center text-sm font-bold text-slate-700">{{ item.total }}</td>
+                    <td class="px-6 py-4 text-center">
+                        <span class="text-xs px-2.5 py-0.5 rounded-full font-semibold bg-amber-100 text-amber-700">{{ item.pending }}</span>
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                        <span class="text-xs px-2.5 py-0.5 rounded-full font-semibold bg-green-100 text-green-700">{{ item.completed }}</span>
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                        {% if item.total > 0 %}
+                        {% widthratio item.completed item.total 100 %}%
+                        {% else %}—{% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="py-16 text-center">
+        <p class="content-heading font-semibold">No data available</p>
+        <p class="content-text text-sm mt-1">Task data per branch will appear here.</p>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}

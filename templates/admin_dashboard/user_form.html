@@ -1,12 +1,76 @@
 {% extends "admin_dashboard/base_admin.html" %}
+{% block page_title %}{{ title }} — TPF Animal System{% endblock %}
+
+{% block extra_head %}
+<style>
+  .field-wrapper input, .field-wrapper select, .field-wrapper textarea {
+    width: 100%; padding: 0.7rem 1rem; border: 1.5px solid #e2e8f0;
+    border-radius: 0.75rem; background: #f8fafc; font-size: 0.875rem;
+    font-family: 'Inter', sans-serif; color: #1e293b;
+    transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+  }
+  .field-wrapper input:focus, .field-wrapper select:focus, .field-wrapper textarea:focus {
+    outline: none; border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59,130,246,0.1); background: #fff;
+  }
+  .field-wrapper select {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 0.75rem center; background-repeat: no-repeat;
+    background-size: 1.25em; padding-right: 2.5rem; appearance: none;
+  }
+  .field-wrapper input[type="checkbox"] { width: 1rem; height: 1rem; }
+</style>
+{% endblock %}
+
 {% block content %}
 
-<h2 class="text-2xl font-bold mb-4">{{ title }}</h2>
+<div class="glassmorphism rounded-2xl p-6 mb-6">
+  <div class="flex items-center justify-between">
+    <div>
+      <h2 class="content-heading text-2xl">{{ title }}</h2>
+      <p class="content-text text-sm mt-1">Branch: {{ branch|title }}</p>
+    </div>
+    <a href="{% url 'admin_user_list' branch=branch %}"
+       class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-600 hover:-translate-y-0.5 transition-all duration-200"
+       style="background: linear-gradient(135deg, #f1f5f9, #e2e8f0); box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+      </svg>
+      All Users
+    </a>
+  </div>
+</div>
 
-<form method="POST" class="bg-white p-6 rounded shadow-md w-full md:w-1/2">
-  {% csrf_token %}
-  {{ form.as_p }}
-  <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded mt-4">Save</button>
-</form>
+<div class="glassmorphism rounded-2xl overflow-hidden">
+  <div class="px-6 py-4" style="background: linear-gradient(135deg, #1e40af, #2563eb);">
+    <h3 class="text-base font-semibold text-white">User Information</h3>
+  </div>
+  <div class="p-6">
+    <form method="POST" class="space-y-5">
+      {% csrf_token %}
+      {% for field in form %}
+      <div>
+        <label class="block text-sm font-semibold text-slate-700 mb-1.5" for="{{ field.id_for_label }}">
+          {{ field.label }}{% if field.field.required %}<span class="text-red-500 ml-0.5">*</span>{% endif %}
+        </label>
+        <div class="field-wrapper">{{ field }}</div>
+        {% if field.errors %}<p class="text-xs text-red-600 mt-1">{{ field.errors.0 }}</p>{% endif %}
+      </div>
+      {% endfor %}
+      <div class="pt-4 border-t border-slate-100 flex items-center justify-between">
+        <a href="{% url 'admin_user_list' branch=branch %}"
+           class="text-sm font-semibold text-slate-500 hover:text-slate-700 transition-colors">Cancel</a>
+        <button type="submit"
+                class="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-white text-sm font-semibold hover:-translate-y-0.5 transition-all duration-200"
+                style="background: linear-gradient(135deg, #2563eb, #4f46e5); box-shadow: 0 4px 12px rgba(37,99,235,0.3);">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+          </svg>
+          Save User
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
 
 {% endblock %}
