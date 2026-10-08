@@ -1041,3 +1041,112 @@ class HousingAssignment(models.Model):
 
     def __str__(self):
         return f"{self.animal.name} in {self.unit.name}"
+
+
+# ------------------------------
+# Stores: feed, medicine and consumables
+# ------------------------------
+
+class StockItem(models.Model):
+    EXPIRY_WARNING_DAYS = 60
+
+    CATEGORY_CHOICES = [
+        ('dog_feed', 'Dog feed'), ('horse_feed', 'Horse feed / hay'), ('supplement', 'Supplement'),
+        ('medicine', 'Medicine'), ('vaccine', 'Vaccine'), ('dewormer', 'Dewormer'),
+        ('consumable', 'Medical consumable'), ('bedding', 'Bedding'), ('other', 'Other'),
+    ]
+    MEDICAL_CATEGORIES = ('medicine', 'vaccine', 'dewormer', 'consumable')
+    UNIT_CHOICES = [
+        ('kg', 'kg'), ('bag', 'bags'), ('bale', 'bales'), ('litre', 'litres'), ('tablet', 'tablets'),
+        ('dose', 'doses'), ('vial', 'vials'), ('ml', 'ml'), ('piece', 'pieces'), ('box', 'boxes'),
+    ]
+
+    branch = models.ForeignKey(Branch, on_delete=models.PROTECT, related_name='stock_items')
+    name = models.CharField(max_length=150, help_text='e.g. Royal Canin Working Dog 20 kg, Rabies vaccine (Nobivac)')
+    category = models.CharField(max_length=20, choices=CATEGORY_CHOICES)
+    unit = models.CharField(max_length=10, choices=UNIT_CHOICES)
+    reorder_level = models.DecimalField(max_digits=12, decimal_places=2, default=0,
+                                        help_text='Alert when stock falls to this level or below.')
+    reorder_quantity = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True,
+                                           help_text='Usual quantity to order.')
+    supplier = models.CharField(max_length=255, blank=True)
+    notes = models.CharField(max_length=255, blank=True)
+    is_active = models.BooleanField('In use', default=True)
+    low_stock_notified = models.BooleanField(default=False, editable=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['category', 'name']
+        constraints = [models.UniqueConstraint(fields=['branch', 'name'], name='unique_stock_item_per_branch')]
+
+    def __str__(self):
+        return self.name
+
+    @property
+    def on_hand(self):
+        # Views annotate `stock_on_hand` to avoid a query per row; fall back to a live sum.
+        cached = getattr(self, 'stock_on_hand', None)
+        if cached is not None:
+            return cached
+        return self.movements.aggregate(total=models.Sum('quantity'))['total'] or 0
+
+    @property
+    def level(self):
+        on_hand = self.on_hand
+        if on_hand <= 0:
+            return 'out'
+        if on_hand <= self.reorder_level:
+            return 'low'
+        return 'ok'
+
+    @property
+    def level_label(self):
+        return {'out': 'Out of stock', 'low': 'Low', 'ok': 'In stock'}[self.level]
+
+    @property
+    def level_badge(self):
+        return {'out': 'tpf-badge-red', 'low': 'tpf-badge-amber', 'ok': 'tpf-badge-green'}[self.level]
+
+    def expiring_batches(self):
+        """Received batches whose expiry is past or within the warning window (only while stock remains)."""
+        if self.on_hand <= 0:
+            return self.movements.none()
+        horizon = timezone.localdate() + timedelta(days=self.EXPIRY_WARNING_DAYS)
+        return self.movements.filter(kind='received', expiry_date__isnull=False,
+                                     expiry_date__lte=horizon).order_by('expiry_date')
+
+
+class StockMovement(models.Model):
+    """Every change to stock. quantity is signed: + into stores, - out of stores."""
+    KIND_CHOICES = [
+        ('received', 'Received'), ('issued', 'Issued'), ('wasted', 'Wasted / expired'),
+        ('adjustment', 'Stock-take adjustment'),
+    ]
+    OUTGOING = ('issued', 'wasted')
+
+    item = models.ForeignKey(StockItem, on_delete=models.CASCADE, related_name='movements')
+    kind = models.CharField(max_length=12, choices=KIND_CHOICES)
+    quantity = models.DecimalField(max_digits=12, decimal_places=2)
+    date = models.DateField()
+    animal = models.ForeignKey(Animal, on_delete=models.SET_NULL, null=True, blank=True,
+                               related_name='stock_issued', help_text='Animal the stock was used for.')
+    batch_number = models.CharField(max_length=64, blank=True)
+    expiry_date = models.DateField(null=True, blank=True)
+    reference = models.CharField(max_length=128, blank=True, help_text='Delivery note, LPO, medical record...')
+    notes = models.CharField(max_length=255, blank=True)
+    medical_record = models.ForeignKey(MedicalRecord, on_delete=models.SET_NULL, null=True, blank=True,
+                                       related_name='stock_used')
+    recorded_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True,
+                                    related_name='stock_movements')
+    expiry_notified = models.BooleanField(default=False, editable=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-date', '-id']
+
+    def __str__(self):
+        return f"{self.get_kind_display()} {self.quantity} {self.item.get_unit_display()} {self.item.name}"
+
+    @property
+    def is_expired(self):
+        return self.expiry_date is not None and self.expiry_date < timezone.localdate()

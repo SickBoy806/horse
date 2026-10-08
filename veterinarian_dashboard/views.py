@@ -6,6 +6,8 @@ from core.forms import MessageReplyForm
 from django.db.models import Q, Avg
 from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
+from django.db import transaction
+from core.stock_views import record_movement
 from core.forms import MessageForm, MessageReplyForm, SupportTicketForm
 from datetime import datetime, timedelta
 from core.models import (
@@ -166,8 +168,15 @@ def add_medical_record(request, branch):
             medical_record.veterinarian = request.user
             medical_record.created_by = request.user
             medical_record.branch = branch_obj
-            medical_record.save()
-            messages.success(request, "Medical record added successfully.")
+            item, qty = form.cleaned_data.get('stock_item'), form.cleaned_data.get('stock_quantity')
+            with transaction.atomic():
+                medical_record.save()
+                if item and qty:
+                    record_movement(item, 'issued', -qty, request.user, date=timezone.localdate(),
+                                    animal=medical_record.animal, medical_record=medical_record,
+                                    reference=f'Medical record #{medical_record.id}')
+            messages.success(request, "Medical record added successfully."
+                             + (f" {qty:g} {item.get_unit_display()} of {item.name} deducted from stores." if item and qty else ""))
             if next_url:
                 return redirect(next_url)
             return redirect('vet_dashboard', branch=branch)

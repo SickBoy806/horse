@@ -116,3 +116,16 @@ def health_alerts_panel(context, limit=6):
         'can_record': getattr(user, 'role', None) == 'veterinarian' and user.branch is not None,
         'request': context['request'],
     }
+
+
+@register.inclusion_tag('partials/stock_alerts_panel.html', takes_context=True)
+def stock_alerts_panel(context, limit=6):
+    """Low / out-of-stock items and batches nearing expiry for the viewer's stores."""
+    from core.stock_views import _scoped_items, with_on_hand  # local: stock_views imports forms
+
+    items = [i for i in with_on_hand(_scoped_items(context['request'].user).filter(is_active=True))]
+    problems = sorted((i for i in items if i.level != 'ok'), key=lambda i: (i.level != 'out', i.name))
+    expiring = [i for i in items if i.expiring_batches().exists()]
+    return {'problems': problems[:limit], 'more': max(len(problems) - limit, 0),
+            'out': sum(1 for i in items if i.level == 'out'), 'low': sum(1 for i in items if i.level == 'low'),
+            'expiring': expiring[:3], 'expiring_count': len(expiring), 'total': len(items)}

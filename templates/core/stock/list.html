@@ -1,0 +1,85 @@
+{% extends base_template %}
+{% block page_title %}Stores — TPF Animal System{% endblock %}
+
+{% block content %}
+{% include "partials/flash_messages.html" %}
+
+<div class="glassmorphism rounded-2xl p-6 mb-6">
+  <div class="flex items-center justify-between flex-wrap gap-4">
+    <div>
+      <h2 class="content-heading text-2xl">Stores — Feed &amp; Medicine</h2>
+      <p class="content-text text-sm mt-1">Stock on hand is calculated from every receipt, issue and stock take.</p>
+    </div>
+    <div class="flex items-center gap-2">
+      <a href="?{{ querystring }}{% if querystring %}&{% endif %}export=csv" class="btn-tpf btn-tpf-light">Export CSV</a>
+      {% if can_manage %}<a href="{% url 'stock_item_create' %}" class="btn-tpf btn-tpf-gold">+ New item</a>{% endif %}
+    </div>
+  </div>
+</div>
+
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+  {% include "partials/stat_tile.html" with label="Items in Use" value=stats.items color="blue" %}
+  {% include "partials/stat_tile.html" with label="Low Stock" value=stats.low color="amber" %}
+  {% include "partials/stat_tile.html" with label="Out of Stock" value=stats.out color="red" %}
+  {% include "partials/stat_tile.html" with label="Batches Expiring" value=stats.expiring color="purple" hint="within 60 days" %}
+</div>
+
+<div class="glassmorphism rounded-2xl p-5 mb-6">
+  <form method="get" class="tpf-form grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3 items-end">
+    <div class="lg:col-span-2"><label>Search</label><input type="text" name="q" value="{{ f.q }}" placeholder="Item or supplier"></div>
+    <div><label>Category</label>
+      <select name="category"><option value="">All</option>{% for v, l in category_choices %}<option value="{{ v }}" {% if f.category == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select>
+    </div>
+    <div><label>Status</label>
+      <select name="level">
+        <option value="">Any</option>
+        <option value="attention" {% if f.level == 'attention' %}selected{% endif %}>Needs attention</option>
+        <option value="low" {% if f.level == 'low' %}selected{% endif %}>Low</option>
+        <option value="out" {% if f.level == 'out' %}selected{% endif %}>Out of stock</option>
+        <option value="ok" {% if f.level == 'ok' %}selected{% endif %}>In stock</option>
+      </select>
+    </div>
+    {% if branches %}
+    <div><label>Branch</label>
+      <select name="branch"><option value="">All</option>{% for b in branches %}<option value="{{ b.name }}" {% if f.branch == b.name %}selected{% endif %}>{{ b.name|title }}</option>{% endfor %}</select>
+    </div>
+    {% endif %}
+    <div class="flex gap-2">
+      <button type="submit" class="btn-tpf flex-1">Filter</button>
+      {% if querystring %}<a href="{% url 'stock_list' %}" class="btn-tpf btn-tpf-light" title="Clear">✕</a>{% endif %}
+    </div>
+  </form>
+</div>
+
+<div class="glassmorphism rounded-2xl overflow-hidden">
+  {% if items %}
+  <div class="overflow-x-auto">
+    <table class="tpf-table">
+      <thead><tr><th>Item</th><th>Category</th>{% if branches %}<th>Branch</th>{% endif %}<th class="text-right">On Hand</th><th class="text-right">Reorder At</th><th>Status</th><th></th></tr></thead>
+      <tbody>
+        {% for i in items %}
+        <tr class="{% if not i.is_active %}opacity-50{% endif %}">
+          <td><a href="{% url 'stock_detail' item_id=i.id %}" class="font-semibold text-slate-800 hover:text-blue-700">{{ i.name }}</a>{% if i.supplier %}<span class="block text-xs text-slate-400">{{ i.supplier }}</span>{% endif %}</td>
+          <td>{{ i.get_category_display }}</td>
+          {% if branches %}<td>{{ i.branch.name|title }}</td>{% endif %}
+          <td class="text-right font-bold text-slate-900 whitespace-nowrap">{{ i.on_hand|floatformat:"-2" }} <span class="font-normal text-slate-500">{{ i.get_unit_display }}</span></td>
+          <td class="text-right whitespace-nowrap text-slate-500">{{ i.reorder_level|floatformat:"-2" }}</td>
+          <td>
+            <span class="tpf-badge {{ i.level_badge }}">{{ i.level_label }}</span>
+            {% if i.expiring_batches.exists %}<span class="tpf-badge tpf-badge-purple ml-1">Expiring batch</span>{% endif %}
+            {% if not i.is_active %}<span class="tpf-badge ml-1">Not in use</span>{% endif %}
+          </td>
+          <td class="text-right"><a href="{% url 'stock_detail' item_id=i.id %}" class="btn-tpf btn-tpf-light btn-tpf-sm">Open</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="tpf-empty">
+    <p class="content-heading">No stock items {% if querystring %}match these filters{% else %}yet{% endif %}</p>
+    <p class="text-sm mt-1">{% if can_manage %}Add feed, medicines, vaccines and consumables with <strong>New item</strong>, then record deliveries.{% else %}Ask your stores manager to set up stock items.{% endif %}</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

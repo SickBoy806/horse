@@ -84,3 +84,20 @@ class HousingUnitAdmin(admin.ModelAdmin):
     list_display = ('name', 'kind', 'branch', 'capacity', 'is_active')
     list_filter = ('kind', 'branch', 'is_active')
     inlines = [HousingAssignmentInline]
+
+
+from .models import StockItem, StockMovement  # noqa: E402
+
+
+class StockMovementInline(admin.TabularInline):
+    model = StockMovement
+    extra = 0
+    fields = ('date', 'kind', 'quantity', 'animal', 'batch_number', 'expiry_date', 'reference', 'recorded_by')
+
+
+@admin.register(StockItem)
+class StockItemAdmin(admin.ModelAdmin):
+    list_display = ('name', 'category', 'branch', 'unit', 'reorder_level', 'is_active')
+    list_filter = ('category', 'branch', 'is_active')
+    search_fields = ('name', 'supplier')
+    inlines = [StockMovementInline]

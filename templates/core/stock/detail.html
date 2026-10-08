@@ -1,0 +1,132 @@
+{% extends base_template %}
+{% block page_title %}{{ item.name }} — Stores{% endblock %}
+
+{% block content %}
+{% include "partials/flash_messages.html" %}
+
+<div class="glassmorphism rounded-2xl p-6 mb-6">
+  <div class="flex items-start justify-between flex-wrap gap-4">
+    <div class="min-w-0">
+      <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">{{ item.get_category_display }}{% if request.user.role == 'superadmin' %} &middot; {{ item.branch.name|title }}{% endif %}</p>
+      <h2 class="content-heading text-3xl mt-0.5">{{ item.name }}</h2>
+      <div class="flex flex-wrap items-center gap-2 mt-2">
+        <span class="tpf-badge {{ item.level_badge }} !text-xs !px-3 !py-1">{{ item.level_label }}</span>
+        {% if not item.is_active %}<span class="tpf-badge !text-xs !px-3 !py-1">Not in use</span>{% endif %}
+        {% if item.supplier %}<span class="text-xs text-slate-500">Supplier: {{ item.supplier }}</span>{% endif %}
+      </div>
+    </div>
+    <div class="flex items-center gap-2">
+      <a href="{% url 'stock_list' %}" class="btn-tpf btn-tpf-light">All stock</a>
+      {% if can_manage %}<a href="{% url 'stock_item_edit' item_id=item.id %}" class="btn-tpf">Edit item</a>{% endif %}
+    </div>
+  </div>
+</div>
+
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+  <div class="glassmorphism rounded-2xl p-5"><p class="text-xs font-semibold uppercase tracking-wide text-slate-500">On Hand</p>
+    <p class="brand-font text-4xl font-bold text-slate-900 mt-1">{{ item.on_hand|floatformat:"-2" }} <span class="text-lg text-slate-400">{{ item.get_unit_display }}</span></p></div>
+  <div class="glassmorphism rounded-2xl p-5"><p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Reorder At</p>
+    <p class="text-2xl font-bold text-amber-600 mt-2">{{ item.reorder_level|floatformat:"-2" }}</p></div>
+  <div class="glassmorphism rounded-2xl p-5"><p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Usual Order</p>
+    <p class="text-2xl font-bold text-slate-700 mt-2">{% if item.reorder_quantity %}{{ item.reorder_quantity|floatformat:"-2" }}{% else %}—{% endif %}</p></div>
+  <div class="glassmorphism rounded-2xl p-5"><p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Expiring Batches</p>
+    <p class="text-2xl font-bold {% if batches %}text-violet-600{% else %}text-slate-400{% endif %} mt-2">{{ batches|length }}</p></div>
+</div>
+
+<div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+  <div class="space-y-6">
+    {% if item.is_active %}
+    <div class="glassmorphism rounded-2xl overflow-hidden">
+      <div class="tpf-panel-head">{% if can_manage %}Receive / Issue{% else %}Issue Stock{% endif %}</div>
+      <form method="post" class="tpf-form p-5 space-y-3" novalidate>
+        {% csrf_token %}<input type="hidden" name="action" value="movement">
+        {% if move_form.non_field_errors %}<div class="p-3 rounded-xl text-sm text-red-700 bg-red-50 border border-red-200">{{ move_form.non_field_errors }}</div>{% endif %}
+        <div class="grid grid-cols-2 gap-3">
+          {% include "core/deployments/_field.html" with field=move_form.kind %}
+          {% include "core/deployments/_field.html" with field=move_form.quantity %}
+        </div>
+        {% include "core/deployments/_field.html" with field=move_form.date %}
+        <div data-show-for="issued">{% include "core/deployments/_field.html" with field=move_form.animal %}</div>
+        <div data-show-for="received" class="grid grid-cols-2 gap-3">
+          {% include "core/deployments/_field.html" with field=move_form.batch_number %}
+          {% include "core/deployments/_field.html" with field=move_form.expiry_date %}
+        </div>
+        {% include "core/deployments/_field.html" with field=move_form.reference %}
+        {% include "core/deployments/_field.html" with field=move_form.notes %}
+        <button type="submit" class="btn-tpf w-full">Record</button>
+      </form>
+    </div>
+
+    {% if can_manage %}
+    <div class="glassmorphism rounded-2xl overflow-hidden">
+      <div class="tpf-panel-head">Stock Take</div>
+      <form method="post" class="tpf-form p-5 space-y-3" novalidate>
+        {% csrf_token %}<input type="hidden" name="action" value="stocktake">
+        <p class="text-xs text-slate-500">System says <strong>{{ item.on_hand|floatformat:"-2" }} {{ item.get_unit_display }}</strong>. Enter what's physically on the shelf; any difference is recorded as an adjustment.</p>
+        {% include "core/deployments/_field.html" with field=take_form.counted %}
+        {% include "core/deployments/_field.html" with field=take_form.notes %}
+        <button type="submit" class="btn-tpf btn-tpf-light w-full">Record count</button>
+      </form>
+    </div>
+    {% endif %}
+    {% endif %}
+
+    {% if batches %}
+    <div class="glassmorphism rounded-2xl overflow-hidden">
+      <div class="tpf-panel-head">Batches to Check</div>
+      <ul class="p-5 space-y-2">
+        {% for b in batches %}
+        <li class="flex items-center justify-between gap-2 text-sm">
+          <span>{% if b.batch_number %}Batch <span class="font-mono">{{ b.batch_number }}</span>{% else %}Delivery {{ b.date|date:"M d" }}{% endif %}</span>
+          <span class="tpf-badge {% if b.is_expired %}tpf-badge-red{% else %}tpf-badge-amber{% endif %}">{% if b.is_expired %}Expired{% else %}Expires{% endif %} {{ b.expiry_date|date:"M d, Y" }}</span>
+        </li>
+        {% endfor %}
+      </ul>
+      <p class="px-5 pb-4 text-xs text-slate-500">Write off expired stock with <em>Write off</em> so on-hand stays accurate.</p>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="glassmorphism rounded-2xl overflow-hidden xl:col-span-2">
+    <div class="tpf-panel-head">Movement History</div>
+    {% if movements %}
+    <div class="overflow-x-auto">
+      <table class="tpf-table">
+        <thead><tr><th>Date</th><th>Movement</th><th class="text-right">Qty</th><th>Details</th><th>By</th></tr></thead>
+        <tbody>
+          {% for m in movements %}
+          <tr>
+            <td class="whitespace-nowrap">{{ m.date|date:"M d, Y" }}</td>
+            <td><span class="tpf-badge {% if m.kind == 'received' %}tpf-badge-green{% elif m.kind == 'issued' %}tpf-badge-blue{% elif m.kind == 'wasted' %}tpf-badge-red{% else %}tpf-badge-purple{% endif %}">{{ m.get_kind_display }}</span></td>
+            <td class="text-right font-semibold whitespace-nowrap {% if m.quantity < 0 %}text-red-600{% else %}text-emerald-700{% endif %}">{% if m.quantity > 0 %}+{% endif %}{{ m.quantity|floatformat:"-2" }}</td>
+            <td class="text-sm">
+              {% if m.animal %}For <a href="{% url 'view_animal_detail' animal_id=m.animal.id %}" class="font-medium text-blue-700">{{ m.animal.name }}</a>{% endif %}
+              {% if m.batch_number %}Batch <span class="font-mono">{{ m.batch_number }}</span>{% endif %}
+              {% if m.expiry_date %}&middot; exp. {{ m.expiry_date|date:"M Y" }}{% endif %}
+              {% if m.reference %}<span class="block text-xs text-slate-500">{{ m.reference }}</span>{% endif %}
+              {% if m.notes %}<span class="block text-xs content-text">{{ m.notes }}</span>{% endif %}
+            </td>
+            <td class="text-sm text-slate-500">{% if m.recorded_by %}{{ m.recorded_by.get_full_name|default:m.recorded_by.username }}{% else %}—{% endif %}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="tpf-empty">No movements yet — record the first delivery.</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  // Show batch/expiry only for deliveries and the animal picker only for issues.
+  const kind = document.getElementById('id_kind');
+  const sync = () => document.querySelectorAll('[data-show-for]').forEach(el => {
+    el.style.display = kind && el.dataset.showFor === kind.value ? '' : 'none';
+  });
+  kind?.addEventListener('change', sync);
+  sync();
+</script>
+{% endblock %}

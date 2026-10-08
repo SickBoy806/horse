@@ -680,3 +680,89 @@ class HousingMoveForm(forms.ModelForm):
         if occupied >= unit.capacity:
             self.add_error('unit', f'{unit.name} is full ({occupied}/{unit.capacity}).')
         return cleaned
+
+
+# ------------------------------
+# Stores
+# ------------------------------
+from decimal import Decimal  # noqa: E402
+from .models import StockItem, StockMovement  # noqa: E402
+
+
+class StockItemForm(forms.ModelForm):
+    class Meta:
+        model = StockItem
+        fields = ['branch', 'name', 'category', 'unit', 'reorder_level', 'reorder_quantity', 'supplier', 'notes', 'is_active']
+        widgets = {
+            'reorder_level': forms.NumberInput(attrs={'step': 'any', 'min': '0'}),
+            'reorder_quantity': forms.NumberInput(attrs={'step': 'any', 'min': '0'}),
+        }
+
+    def __init__(self, *args, user=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        if user is not None and user.role != 'superadmin':
+            del self.fields['branch']
+        else:
+            self.fields['branch'].queryset = Branch.objects.filter(is_active=True).order_by('name')
+
+    def clean(self):
+        cleaned = super().clean()
+        branch = cleaned.get('branch') or (self.instance.branch if self.instance.branch_id else None)
+        name = (cleaned.get('name') or '').strip()
+        if branch and name and StockItem.objects.filter(branch=branch, name__iexact=name).exclude(pk=self.instance.pk).exists():
+            self.add_error('name', 'This branch already has an item with this name.')
+        for f in ('reorder_level', 'reorder_quantity'):
+            if cleaned.get(f) is not None and cleaned[f] < 0:
+                self.add_error(f, 'Cannot be negative.')
+        return cleaned
+
+
+class StockMovementForm(forms.ModelForm):
+    """Receive / issue / write off. Quantity is entered positive; the view applies the sign."""
+    KIND_CHOICES = [('received', 'Receive delivery'), ('issued', 'Issue / use'), ('wasted', 'Write off (expired, damaged)')]
+
+    kind = forms.ChoiceField(choices=KIND_CHOICES)
+
+    class Meta:
+        model = StockMovement
+        fields = ['kind', 'quantity', 'date', 'animal', 'batch_number', 'expiry_date', 'reference', 'notes']
+        widgets = {
+            'date': forms.DateInput(attrs={'type': 'date'}),
+            'expiry_date': forms.DateInput(attrs={'type': 'date'}),
+            'quantity': forms.NumberInput(attrs={'step': 'any', 'min': '0'}),
+        }
+        labels = {'animal': 'For animal (optional)'}
+
+    def __init__(self, *args, item=None, allowed_kinds=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.item = item
+        if allowed_kinds is not None:
+            self.fields['kind'].choices = [c for c in self.KIND_CHOICES if c[0] in allowed_kinds]
+        animals = Animal.objects.filter(status__in=Animal.ACTIVE_STATUSES)
+        if item is not None:
+            animals = animals.filter(branch=item.branch)
+        self.fields['animal'].queryset = animals.order_by('name')
+        self.fields['animal'].required = False
+        if not self.is_bound:
+            self.initial.setdefault('date', timezone.localdate())
+
+    def clean(self):
+        cleaned = super().clean()
+        kind, qty, day = cleaned.get('kind'), cleaned.get('quantity'), cleaned.get('date')
+        if qty is not None and qty <= 0:
+            self.add_error('quantity', 'Enter a quantity greater than zero.')
+        if day and day > timezone.localdate():
+            self.add_error('date', 'Cannot record a movement in the future.')
+        if kind != 'received':
+            cleaned['expiry_date'] = None
+            cleaned['batch_number'] = cleaned.get('batch_number') or ''
+        if kind in StockMovement.OUTGOING and qty and self.item is not None and qty > self.item.on_hand:
+            self.add_error('quantity', f'Only {self.item.on_hand:g} {self.item.get_unit_display()} in stock.')
+        return cleaned
+
+
+class StockTakeForm(forms.Form):
+    counted = forms.DecimalField(label='Counted on shelf', min_value=Decimal('0'), max_digits=12, decimal_places=2,
+                                 widget=forms.NumberInput(attrs={'step': 'any', 'min': '0'}))
+    notes = forms.CharField(required=False, max_length=255,
+                            widget=forms.TextInput(attrs={'placeholder': 'Reason for any difference'}))

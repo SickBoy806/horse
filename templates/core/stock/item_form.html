@@ -1,0 +1,31 @@
+{% extends base_template %}
+{% block page_title %}{% if is_new %}New Stock Item{% else %}Edit {{ item.name }}{% endif %} — Stores{% endblock %}
+
+{% block content %}
+{% include "partials/flash_messages.html" %}
+<div class="glassmorphism rounded-2xl p-6 mb-6">
+  <h2 class="content-heading text-2xl">{% if is_new %}New Stock Item{% else %}Edit {{ item.name }}{% endif %}</h2>
+  <p class="content-text text-sm mt-1">Stock levels change through deliveries, issues and stock takes — not here.</p>
+</div>
+
+<div class="glassmorphism rounded-2xl overflow-hidden max-w-3xl">
+  <div class="tpf-panel-head">Item Details</div>
+  <form method="post" class="tpf-form p-6 grid grid-cols-1 sm:grid-cols-2 gap-4" novalidate>
+    {% csrf_token %}
+    {% if form.non_field_errors %}<div class="sm:col-span-2 p-3 rounded-xl text-sm text-red-700 bg-red-50 border border-red-200">{{ form.non_field_errors }}</div>{% endif %}
+    {% if form.branch %}{% include "core/deployments/_field.html" with field=form.branch %}{% endif %}
+    <div class="sm:col-span-2">{% include "core/deployments/_field.html" with field=form.name %}</div>
+    {% include "core/deployments/_field.html" with field=form.category %}
+    {% include "core/deployments/_field.html" with field=form.unit %}
+    {% include "core/deployments/_field.html" with field=form.reorder_level %}
+    {% include "core/deployments/_field.html" with field=form.reorder_quantity %}
+    {% include "core/deployments/_field.html" with field=form.supplier %}
+    {% include "core/deployments/_field.html" with field=form.notes %}
+    <label class="sm:col-span-2 !flex items-center gap-2">{{ form.is_active }} {{ form.is_active.label }}</label>
+    <div class="sm:col-span-2 flex items-center justify-end gap-4 pt-2 border-t border-slate-100">
+      <a href="{% if is_new %}{% url 'stock_list' %}{% else %}{% url 'stock_detail' item_id=item.id %}{% endif %}" class="text-sm font-semibold text-slate-500 hover:text-slate-700">Cancel</a>
+      <button type="submit" class="btn-tpf btn-tpf-success">{% if is_new %}Create item{% else %}Save changes{% endif %}</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

@@ -1,4 +1,5 @@
 from django import forms
+from core.models import StockItem
 from core.models import (
     Animal, Message, MedicalRecord, VetTask, 
     EquipmentLog, EmergencyIncident
@@ -21,6 +22,11 @@ REPORT_TYPE_CHOICES = [
 class MedicalRecordForm(forms.ModelForm):
     report_type = forms.ChoiceField(choices=REPORT_TYPE_CHOICES)
     animal = forms.ModelChoiceField(queryset=Animal.objects.none(), label="Animal")
+    # Optional: deduct what was used from the branch stores.
+    stock_item = forms.ModelChoiceField(queryset=StockItem.objects.none(), required=False, label='Stock used')
+    stock_quantity = forms.DecimalField(required=False, min_value=0, max_digits=12, decimal_places=2,
+                                        label='Quantity used',
+                                        widget=forms.NumberInput(attrs={'step': 'any', 'min': '0'}))
 
     class Meta:
         model = MedicalRecord
@@ -62,6 +68,11 @@ class MedicalRecordForm(forms.ModelForm):
         # Filter animals by branch
         if branch:
             self.fields['animal'].queryset = Animal.objects.filter(branch=branch)
+            self.fields['stock_item'].queryset = StockItem.objects.filter(
+                branch=branch, is_active=True, category__in=StockItem.MEDICAL_CATEGORIES).order_by('name')
+        self.fields['stock_item'].label_from_instance = (
+            lambda i: f"{i.name} ({i.on_hand:g} {i.get_unit_display()} left)")
+        self.fields['stock_item'].help_text = 'Optional: deducts the dose from stores.'
 
         # These dates drive the vaccination / deworming due alerts.
         self.fields['next_due_date'].label = 'Next vaccination due'
@@ -76,6 +87,13 @@ class MedicalRecordForm(forms.ModelForm):
 
     def clean(self):
         cleaned = super().clean()
+        item, qty = cleaned.get('stock_item'), cleaned.get('stock_quantity')
+        if item and not qty:
+            self.add_error('stock_quantity', 'Enter how much was used.')
+        elif qty and not item:
+            self.add_error('stock_item', 'Choose the stock item used.')
+        elif item and qty and qty > item.on_hand:
+            self.add_error('stock_quantity', f'Only {item.on_hand:g} {item.get_unit_display()} in stock.')
         report_type = cleaned.get('report_type')
         if report_type in self.ROUTINE_TYPES:
             if not cleaned.get('treatment'):
