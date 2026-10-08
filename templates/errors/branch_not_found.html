@@ -1,10 +1,15 @@
-{% extends "base.html" %}
+{% extends base_template %}
+{% block page_title %}Branch Not Found — TPF Animal System{% endblock %}
 
 {% block content %}
-  <div class="p-6 text-center text-red-600">
-    <h1 class="text-2xl font-bold">Branch Not Found</h1>
-    <p>The system could not find a matching branch for your account.</p>
-    <a href="/" class="text-blue-600 underline">Return Home</a>
+<div class="tpf-empty max-w-lg mx-auto">
+  <div class="w-16 h-16 mx-auto mb-5 rounded-full flex items-center justify-center bg-amber-100 text-amber-600">
+    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
   </div>
+  <h2 class="content-heading text-2xl mb-2">Branch Not Found</h2>
+  <p class="content-text">The system could not find a matching branch for your account. Contact your administrator.</p>
+  <div class="flex justify-center gap-3 mt-6">
+    <a href="/" class="btn-tpf">Return Home</a>
+  </div>
+</div>
 {% endblock %}
-

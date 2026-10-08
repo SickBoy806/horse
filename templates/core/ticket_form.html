@@ -1,24 +1,36 @@
-{% extends "base.html" %}
+{% extends base_template %}
+{% block page_title %}New Support Ticket — TPF Animal System{% endblock %}
 
 {% block content %}
-<div class="max-w-2xl mx-auto mt-8 p-6 bg-white rounded shadow">
-  <h2 class="text-xl font-semibold mb-4">Create Support Ticket</h2>
+<div class="glassmorphism rounded-2xl p-6 mb-6">
+  <div class="flex items-center justify-between flex-wrap gap-4">
+    <div>
+      <h2 class="content-heading text-2xl">New Support Ticket</h2>
+      <p class="content-text text-sm mt-1">Describe the issue and the branch team will respond</p>
+    </div>
+    <a href="{% url 'ticket_list' branch=branch %}" class="btn-tpf btn-tpf-light">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+      All Tickets
+    </a>
+  </div>
+</div>
 
-  <form method="post">
+<div class="glassmorphism rounded-2xl overflow-hidden">
+  <div class="tpf-panel-head">Ticket Details</div>
+  <form method="post" class="tpf-form p-6 space-y-5" novalidate>
     {% csrf_token %}
-    <div class="mb-4">
-      <label class="block text-gray-700 mb-1">Subject</label>
-      {{ form.subject|add_class:"w-full border border-gray-300 rounded px-3 py-2" }}
+    {% if form.non_field_errors %}<div class="p-4 rounded-xl text-sm text-red-700 bg-red-50 border border-red-200">{{ form.non_field_errors }}</div>{% endif %}
+    {% for field in form %}
+    <div>
+      <label for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %} <span class="text-red-500">*</span>{% endif %}</label>
+      {{ field }}
+      {% if field.errors %}<p class="text-xs text-red-600 mt-1.5">{{ field.errors.0 }}</p>{% endif %}
     </div>
-
-    <div class="mb-4">
-      <label class="block text-gray-700 mb-1">Description</label>
-      {{ form.description|add_class:"w-full border border-gray-300 rounded px-3 py-2 h-32" }}
+    {% endfor %}
+    <div class="pt-4 border-t border-slate-100 flex items-center justify-between">
+      <a href="{% url 'ticket_list' branch=branch %}" class="text-sm font-semibold text-slate-500 hover:text-slate-700">Cancel</a>
+      <button type="submit" class="btn-tpf">Submit Ticket</button>
     </div>
-
-    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-      Submit Ticket
-    </button>
   </form>
 </div>
 {% endblock %}

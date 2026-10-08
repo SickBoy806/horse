@@ -1,16 +1,24 @@
 {% extends "veterinarian_dashboard/base_dashboard.html" %}
+{% block page_title %}Help &amp; Support — TPF Animal System{% endblock %}
 
+{% block content %}
+<div class="glassmorphism rounded-2xl p-6 mb-6">
+  <h2 class="content-heading text-2xl">Help &amp; Support</h2>
+  <p class="content-text text-sm mt-1">Experiencing issues? Contact the admin or submit a support ticket.</p>
+</div>
 
-{% block page_title %}Help & Support - {{ branch|title }}{% endblock %}
-
-{% block dashboard_content %}
-<h2 class="text-2xl font-bold mb-6 text-gray-700">Help & Support</h2>
-
-<p class="text-gray-600">If you're experiencing issues or need assistance, please contact the admin or submit a support ticket.</p>
-
-<ul class="mt-4 list-disc pl-6 text-gray-600">
-    <li>Email: support@animalhealth.org</li>
-    <li>Phone: +255-700-123-456</li>
-    <li>Or use the in-app support system.</li>
-</ul>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+  <div class="glassmorphism rounded-2xl p-5 card-hover">
+    <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Email</p>
+    <p class="content-heading mt-2">support@animalhealth.org</p>
+  </div>
+  <div class="glassmorphism rounded-2xl p-5 card-hover">
+    <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Phone</p>
+    <p class="content-heading mt-2">+255-700-123-456</p>
+  </div>
+  <a href="{% url 'support_request' branch=branch %}" class="glassmorphism rounded-2xl p-5 card-hover block">
+    <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">In-app</p>
+    <p class="content-heading mt-2 text-blue-600">Open a support ticket →</p>
+  </a>
+</div>
 {% endblock %}

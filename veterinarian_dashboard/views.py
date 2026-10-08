@@ -5,6 +5,7 @@ from django.contrib import messages
 from core.forms import MessageReplyForm
 from django.db.models import Q, Avg
 from django.utils import timezone
+from django.utils.http import url_has_allowed_host_and_scheme
 from core.forms import MessageForm, MessageReplyForm, SupportTicketForm
 from datetime import datetime, timedelta
 from core.models import (
@@ -153,6 +154,9 @@ def update_task_view(request, branch):
 @login_required
 def add_medical_record(request, branch):
     branch_obj = get_object_or_404(Branch, name__iexact=branch)
+    next_url = request.POST.get('next') or request.GET.get('next') or ''
+    if not url_has_allowed_host_and_scheme(next_url, allowed_hosts={request.get_host()}):
+        next_url = ''
 
     if request.method == 'POST':
         form = MedicalRecordForm(request.POST, request.FILES, branch=branch_obj, user=request.user)
@@ -164,15 +168,20 @@ def add_medical_record(request, branch):
             medical_record.branch = branch_obj
             medical_record.save()
             messages.success(request, "Medical record added successfully.")
+            if next_url:
+                return redirect(next_url)
             return redirect('vet_dashboard', branch=branch)
         messages.error(request, "Please correct the errors below.")
     else:
-        form = MedicalRecordForm(branch=branch_obj, user=request.user)
+        # Links such as "Record dose" on the health schedule pre-fill the form.
+        prefill = {k: request.GET[k] for k in ('animal', 'report_type', 'vaccine_name', 'dewormer_name')
+                   if request.GET.get(k)}
+        form = MedicalRecordForm(branch=branch_obj, user=request.user, initial=prefill)
 
     return render(
         request,
         'veterinarian_dashboard/add_medical_record.html',
-        {'form': form, 'branch': branch_obj}
+        {'form': form, 'branch': branch_obj, 'next': next_url}
     )
 
 
@@ -422,7 +431,7 @@ def inbox(request, branch):
 
 
 @login_required
-def message_detail(request, message_id):
+def message_detail(request, message_id, branch=None):
     """
     View a specific message, usable by all dashboards (user, admin, vet, superadmin)
     """
@@ -584,21 +593,23 @@ def deleted_messages(request, branch):
 
 @login_required
 def search_animal_logs(request, branch):
-    logs = AnimalLog.objects.filter(branch__name__iexact=branch)
+    logs = (AnimalLog.objects.filter(animal__branch__name__iexact=branch)
+            .select_related('animal', 'user').order_by('-date'))
 
-    query = request.GET.get('q')
+    query = request.GET.get('q', '')
     if query:
-        logs = logs.filter(description__icontains=query)
+        logs = logs.filter(Q(notes__icontains=query) | Q(animal__name__icontains=query))
 
     context = {
         'branch': branch,
         'logs': logs,
+        'query': query,
     }
     return render(request, 'veterinarian_dashboard/search_animal_logs.html', context)
 
 @login_required
 def animal_logs(request, branch):
-    return render(request, 'veterinarian_dashboard/animal_logs.html', {'branch': branch})
+    return search_animal_logs(request, branch)
 
 from core.views import animal_list as core_animal_list
 
@@ -608,12 +619,11 @@ def vet_animal_list_wrapper(request, branch):
     return core_animal_list(request)
 
 
+@login_required
 def patient_detail(request, branch, patient_id):
-    patient = get_object_or_404(Patient, id=patient_id, branch__name__iexact=branch)
-    return render(request, 'veterinarian_dashboard/patient_detail.html', {
-        'branch': branch,
-        'patient': patient
-    })
+    # Patients are Animal records; reuse the shared animal profile page.
+    from core.views import view_animal_detail
+    return view_animal_detail(request, patient_id, branch=branch)
 
 
 @login_required

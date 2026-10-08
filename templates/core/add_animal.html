@@ -1,6 +1,6 @@
 {% extends base_template %}
 {% load widget_tweaks %}
-{% block page_title %}Add Animal — TPF Animal System{% endblock %}
+{% block page_title %}{% if is_edit %}Edit {{ animal.name }}{% else %}Add Animal{% endif %} — TPF Animal System{% endblock %}
 
 {% block extra_head %}
 <style>
@@ -32,10 +32,15 @@
 <div class="glassmorphism rounded-2xl p-6 mb-6">
   <div class="flex items-center justify-between">
     <div>
-      <h2 class="content-heading text-2xl">Add New Animal</h2>
-      <p class="content-text text-sm mt-1">Register a new animal to your branch</p>
+      <h2 class="content-heading text-2xl">{% if is_edit %}Edit {{ animal.name }}{% else %}Add New Animal{% endif %}</h2>
+      <p class="content-text text-sm mt-1">{% if is_edit %}Force No. {{ animal.force_number }} &middot; update profile, duty status and records{% else %}Register a new animal to your branch{% endif %}</p>
     </div>
-    {% if request.user.branch %}
+    {% if is_edit %}
+      <a href="{% url 'view_animal_detail' animal_id=animal.id %}" class="btn-tpf btn-tpf-light">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        Back to profile
+      </a>
+    {% elif request.user.branch %}
       {% if request.user.role == 'admin' %}
         <a href="{% url 'admin_dashboard' branch=request.user.branch.name %}"
       {% elif request.user.role == 'veterinarian' %}
@@ -68,7 +73,7 @@
 </div>
 {% endif %}
 
-<form method="POST" action="{% url 'add_animal' %}" enctype="multipart/form-data" id="animal-form" class="space-y-5">
+<form method="POST" action="" enctype="multipart/form-data" id="animal-form" class="space-y-5">
   {% csrf_token %}
 
   {% if form.non_field_errors %}
@@ -79,7 +84,7 @@
 
   <!-- Basic Information -->
   <div class="glassmorphism rounded-2xl overflow-hidden">
-    <div class="px-6 py-4" style="background: linear-gradient(135deg, #1e40af, #2563eb);">
+    <div class="tpf-panel-head">
       <h3 class="text-base font-semibold text-white">Basic Information</h3>
     </div>
     <div class="p-6">
@@ -124,9 +129,39 @@
     </div>
   </div>
 
+  <!-- Duty status & identification -->
+  <div class="glassmorphism rounded-2xl overflow-hidden">
+    <div class="tpf-panel-head">
+      <h3 class="text-base font-semibold text-white">Duty Status &amp; Identification</h3>
+    </div>
+    <div class="p-6 space-y-6">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        {% include "core/_animal_field.html" with field=form.status %}
+        {% include "core/_animal_field.html" with field=form.specialisation %}
+        {% include "core/_animal_field.html" with field=form.status_since %}
+        {% include "core/_animal_field.html" with field=form.status_notes %}
+      </div>
+      <div class="h-px bg-slate-100"></div>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        {% include "core/_animal_field.html" with field=form.breed %}
+        {% include "core/_animal_field.html" with field=form.sex %}
+        {% include "core/_animal_field.html" with field=form.colour_markings %}
+        {% include "core/_animal_field.html" with field=form.is_neutered %}
+        {% include "core/_animal_field.html" with field=form.microchip_number %}
+        {% include "core/_animal_field.html" with field=form.brand_or_tattoo %}
+      </div>
+      <div class="h-px bg-slate-100"></div>
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        {% include "core/_animal_field.html" with field=form.acquisition_date %}
+        {% include "core/_animal_field.html" with field=form.acquisition_source %}
+        {% include "core/_animal_field.html" with field=form.acquired_from %}
+      </div>
+    </div>
+  </div>
+
   <!-- Photo -->
   <div class="glassmorphism rounded-2xl overflow-hidden">
-    <div class="px-6 py-4" style="background: linear-gradient(135deg, #065f46, #059669);">
+    <div class="tpf-panel-head">
       <h3 class="text-base font-semibold text-white">Animal Photo</h3>
     </div>
     <div class="p-6">
@@ -137,10 +172,10 @@
           {% if form.photo.errors %}<p class="text-xs text-red-600 mt-1">{{ form.photo.errors.0 }}</p>{% endif %}
         </div>
         <div class="flex-shrink-0">
-          <img id="preview" src="#"
-               class="hidden w-28 h-28 object-cover rounded-xl border-2 border-slate-200 shadow-sm" alt="Preview">
+          <img id="preview" src="{% if is_edit and animal.photo %}{{ animal.photo.url }}{% else %}#{% endif %}"
+               class="{% if not is_edit or not animal.photo %}hidden {% endif %}w-28 h-28 object-cover rounded-xl border-2 border-slate-200 shadow-sm" alt="Preview">
           <div id="preview-placeholder"
-               class="w-28 h-28 rounded-xl border-2 border-dashed border-slate-300 flex items-center justify-center"
+               class="{% if is_edit and animal.photo %}hidden {% endif %}w-28 h-28 rounded-xl border-2 border-dashed border-slate-300 flex items-center justify-center"
                style="background: #f8fafc;">
             <svg class="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
@@ -156,7 +191,7 @@
   <!-- User Assignment -->
   {% if form.assigned_users %}
   <div class="glassmorphism rounded-2xl overflow-hidden">
-    <div class="px-6 py-4" style="background: linear-gradient(135deg, #4f46e5, #7c3aed);">
+    <div class="tpf-panel-head">
       <h3 class="text-base font-semibold text-white">User Assignment</h3>
     </div>
     <div class="p-6">
@@ -171,7 +206,7 @@
 
   <!-- Training Records -->
   <div class="glassmorphism rounded-2xl overflow-hidden">
-    <div class="px-6 py-4 flex items-center justify-between" style="background: linear-gradient(135deg, #92400e, #d97706);">
+    <div class="tpf-panel-head flex items-center justify-between">
       <h3 class="text-base font-semibold text-white">Training Records</h3>
       <button type="button" id="add-training"
               class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/20 hover:bg-white/30 text-white text-xs font-semibold transition-colors">
@@ -214,14 +249,11 @@
   </div>
 
   <!-- Submit -->
-  <div class="flex justify-end pt-2">
-    <button type="submit"
-            class="inline-flex items-center gap-2 px-8 py-3 rounded-xl text-white text-sm font-semibold hover:-translate-y-0.5 transition-all duration-200"
-            style="background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 4px 12px rgba(16,185,129,0.35);">
-      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-      </svg>
-      Add Animal
+  <div class="flex items-center justify-end gap-4 pt-2">
+    {% if is_edit %}<a href="{% url 'view_animal_detail' animal_id=animal.id %}" class="text-sm font-semibold text-slate-500 hover:text-slate-700">Cancel</a>{% endif %}
+    <button type="submit" class="btn-tpf btn-tpf-success" style="padding: 0.75rem 2rem;">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+      {% if is_edit %}Save Changes{% else %}Add Animal{% endif %}
     </button>
   </div>
 
@@ -292,7 +324,7 @@
     // Training record add/remove
     const addBtn = document.getElementById('add-training');
     const container = document.getElementById('training-records-container');
-    const totalForms = document.querySelector('#id_trainingrecord_set-TOTAL_FORMS');
+    const totalForms = document.querySelector('#id_{{ formset.prefix }}-TOTAL_FORMS');
 
     addBtn.addEventListener('click', () => {
       const idx = parseInt(totalForms.value);
@@ -311,18 +343,15 @@
     });
 
     container.addEventListener('click', (e) => {
-      if (e.target.classList.contains('remove-training')) {
-        e.target.closest('.training-record').remove();
-        const forms = container.querySelectorAll('.training-record');
-        totalForms.value = forms.length;
-        forms.forEach((f, i) => {
-          f.querySelectorAll('input,select,textarea,label').forEach(el => {
-            ['name','id','for'].forEach(attr => {
-              if (el.hasAttribute(attr))
-                el.setAttribute(attr, el.getAttribute(attr).replace(/\d+/, i));
-            });
-          });
-        });
+      if (!e.target.classList.contains('remove-training')) return;
+      const record = e.target.closest('.training-record');
+      const idInput = record.querySelector('input[name$="-id"]');
+      const del = record.querySelector('input[name$="-DELETE"]');
+      if (idInput && idInput.value && del) {
+        del.checked = true;            // existing record: let the formset delete it
+        record.style.display = 'none';
+      } else {
+        record.remove();               // unsaved row: empty forms are ignored on submit
       }
     });
   });

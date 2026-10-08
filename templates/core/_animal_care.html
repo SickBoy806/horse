@@ -1,0 +1,58 @@
+<div class="glassmorphism rounded-2xl overflow-hidden mb-6">
+  <div class="tpf-panel-head flex items-center justify-between">
+    <span>{% if animal.species == 'horse' %}Stable &amp; Care{% else %}Kennel{% endif %}</span>
+    <a href="{% if animal.species == 'horse' %}{% url 'horse_care' %}{% else %}{% url 'stables_board' %}{% endif %}" class="text-xs font-semibold text-blue-100 hover:text-white">{% if animal.species == 'horse' %}Horse Care →{% else %}Stables &amp; Kennels →{% endif %}</a>
+  </div>
+  <div class="p-6 grid grid-cols-1 {% if animal.species == 'horse' %}lg:grid-cols-3{% endif %} gap-6">
+    <!-- Housing -->
+    <div>
+      <h4 class="text-xs font-bold uppercase tracking-wide text-slate-500 mb-2">Housing</h4>
+      {% if housing_now %}
+      <p class="text-sm font-semibold text-slate-800">{{ housing_now.unit.name }}</p>
+      <p class="text-xs text-slate-500">{{ housing_now.unit.get_kind_display }} &middot; since {{ housing_now.start_date|date:"M d, Y" }}</p>
+      {% else %}
+      <p class="text-sm text-amber-700">Not assigned to a {% if animal.species == 'horse' %}stall{% else %}kennel{% endif %}.</p>
+      {% endif %}
+      {% if request.user.role in 'admin,veterinarian,superadmin,staff' %}
+      <a href="{% url 'stables_board' %}?animal={{ animal.id }}#move" class="inline-block text-xs font-semibold text-blue-700 hover:text-blue-900 mt-2">{% if housing_now %}Move{% else %}Assign{% endif %} →</a>
+      {% endif %}
+      {% if housing_past %}
+      <details class="mt-3"><summary class="cursor-pointer text-xs font-semibold text-slate-500">Previous ({{ housing_past|length }})</summary>
+        <ul class="mt-1.5 space-y-1">{% for h in housing_past %}<li class="text-xs text-slate-600">{{ h.unit.name }} — {{ h.start_date|date:"M d" }} → {{ h.end_date|date:"M d, Y" }}</li>{% endfor %}</ul>
+      </details>
+      {% endif %}
+    </div>
+
+    {% if animal.species == 'horse' %}
+    <!-- Farrier -->
+    <div>
+      <h4 class="text-xs font-bold uppercase tracking-wide text-slate-500 mb-2">Farrier</h4>
+      {% with last=hoof_visits.0 %}
+      {% if last %}
+      <p class="text-sm font-semibold text-slate-800">{{ last.get_service_display }} <span class="tpf-badge {{ last.condition_badge }} ml-1">{{ last.get_condition_display }}</span></p>
+      <p class="text-xs text-slate-500">{{ last.date|date:"M d, Y" }} by {{ last.farrier }}{% if last.next_due %} &middot; next {{ last.next_due|date:"M d, Y" }}{% endif %}</p>
+      {% else %}
+      <p class="text-sm text-red-700">No farrier visit recorded.</p>
+      {% endif %}
+      {% endwith %}
+      <a href="{% url 'farrier_log' %}?animal={{ animal.id }}#new" class="inline-block text-xs font-semibold text-blue-700 hover:text-blue-900 mt-2">Log visit →</a>
+    </div>
+
+    <!-- Tack -->
+    <div>
+      <h4 class="text-xs font-bold uppercase tracking-wide text-slate-500 mb-2">Fitted Tack</h4>
+      <ul class="space-y-1">
+        {% for t in fitted_tack %}
+        <li class="text-sm text-slate-700 flex items-center justify-between gap-2">
+          <span>{{ t.get_item_type_display }}{% if t.asset_tag %} <span class="text-xs text-slate-400 font-mono">{{ t.asset_tag }}</span>{% endif %}</span>
+          {% if t.needs_attention %}<span class="tpf-badge tpf-badge-amber">{% if t.inspection_overdue %}Inspect{% else %}{{ t.get_condition_display }}{% endif %}</span>{% endif %}
+        </li>
+        {% empty %}
+        <li class="text-sm text-slate-400">No tack assigned.</li>
+        {% endfor %}
+      </ul>
+      <a href="{% url 'tack_list' %}?horse={{ animal.id }}" class="inline-block text-xs font-semibold text-blue-700 hover:text-blue-900 mt-2">Tack →</a>
+    </div>
+    {% endif %}
+  </div>
+</div>

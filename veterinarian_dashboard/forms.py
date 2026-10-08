@@ -63,6 +63,31 @@ class MedicalRecordForm(forms.ModelForm):
         if branch:
             self.fields['animal'].queryset = Animal.objects.filter(branch=branch)
 
+        # These dates drive the vaccination / deworming due alerts.
+        self.fields['next_due_date'].label = 'Next vaccination due'
+        self.fields['next_due_date'].help_text = 'Drives the due-date alerts. Leave blank if no booster is needed.'
+        self.fields['next_deworming_date'].help_text = 'Drives the due-date alerts (typically every 3 months).'
+
+        # Routine preventive care doesn't have a diagnosis; enforce it in clean() for clinical records only.
+        self.fields['diagnosis'].required = False
+        self.fields['treatment'].required = False
+
+    ROUTINE_TYPES = ('vaccination', 'deworming', 'dipping')
+
+    def clean(self):
+        cleaned = super().clean()
+        report_type = cleaned.get('report_type')
+        if report_type in self.ROUTINE_TYPES:
+            if not cleaned.get('treatment'):
+                product = cleaned.get('vaccine_name') or cleaned.get('dewormer_name') or cleaned.get('dip_type') or ''
+                cleaned['treatment'] = f"{product} {dict(REPORT_TYPE_CHOICES).get(report_type, report_type).lower()} administered".strip()
+            cleaned['diagnosis'] = cleaned.get('diagnosis') or ''
+        elif report_type:
+            for field in ('diagnosis', 'treatment'):
+                if not cleaned.get(field):
+                    self.add_error(field, 'This field is required.')
+        return cleaned
+
 
 class VetTaskForm(forms.ModelForm):
     class Meta:

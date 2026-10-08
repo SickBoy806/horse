@@ -1,0 +1,53 @@
+<div class="glassmorphism rounded-2xl overflow-hidden mb-6">
+  <div class="tpf-panel-head flex items-center justify-between">
+    <span>Operations &middot; last {{ days }} days{% if all_branches %} &middot; All Branches{% endif %}</span>
+    <div class="flex items-center gap-4">
+      <a href="{% url 'deployment_create' %}" class="text-xs font-semibold hover:text-white" style="color: #f2cf63;">+ Log deployment</a>
+      <a href="{% url 'deployment_list' %}" class="text-xs font-semibold text-blue-100 hover:text-white">All →</a>
+    </div>
+  </div>
+  <div class="p-6 grid grid-cols-1 xl:grid-cols-3 gap-6">
+    <div class="grid grid-cols-2 gap-3 self-start">
+      <div class="rounded-xl bg-slate-50 border border-slate-100 p-4"><p class="text-xs font-semibold uppercase text-slate-500">Deployments</p><p class="text-2xl font-bold text-slate-900 mt-1">{{ count }}</p></div>
+      <div class="rounded-xl bg-slate-50 border border-slate-100 p-4"><p class="text-xs font-semibold uppercase text-slate-500">Success Rate</p><p class="text-2xl font-bold text-emerald-600 mt-1">{{ success_rate }}</p></div>
+      <div class="rounded-xl bg-slate-50 border border-slate-100 p-4"><p class="text-xs font-semibold uppercase text-slate-500">Finds</p><p class="text-2xl font-bold text-violet-600 mt-1">{{ finds }}</p></div>
+      <div class="rounded-xl bg-slate-50 border border-slate-100 p-4"><p class="text-xs font-semibold uppercase text-slate-500">Arrests</p><p class="text-2xl font-bold text-red-600 mt-1">{{ arrests }}</p></div>
+    </div>
+
+    <div>
+      <h4 class="text-xs font-bold uppercase tracking-wide text-slate-500 mb-3 flex items-center gap-2">
+        <span class="w-2 h-2 rounded-full bg-blue-500 {% if live %}animate-pulse{% endif %}"></span> Live now
+      </h4>
+      <ul class="space-y-2">
+        {% for d in live %}
+        <li>
+          <a href="{% url 'deployment_detail' deployment_id=d.id %}" class="block rounded-xl border border-blue-100 bg-blue-50/60 hover:bg-blue-50 px-4 py-3">
+            <p class="text-sm font-semibold text-slate-800">{{ d.get_deployment_type_display }}</p>
+            <p class="text-xs text-slate-500 truncate">{{ d.location }}{% if all_branches %} &middot; {{ d.branch.name|title }}{% endif %} &middot; since {{ d.started_at|date:"H:i" }}</p>
+          </a>
+        </li>
+        {% empty %}
+        <li class="text-sm text-slate-400">No deployments in progress.</li>
+        {% endfor %}
+      </ul>
+    </div>
+
+    <div>
+      <h4 class="text-xs font-bold uppercase tracking-wide text-slate-500 mb-3">Top performers</h4>
+      <ol class="space-y-2">
+        {% for a in top %}
+        <li>
+          <a href="{% url 'view_animal_detail' animal_id=a.id %}" class="flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50 hover:bg-white px-3 py-2.5">
+            <span class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0" style="background: {% if forloop.first %}#d4a72c{% else %}#e2e8f0{% endif %}; color: {% if forloop.first %}#1a1205{% else %}#475569{% endif %};">{{ forloop.counter }}</span>
+            {% if a.photo %}<img src="{{ a.photo.url }}" alt="" class="w-8 h-8 rounded-lg object-cover">{% endif %}
+            <span class="min-w-0 flex-1"><span class="block text-sm font-semibold text-slate-800 truncate">{{ a.name }}</span><span class="block text-xs text-slate-500">{{ a.get_specialisation_display }}</span></span>
+            <span class="text-sm font-bold text-emerald-600">{{ a.positive }}</span>
+          </a>
+        </li>
+        {% empty %}
+        <li class="text-sm text-slate-400">No positive results yet in this period.</li>
+        {% endfor %}
+      </ol>
+    </div>
+  </div>
+</div>

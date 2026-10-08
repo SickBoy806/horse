@@ -1,0 +1,26 @@
+<div class="glassmorphism rounded-2xl overflow-hidden">
+  {% if records %}
+  <div class="overflow-x-auto">
+    <table class="tpf-table">
+      <thead><tr><th>Date</th><th>Animal</th><th>Type</th><th>Diagnosis</th><th>Treatment</th><th>Document</th></tr></thead>
+      <tbody>
+        {% for record in records %}
+        <tr>
+          <td class="whitespace-nowrap">{{ record.date_recorded|date:"M d, Y" }}</td>
+          <td class="font-semibold text-slate-800">{{ record.animal.name }}</td>
+          <td><span class="tpf-badge tpf-badge-purple">{{ record.get_report_type_display|default:record.report_type }}</span></td>
+          <td>{{ record.diagnosis|default:"—"|truncatechars:60 }}</td>
+          <td>{{ record.treatment|default:"—"|truncatechars:60 }}</td>
+          <td>{% if record.document %}<a href="{{ record.document.url }}" target="_blank" class="text-xs font-semibold text-blue-600 hover:text-blue-800">View</a>{% else %}<span class="text-slate-400">—</span>{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="tpf-empty">
+    <p class="content-heading">No records found</p>
+    {% if query %}<p class="text-sm mt-1">Nothing matches “{{ query }}”.</p>{% endif %}
+  </div>
+  {% endif %}
+</div>

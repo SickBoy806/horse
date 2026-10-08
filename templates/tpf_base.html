@@ -8,7 +8,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Barlow+Semi+Condensed:wght@600;700&display=swap');
 
     body {
       font-family: 'Inter', sans-serif;
@@ -186,10 +186,159 @@
     }
     .glassmorphism, .nav-item { opacity: 1 !important; visibility: visible !important; }
 
+    /* ── Shared page components (use these instead of per-page CSS) ── */
+    .field-wrapper input:not([type=checkbox]):not([type=radio]), .field-wrapper select, .field-wrapper textarea,
+    .tpf-form input:not([type=checkbox]):not([type=radio]):not([type=hidden]):not([type=submit]):not([type=file]),
+    .tpf-form select, .tpf-form textarea, .tpf-input {
+      width: 100%; padding: 0.7rem 1rem; border: 1.5px solid #e2e8f0;
+      border-radius: 0.75rem; background: #f8fafc; font-size: 0.875rem;
+      font-family: 'Inter', sans-serif; color: #1e293b;
+      transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+    }
+    .field-wrapper input:focus, .field-wrapper select:focus, .field-wrapper textarea:focus,
+    .tpf-form input:focus, .tpf-form select:focus, .tpf-form textarea:focus, .tpf-input:focus {
+      outline: none; border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59,130,246,0.1); background: #fff;
+    }
+    .field-wrapper textarea, .tpf-form textarea { min-height: 110px; resize: vertical; }
+    .field-wrapper select, .tpf-form select, select.tpf-input {
+      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+      background-position: right 0.75rem center; background-repeat: no-repeat;
+      background-size: 1.25em; padding-right: 2.5rem; appearance: none;
+    }
+    .tpf-form input[type=file] { font-size: 0.875rem; color: #475569; }
+    .tpf-form label { display: block; font-size: 0.875rem; font-weight: 600; color: #334155; margin-bottom: 0.375rem; }
+    .tpf-form .helptext, .tpf-form .help { font-size: 0.75rem; color: #94a3b8; }
+    .tpf-form ul.errorlist { font-size: 0.75rem; color: #dc2626; margin-top: 0.375rem; }
+
+    .btn-tpf {
+      display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+      padding: 0.625rem 1.25rem; border-radius: 0.75rem; font-size: 0.875rem; font-weight: 600;
+      color: #fff; border: none; cursor: pointer; text-decoration: none;
+      transition: transform 0.2s, box-shadow 0.2s;
+      background: linear-gradient(135deg, #2563eb, #4f46e5); box-shadow: 0 4px 12px rgba(37,99,235,0.3);
+    }
+    .btn-tpf:hover { transform: translateY(-2px); color: #fff; }
+    .btn-tpf-success { background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 4px 12px rgba(16,185,129,0.3); }
+    .btn-tpf-danger  { background: linear-gradient(135deg, #ef4444, #dc2626); box-shadow: 0 4px 12px rgba(239,68,68,0.3); }
+    .btn-tpf-warning { background: linear-gradient(135deg, #f59e0b, #d97706); box-shadow: 0 4px 12px rgba(245,158,11,0.3); }
+    .btn-tpf-light   { background: linear-gradient(135deg, #f1f5f9, #e2e8f0); box-shadow: 0 2px 8px rgba(0,0,0,0.06); color: #475569; }
+    .btn-tpf-light:hover { color: #1e293b; }
+    .btn-tpf-sm { padding: 0.375rem 0.875rem; font-size: 0.75rem; border-radius: 0.6rem; }
+
+    .tpf-panel-head { padding: 1rem 1.5rem; background: linear-gradient(135deg, #1e40af, #2563eb); color: #fff; font-weight: 600; }
+
+    .tpf-table { width: 100%; font-size: 0.875rem; border-collapse: separate; border-spacing: 0; }
+    .tpf-table thead th {
+      background: #f8fafc; color: #64748b; font-size: 0.7rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.05em; text-align: left;
+      padding: 0.75rem 1rem; border-bottom: 1px solid #e2e8f0;
+    }
+    .tpf-table tbody td { padding: 0.8rem 1rem; border-bottom: 1px solid #f1f5f9; color: #334155; vertical-align: middle; }
+    .tpf-table tbody tr { transition: background 0.15s; }
+    .tpf-table tbody tr:hover { background: rgba(59,130,246,0.04); }
+    .tpf-table tbody tr:last-child td { border-bottom: none; }
+
+    .tpf-badge { display: inline-block; padding: 0.15rem 0.6rem; border-radius: 9999px; font-size: 0.7rem; font-weight: 600; background: #f1f5f9; color: #475569; }
+    .tpf-badge-green  { background: #dcfce7; color: #15803d; }
+    .tpf-badge-blue   { background: #dbeafe; color: #1d4ed8; }
+    .tpf-badge-amber  { background: #fef3c7; color: #b45309; }
+    .tpf-badge-red    { background: #fee2e2; color: #b91c1c; }
+    .tpf-badge-purple { background: #ede9fe; color: #6d28d9; }
+
+    .tpf-empty { padding: 3.5rem 1.5rem; text-align: center; color: #64748b; }
+
     /* Scrollbar for sidebar */
     #sidebar::-webkit-scrollbar { width: 4px; }
     #sidebar::-webkit-scrollbar-track { background: transparent; }
     #sidebar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 2px; }
+    /* ════════ TPF brand layer: navy + gold ════════ */
+    :root {
+      --tpf-navy-950: #060f1f; --tpf-navy-900: #0a1a33; --tpf-navy-800: #10284d; --tpf-navy-700: #173a6b;
+      --tpf-blue: #1e4fd6; --tpf-gold: #d4a72c; --tpf-gold-light: #f2cf63; --tpf-canvas: #eef2f7;
+    }
+    .gradient-bg {
+      background:
+        radial-gradient(1100px 560px at 88% -12%, rgba(212,167,44,0.16), transparent 60%),
+        radial-gradient(900px 520px at -12% 112%, rgba(30,79,214,0.28), transparent 60%),
+        radial-gradient(circle at 1px 1px, rgba(255,255,255,0.05) 1px, transparent 0) 0 0 / 24px 24px,
+        linear-gradient(160deg, #060f1f 0%, #0a1a33 45%, #0e2344 100%);
+      background-color: #0a1a33;
+      background-attachment: fixed;
+    }
+    .gradient-bg::before { background: none; }
+    .geometric-bg { background-image: none; }
+
+    .brand-font, .content-heading, .tpf-hero h1 {
+      font-family: 'Barlow Semi Condensed', 'Inter', sans-serif !important; letter-spacing: 0.01em;
+    }
+    .logo-gradient {
+      background: linear-gradient(135deg, #f2cf63 0%, #d4a72c 55%, #b8860b 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+
+    /* Content surfaces */
+    .tpf-canvas {
+      background: rgba(238,242,247,0.97); border-radius: 1.25rem;
+      border: 1px solid rgba(255,255,255,0.6); box-shadow: 0 24px 60px rgba(0,0,0,0.35);
+    }
+    .glassmorphism {
+      background: rgba(255,255,255,0.97); border: 1px solid rgba(15,23,42,0.06);
+      box-shadow: 0 1px 2px rgba(15,23,42,0.04), 0 8px 24px rgba(15,23,42,0.06);
+    }
+    .card-hover:hover { box-shadow: 0 18px 40px -12px rgba(10,26,51,0.28); }
+
+    /* Sidebar */
+    #sidebar {
+      background: linear-gradient(180deg, rgba(16,40,77,0.97) 0%, rgba(6,15,31,0.97) 100%);
+      border: 1px solid rgba(212,167,44,0.18); box-shadow: 0 24px 60px rgba(0,0,0,0.45);
+    }
+    #sidebar .nav-item { color: #c3cee0; }
+    #sidebar .nav-item svg { color: #7f94b5; transition: color 0.2s; }
+    #sidebar .nav-item::before { background: linear-gradient(90deg, rgba(212,167,44,0.20), rgba(212,167,44,0.03)); }
+    #sidebar .nav-item:hover { color: #fff !important; transform: translateX(4px); box-shadow: inset 3px 0 0 var(--tpf-gold); }
+    #sidebar .nav-item:hover svg, #sidebar .nav-item.is-active svg { color: var(--tpf-gold-light); }
+    #sidebar .nav-item.is-active, #sidebar .bg-blue-50 {
+      background: rgba(212,167,44,0.14) !important; color: #fff; box-shadow: inset 3px 0 0 var(--tpf-gold);
+    }
+    #sidebar .accent-line::after { background: var(--tpf-gold); }
+    #sidebar .nav-subitem { color: #93a5c1; }
+    #sidebar .nav-subitem:hover { background: rgba(255,255,255,0.06); color: var(--tpf-gold-light); }
+    #sidebar .nav-subitem.is-active { color: var(--tpf-gold-light); background: rgba(212,167,44,0.10); }
+    #sidebar .nav-item-logout, #sidebar .nav-item-logout svg { color: #f87171; }
+    #sidebar .nav-item-logout:hover { box-shadow: inset 3px 0 0 #ef4444; }
+    #sidebar .nav-item-logout::before { background: linear-gradient(90deg, rgba(239,68,68,0.25), rgba(239,68,68,0.03)); }
+    #sidebar::-webkit-scrollbar-thumb { background: #24406b; }
+
+    /* Hero header */
+    .tpf-hero {
+      position: relative; overflow: hidden; color: #fff;
+      background: linear-gradient(120deg, #0a1a33 0%, #173a6b 55%, #1e4fd6 130%);
+      border: 1px solid rgba(212,167,44,0.25); box-shadow: 0 24px 60px rgba(0,0,0,0.35);
+    }
+    .tpf-hero::before {
+      content: ''; position: absolute; left: 0; right: 0; top: 0; height: 3px;
+      background: linear-gradient(90deg, var(--tpf-gold), var(--tpf-gold-light) 50%, transparent);
+    }
+    .tpf-hero-crest { position: absolute; right: -2.5rem; top: 50%; width: 13rem; transform: translateY(-50%); opacity: 0.12; filter: invert(1) grayscale(1); mix-blend-mode: screen; pointer-events: none; }
+    .tpf-chip { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.72rem; font-weight: 600; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.14); color: #dbe4f3; }
+    .pulse-glow { animation: gold-glow 3s ease-in-out infinite; }
+    @keyframes gold-glow {
+      0%, 100% { box-shadow: 0 0 0 3px rgba(212,167,44,0.55), 0 0 18px rgba(212,167,44,0.25); }
+      50%      { box-shadow: 0 0 0 3px rgba(242,207,99,0.85), 0 0 28px rgba(212,167,44,0.45); }
+    }
+
+    /* Components on the brand palette */
+    .tpf-panel-head { background: linear-gradient(135deg, #0a1a33, #173a6b); border-bottom: 2px solid var(--tpf-gold); }
+    .btn-tpf { background: linear-gradient(135deg, #173a6b, #1e4fd6); box-shadow: 0 4px 14px rgba(30,79,214,0.32); }
+    .btn-tpf-success { background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 4px 12px rgba(16,185,129,0.3); }
+    .btn-tpf-danger  { background: linear-gradient(135deg, #ef4444, #dc2626); box-shadow: 0 4px 12px rgba(239,68,68,0.3); }
+    .btn-tpf-warning { background: linear-gradient(135deg, #f59e0b, #d97706); box-shadow: 0 4px 12px rgba(245,158,11,0.3); }
+    .btn-tpf-light   { background: linear-gradient(135deg, #f1f5f9, #e2e8f0); box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+    .btn-tpf-gold { background: linear-gradient(135deg, #e3b93e, #b8860b); box-shadow: 0 4px 14px rgba(212,167,44,0.35); color: #1a1205; }
+    .btn-tpf-gold:hover { color: #1a1205; }
+    .tpf-table thead th { background: #f4f6fa; color: #4b5d7a; }
+    .mobile-toggle { background: var(--tpf-navy-800) !important; color: #fff !important; }
   </style>
   {% block extra_head %}{% endblock %}
 </head>
@@ -206,18 +355,21 @@
 
   <div class="flex min-h-screen">
 
+    {% block tpf_sidebar %}
     <!-- ── Sidebar ── -->
-    <aside id="sidebar" class="w-72 glassmorphism backdrop-blur-xl p-6 m-4 rounded-2xl shadow-2xl overflow-y-auto flex-shrink-0">
+    <aside id="sidebar" class="w-72 p-6 m-4 rounded-2xl overflow-y-auto flex-shrink-0 self-start sticky top-4" style="max-height: calc(100vh - 2rem);">
 
-      <!-- Logo -->
-      <div class="text-2xl font-bold mb-8 floating status-indicator flex items-center space-x-3">
-        <img src="{% static 'images/tanzania-police-logo.png' %}" alt="TPF Logo"
-             class="w-14 h-14 object-contain"
-             onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
-        <div class="w-14 h-14 bg-gradient-to-br from-blue-600 to-blue-800 rounded-full items-center justify-center text-white font-bold text-lg shadow-lg flex-shrink-0" style="display:none;">🚔</div>
+      <!-- Brand -->
+      <div class="flex items-center gap-3 mb-7 pb-6 border-b border-white/10">
+        <div class="relative flex-shrink-0">
+          <div class="absolute inset-0 rounded-full blur-md" style="background: rgba(212,167,44,0.25);"></div>
+          <img src="{% static 'images/tanzania-police-logo.png' %}" alt="Tanzania Police Force crest"
+               class="relative w-14 h-14 object-contain rounded-full bg-white p-0.5 ring-2 ring-amber-400/70 shadow-lg" onerror="this.style.display='none';" />
+        </div>
         <div class="min-w-0">
-          <span class="logo-gradient block truncate">TPF Animal System</span>
-          <div class="text-sm font-normal text-slate-500 mt-0.5">{% block sidebar_subtitle %}Management Portal{% endblock %}</div>
+          <div class="text-[10px] font-semibold uppercase tracking-[0.18em]" style="color: #e9c75a;">Tanzania Police Force</div>
+          <div class="brand-font text-xl font-bold text-white leading-tight">K9 &amp; Mounted Unit</div>
+          <div class="text-xs text-slate-400 mt-0.5">{% block sidebar_subtitle %}Management Portal{% endblock %}</div>
         </div>
       </div>
 
@@ -225,9 +377,9 @@
       <nav class="space-y-1">
         {% block sidebar_nav %}{% endblock %}
 
-        <div class="h-px bg-gradient-to-r from-transparent via-slate-300 to-transparent my-4"></div>
+        <div class="h-px bg-gradient-to-r from-transparent via-white/15 to-transparent my-4"></div>
 
-        <a href="{% url 'logout' %}" class="nav-item nav-item-logout flex items-center space-x-3 px-4 py-3 text-red-500 hover:text-white relative">
+        <a href="{% url 'logout' %}" class="nav-item nav-item-logout flex items-center space-x-3 px-4 py-3 relative">
           <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
           </svg>
@@ -235,67 +387,56 @@
         </a>
       </nav>
     </aside>
+    {% endblock tpf_sidebar %}
 
     <!-- ── Main content ── -->
     <div class="flex-1 p-6 min-w-0">
 
-      <!-- Welcome header card -->
-      <div class="glassmorphism backdrop-blur-xl rounded-2xl p-6 mb-6 shadow-2xl card-hover">
-        <div class="flex justify-between items-center flex-wrap gap-4">
-          <div>
-            <h1 class="text-3xl font-bold content-heading mb-2">
-              Welcome back,
-              <span class="logo-gradient">{{ request.user.get_full_name|default:request.user.username }}</span>
+      {% block tpf_header %}
+      <!-- Hero header -->
+      <header class="tpf-hero rounded-2xl px-6 py-6 mb-6">
+        <img src="{% static 'images/tanzania-police-logo.png' %}" alt="" class="tpf-hero-crest" aria-hidden="true">
+        <div class="relative flex justify-between items-center flex-wrap gap-5">
+          <div class="min-w-0">
+            <p class="text-xs font-semibold uppercase tracking-[0.18em]" style="color: #e9c75a;">{% now "l, d F Y" %}</p>
+            <h1 class="text-3xl md:text-4xl font-bold text-white mt-1">
+              Welcome back, <span class="logo-gradient">{{ request.user.get_full_name|default:request.user.username }}</span>
             </h1>
-            <div class="flex items-center flex-wrap gap-3">
-              <p class="content-text flex items-center">
-                <span class="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse flex-shrink-0"></span>
-                {% if request.user.branch %}
-                  📍 Branch: <strong class="ml-1 text-blue-600">{{ request.user.branch.name|title }}</strong>
-                {% else %}
-                  🌐 <strong class="ml-1 text-purple-600">All Branches</strong>
-                {% endif %}
-              </p>
+            <div class="flex items-center flex-wrap gap-2 mt-3">
+              <span class="tpf-chip">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                {% if request.user.branch %}{{ request.user.branch.name|title }}{% else %}All Branches{% endif %}
+              </span>
               <span class="px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wide {% block role_badge_class %}bg-slate-100 text-slate-700{% endblock %}">
                 {% block role_badge %}{{ request.user.role|title }}{% endblock %}
               </span>
-              <span class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold uppercase tracking-wide">
-                Active
-              </span>
+              <span class="tpf-chip"><span class="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></span>On duty</span>
             </div>
           </div>
 
-          <div class="flex items-center space-x-4">
-            <div class="text-right hidden sm:block">
-              <div class="text-xs text-slate-500">System Status</div>
-              <div class="text-green-600 font-semibold text-sm flex items-center justify-end">
-                <span class="w-2 h-2 bg-green-500 rounded-full mr-1.5"></span>Online
-              </div>
-            </div>
-
-            <div class="w-14 h-14 bg-gradient-to-br from-blue-500 to-green-500 rounded-full flex items-center justify-center text-white font-bold text-xl pulse-glow shadow-xl flex-shrink-0">
+          <div class="flex items-center gap-4">
+            <a href="{% block notification_url %}#{% endblock %}" aria-label="Notifications"
+               class="relative w-11 h-11 rounded-full flex items-center justify-center text-slate-200 hover:text-white transition-colors"
+               style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.14);">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+              {% if unread_notifications_count > 0 %}
+              <span class="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] min-w-[1.15rem] h-[1.15rem] px-1 rounded-full notification-pulse font-bold flex items-center justify-center">{{ unread_notifications_count }}</span>
+              {% endif %}
+            </a>
+            <div class="w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg pulse-glow flex-shrink-0"
+                 style="background: linear-gradient(135deg, #173a6b, #0a1a33); color: #f2cf63;">
               {{ request.user.get_full_name.0|upper|default:request.user.username.0|upper }}
-            </div>
-
-            <div class="relative">
-              <a href="{% block notification_url %}#{% endblock %}"
-                 class="text-slate-600 hover:text-blue-600 transition-all duration-300 text-2xl p-2.5 rounded-full bg-white/80 hover:bg-white hover:shadow-lg relative backdrop-blur-sm inline-block">
-                🔔
-                {% if unread_notifications_count > 0 %}
-                <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full notification-pulse shadow font-bold leading-none">
-                  {{ unread_notifications_count }}
-                </span>
-                {% endif %}
-              </a>
             </div>
           </div>
         </div>
-      </div>
+      </header>
+
+      {% endblock tpf_header %}
 
       <!-- Page content card -->
-      <div class="glassmorphism backdrop-blur-xl rounded-2xl p-8 shadow-2xl min-h-64">
+      <main class="tpf-canvas p-6 md:p-8 min-h-64">
         {% block content %}{% endblock %}
-      </div>
+      </main>
 
     </div>
   </div>
@@ -312,16 +453,20 @@
   // GSAP entrance animations
   if (typeof gsap !== 'undefined') {
     gsap.set('body', {opacity: 1});
-    gsap.set('.glassmorphism, .nav-item, .card-hover', {opacity: 1});
-    gsap.timeline()
-      .from('.glassmorphism', {
-        duration: 1.0, y: 50, opacity: 0, stagger: 0.12, ease: 'power3.out',
+    gsap.set('.glassmorphism, .tpf-hero, .tpf-canvas, .nav-item, .card-hover', {opacity: 1});
+    gsap.ticker.lagSmoothing(0);  // finish on wall-clock time even when frames are sparse
+    const intro = gsap.timeline();
+    // If frames are throttled (slow device, background tab), never leave the page half-faded.
+    setTimeout(() => intro.progress(1), 1200);
+    intro
+      .from('.tpf-hero, .tpf-canvas, .tpf-canvas .glassmorphism', {
+        duration: 0.55, y: 24, opacity: 0, stagger: 0.05, ease: 'power3.out',
         onComplete() { gsap.set(this.targets(), {opacity: 1}); }
       })
       .from('.nav-item', {
-        duration: 0.7, x: -25, opacity: 0, stagger: 0.04, ease: 'back.out(1.7)',
+        duration: 0.45, x: -16, opacity: 0, stagger: 0.025, ease: 'power2.out',
         onComplete() { gsap.set(this.targets(), {opacity: 1}); }
-      }, '-=0.7');
+      }, '-=0.5');
   } else {
     document.body.style.opacity = '1';
   }
@@ -333,6 +478,21 @@
         .forEach(el => { el.style.opacity = '1'; el.style.visibility = 'visible'; });
     }, 80);
   });
+
+  // Highlight the sidebar link for the current page: the longest link that prefixes the URL,
+  // so sub-pages (e.g. Horse Care tabs, an animal's profile) light up their section.
+  (() => {
+    const path = window.location.pathname.toLowerCase();  // branch names appear in either case
+    let best = null, bestLen = 0;
+    document.querySelectorAll('#sidebar a.nav-item, #sidebar a.nav-subitem').forEach(a => {
+      const href = (a.getAttribute('href') || '').toLowerCase();
+      if (href.length > 1 && href.length > bestLen && path.startsWith(href)) { best = a; bestLen = href.length; }
+    });
+    if (best) {
+      best.classList.add('is-active');
+      best.closest('.nav-dropdown-content')?.classList.add('open');
+    }
+  })();
 
   function toggleDropdown(el) {
     const content = el.nextElementSibling;

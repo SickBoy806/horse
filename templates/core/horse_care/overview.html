@@ -1,0 +1,57 @@
+{% extends base_template %}
+{% block page_title %}Horse Care — TPF Animal System{% endblock %}
+
+{% block content %}
+{% include "core/horse_care/_tabs.html" %}
+
+<div class="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+  {% include "partials/stat_tile.html" with label="Active Horses" value=stats.horses color="blue" %}
+  {% include "partials/stat_tile.html" with label="Farrier Overdue" value=stats.farrier_overdue color="red" hint="incl. never shod" %}
+  {% include "partials/stat_tile.html" with label="Farrier Due Soon" value=stats.farrier_due_soon color="amber" %}
+  {% include "partials/stat_tile.html" with label="Tack Needs Attention" value=stats.tack_attention color="purple" %}
+  {% include "partials/stat_tile.html" with label="Not Stabled" value=stats.unhoused color="blue" %}
+</div>
+
+<div class="glassmorphism rounded-2xl overflow-hidden">
+  {% if rows %}
+  <div class="overflow-x-auto">
+    <table class="tpf-table">
+      <thead><tr><th>Horse</th><th>Stall</th><th>Last Farrier Visit</th><th>Next Visit</th><th>Hooves</th><th>Tack</th></tr></thead>
+      <tbody>
+        {% for r in rows %}
+        <tr>
+          <td>
+            <a href="{% url 'view_animal_detail' animal_id=r.horse.id %}" class="flex items-center gap-3 group">
+              {% if r.horse.photo %}<img src="{{ r.horse.photo.url }}" alt="" class="w-9 h-9 rounded-lg object-cover">{% endif %}
+              <span><span class="font-semibold text-slate-800 group-hover:text-blue-700">{{ r.horse.name }}</span>
+              <span class="block text-xs text-slate-400">{{ r.horse.force_number }} &middot; {{ r.horse.get_status_display }}</span></span>
+            </a>
+          </td>
+          <td>{% if r.unit %}{{ r.unit.name }}{% else %}<a href="{% url 'stables_board' %}?animal={{ r.horse.id }}#move" class="tpf-badge tpf-badge-purple">Assign stall</a>{% endif %}</td>
+          <td>{% if r.last_visit %}{{ r.last_visit.date|date:"M d, Y" }}<span class="block text-xs text-slate-400">{{ r.last_visit.get_service_display }}</span>{% else %}<span class="text-slate-400">Never</span>{% endif %}</td>
+          <td>
+            {% if r.farrier_state == 'missing' %}<a href="{% url 'farrier_log' %}?animal={{ r.horse.id }}#new" class="tpf-badge tpf-badge-red">Log first visit</a>
+            {% elif r.farrier_state == 'none' %}<span class="text-slate-400">Not scheduled</span>
+            {% else %}
+              {{ r.last_visit.next_due|date:"M d, Y" }}
+              <span class="block mt-0.5"><span class="tpf-badge {% if r.farrier_state == 'overdue' %}tpf-badge-red{% elif r.farrier_state == 'due_soon' %}tpf-badge-amber{% else %}tpf-badge-green{% endif %}">{% if r.farrier_state == 'overdue' %}Overdue{% elif r.farrier_state == 'due_soon' %}Due soon{% else %}On schedule{% endif %}</span></span>
+            {% endif %}
+          </td>
+          <td>{% if r.last_visit %}<span class="tpf-badge {{ r.last_visit.condition_badge }}">{{ r.last_visit.get_condition_display }}</span>{% else %}<span class="text-slate-400">—</span>{% endif %}</td>
+          <td>
+            <a href="{% url 'tack_list' %}?horse={{ r.horse.id }}" class="text-sm font-semibold text-blue-700 hover:text-blue-900">{{ r.tack_count }} item{{ r.tack_count|pluralize }}</a>
+            {% if r.tack_issues %}<span class="block mt-0.5"><span class="tpf-badge tpf-badge-amber">{{ r.tack_issues }} need{{ r.tack_issues|pluralize:"s," }} attention</span></span>{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="tpf-empty">
+    <p class="content-heading">No active horses</p>
+    <p class="text-sm mt-1">Register horses under <a href="{% url 'add_animal' %}" class="font-semibold text-blue-700">Add Animal</a> (species: Horse) to manage their care here.</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

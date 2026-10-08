@@ -56,7 +56,7 @@
 
 <!-- Filters -->
 <div class="glassmorphism rounded-2xl p-5 mb-6">
-  <form method="get" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+  <form method="get" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
     {% if branches %}
     <div>
       <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">Branch</label>
@@ -80,6 +80,17 @@
     </div>
 
     <div>
+      <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">Duty Status</label>
+      <select name="status" class="filter-field">
+        <option value="">All Statuses</option>
+        <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active strength</option>
+        {% for val, label in status_choices %}
+          <option value="{{ val }}" {% if val == status_filter %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div>
       <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">Search</label>
       <input type="text" name="q" value="{{ search|default:'' }}" placeholder="Name, number…"
              class="filter-field">
@@ -87,8 +98,7 @@
 
     <div class="flex items-end">
       <button type="submit"
-              class="w-full py-2.5 rounded-xl text-white text-sm font-semibold transition-all duration-200 hover:-translate-y-0.5"
-              style="background: linear-gradient(135deg, #2563eb, #4f46e5); box-shadow: 0 4px 12px rgba(37,99,235,0.25);">
+              class="btn-tpf w-full">
         Apply Filters
       </button>
     </div>
@@ -103,7 +113,7 @@
         <tr style="background: linear-gradient(135deg, rgba(241,245,249,0.9), rgba(226,232,240,0.9));">
           <th class="px-6 py-3.5 text-left text-xs font-bold text-slate-600 uppercase tracking-wider">Photo</th>
           <th class="px-6 py-3.5 text-left text-xs font-bold text-slate-600 uppercase tracking-wider">Name</th>
-          <th class="px-6 py-3.5 text-left text-xs font-bold text-slate-600 uppercase tracking-wider">Species</th>
+          <th class="px-6 py-3.5 text-left text-xs font-bold text-slate-600 uppercase tracking-wider">Species / Role</th>
           <th class="px-6 py-3.5 text-left text-xs font-bold text-slate-600 uppercase tracking-wider">Branch</th>
           <th class="px-6 py-3.5 text-left text-xs font-bold text-slate-600 uppercase tracking-wider">Status</th>
           <th class="px-6 py-3.5 text-left text-xs font-bold text-slate-600 uppercase tracking-wider">Assigned To</th>
@@ -127,15 +137,20 @@
               </div>
             {% endif %}
           </td>
-          <td class="px-6 py-4 text-sm font-semibold text-slate-800">{{ animal.name }}</td>
-          <td class="px-6 py-4 text-sm content-text capitalize">{{ animal.species|default:"—" }}</td>
+          <td class="px-6 py-4">
+            <p class="text-sm font-semibold text-slate-800">{{ animal.name }}</p>
+            <p class="text-xs text-slate-500 font-mono">{{ animal.force_number }}</p>
+          </td>
+          <td class="px-6 py-4 text-sm content-text">
+            {{ animal.get_species_display }}
+            <p class="text-xs text-slate-500">{{ animal.get_specialisation_display }}</p>
+          </td>
           <td class="px-6 py-4 text-sm content-text">{{ animal.branch|title|default:"—" }}</td>
           <td class="px-6 py-4">
-            <span class="text-xs px-2.5 py-0.5 rounded-full font-semibold
-              {% if animal.status == 'active' %}bg-green-100 text-green-700
-              {% else %}bg-slate-100 text-slate-600{% endif %}">
-              {{ animal.status|title|default:"Active" }}
-            </span>
+            <span class="tpf-badge {{ animal.status_badge }}">{{ animal.get_status_display }}</span>
+            {% if animal.required_cert_type %}{% with cert=animal.role_certificate %}
+            <span class="block mt-1">{% if cert %}<span class="tpf-badge {{ cert.state_badge }}" title="{{ cert.get_cert_type_display }} — {{ cert.expiry_date|date:'M d, Y' }}">Cert {{ cert.state_label|lower }}</span>{% else %}<span class="tpf-badge tpf-badge-red">Not certified</span>{% endif %}</span>
+            {% endwith %}{% endif %}
           </td>
           <td class="px-6 py-4">
             {% for u in animal.assigned_users.all %}
@@ -171,13 +186,13 @@
     </p>
     <div class="flex items-center gap-2">
       {% if page_obj.has_previous %}
-      <a href="?page={{ page_obj.previous_page_number }}&branch={{ branch_filter }}&species={{ species_filter }}&q={{ search }}"
+      <a href="?page={{ page_obj.previous_page_number }}&branch={{ branch_filter }}&species={{ species_filter|default:"" }}&status={{ status_filter|default:"" }}&q={{ search|default:"" }}"
          class="px-3 py-1.5 text-xs font-semibold rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50 transition-colors">
         &laquo; Prev
       </a>
       {% endif %}
       {% if page_obj.has_next %}
-      <a href="?page={{ page_obj.next_page_number }}&branch={{ branch_filter }}&species={{ species_filter }}&q={{ search }}"
+      <a href="?page={{ page_obj.next_page_number }}&branch={{ branch_filter }}&species={{ species_filter|default:"" }}&status={{ status_filter|default:"" }}&q={{ search|default:"" }}"
          class="px-3 py-1.5 text-xs font-semibold rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50 transition-colors">
         Next &raquo;
       </a>

@@ -1,0 +1,6 @@
+{% comment %}Usage: {% include "partials/stat_tile.html" with label="Patients" value=n color="blue" %}  color: blue|green|amber|purple|red{% endcomment %}
+<div class="glassmorphism rounded-2xl p-5 card-hover">
+  <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">{{ label }}</p>
+  <p class="text-3xl font-bold mt-2 {% if color == 'green' %}text-emerald-600{% elif color == 'amber' %}text-amber-600{% elif color == 'purple' %}text-violet-600{% elif color == 'red' %}text-red-600{% else %}text-blue-600{% endif %}">{{ value }}</p>
+  {% if hint %}<p class="text-xs text-slate-400 mt-1">{{ hint }}</p>{% endif %}
+</div>

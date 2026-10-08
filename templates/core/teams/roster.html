@@ -1,0 +1,90 @@
+{% extends base_template %}
+{% block page_title %}Teams &amp; Certifications — TPF Animal System{% endblock %}
+
+{% block content %}
+{% include "partials/flash_messages.html" %}
+
+<div class="glassmorphism rounded-2xl p-6 mb-6">
+  <div class="flex items-center justify-between flex-wrap gap-4">
+    <div>
+      <h2 class="content-heading text-2xl">Teams &amp; Certifications</h2>
+      <p class="content-text text-sm mt-1">Who handles each animal, and whether it's certified for its role. Certificates are flagged {{ expiring_days }} days before expiry.</p>
+    </div>
+    <a href="?{% if state %}state={{ state }}&{% endif %}{% if branch_filter %}branch={{ branch_filter|urlencode }}&{% endif %}export=csv" class="btn-tpf btn-tpf-light">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+      Export CSV
+    </a>
+  </div>
+</div>
+
+<!-- State filter chips -->
+<div class="flex flex-wrap items-center gap-2 mb-6">
+  {% with b=branch_filter|urlencode %}
+  <a href="?{% if b %}branch={{ b }}{% endif %}" class="tpf-badge !text-xs !px-3 !py-1.5 {% if not state %}tpf-badge-blue ring-2 ring-blue-300{% endif %}">All</a>
+  <a href="?state=valid{% if b %}&branch={{ b }}{% endif %}" class="tpf-badge tpf-badge-green !text-xs !px-3 !py-1.5 {% if state == 'valid' %}ring-2 ring-emerald-300{% endif %}">Certified <strong class="ml-1">{{ counts.valid }}</strong></a>
+  <a href="?state=expiring{% if b %}&branch={{ b }}{% endif %}" class="tpf-badge tpf-badge-amber !text-xs !px-3 !py-1.5 {% if state == 'expiring' %}ring-2 ring-amber-300{% endif %}">Expiring <strong class="ml-1">{{ counts.expiring }}</strong></a>
+  <a href="?state=expired{% if b %}&branch={{ b }}{% endif %}" class="tpf-badge tpf-badge-red !text-xs !px-3 !py-1.5 {% if state == 'expired' %}ring-2 ring-red-300{% endif %}">Expired <strong class="ml-1">{{ counts.expired }}</strong></a>
+  <a href="?state=missing{% if b %}&branch={{ b }}{% endif %}" class="tpf-badge tpf-badge-red !text-xs !px-3 !py-1.5 {% if state == 'missing' %}ring-2 ring-red-300{% endif %}">Not certified <strong class="ml-1">{{ counts.missing }}</strong></a>
+  <a href="?state=no_handler{% if b %}&branch={{ b }}{% endif %}" class="tpf-badge tpf-badge-purple !text-xs !px-3 !py-1.5 {% if state == 'no_handler' %}ring-2 ring-violet-300{% endif %}">No handler <strong class="ml-1">{{ counts.no_handler }}</strong></a>
+  {% endwith %}
+  {% if branches %}
+  <form method="get" class="tpf-form ml-auto">
+    {% if state %}<input type="hidden" name="state" value="{{ state }}">{% endif %}
+    <select name="branch" onchange="this.form.submit()" style="min-width: 12rem;">
+      <option value="">All branches</option>
+      {% for br in branches %}<option value="{{ br.name }}" {% if br.name == branch_filter %}selected{% endif %}>{{ br.name|title }}</option>{% endfor %}
+    </select>
+  </form>
+  {% endif %}
+</div>
+
+<div class="glassmorphism rounded-2xl overflow-hidden">
+  {% if rows %}
+  <div class="overflow-x-auto">
+    <table class="tpf-table">
+      <thead><tr><th>Animal</th>{% if branches %}<th>Branch</th>{% endif %}<th>Role</th><th>Primary Handler</th><th>Secondary</th><th>Role Certificate</th><th>Other Certificates</th></tr></thead>
+      <tbody>
+        {% for r in rows %}
+        <tr>
+          <td>
+            <a href="{% url 'view_animal_detail' animal_id=r.animal.id %}" class="flex items-center gap-3 group">
+              {% if r.animal.photo %}<img src="{{ r.animal.photo.url }}" alt="" class="w-9 h-9 rounded-lg object-cover">{% endif %}
+              <span>
+                <span class="font-semibold text-slate-800 group-hover:text-blue-700">{{ r.animal.name }}</span>
+                <span class="block text-xs text-slate-400 font-mono">{{ r.animal.force_number }}</span>
+              </span>
+            </a>
+          </td>
+          {% if branches %}<td>{{ r.animal.branch.name|title }}</td>{% endif %}
+          <td>
+            {{ r.animal.get_specialisation_display }}
+            <span class="block mt-0.5"><span class="tpf-badge {{ r.animal.status_badge }}">{{ r.animal.get_status_display }}</span></span>
+          </td>
+          <td>
+            {% if r.primary %}<span class="font-medium text-slate-800">{{ r.primary.get_full_name|default:r.primary.username }}</span>
+            {% else %}<a href="{% url 'view_animal_detail' animal_id=r.animal.id %}#team" class="tpf-badge tpf-badge-purple">Assign handler</a>{% endif %}
+          </td>
+          <td class="text-sm">{% for u in r.secondary %}{{ u.get_full_name|default:u.username }}{% if not forloop.last %}, {% endif %}{% empty %}<span class="text-slate-400">—</span>{% endfor %}</td>
+          <td>
+            {% if r.role_cert %}
+              <span class="tpf-badge {{ r.role_cert.state_badge }}">{{ r.role_cert.state_label }}</span>
+              <span class="block text-xs text-slate-500 mt-0.5">{{ r.role_cert.get_cert_type_display }} &middot; {% if r.role_cert.state == 'expired' %}expired{% else %}to{% endif %} {{ r.role_cert.expiry_date|date:"M d, Y" }}</span>
+            {% elif r.cert_state == 'missing' %}
+              <a href="{% url 'view_animal_detail' animal_id=r.animal.id %}#certifications" class="tpf-badge tpf-badge-red">Not certified</a>
+            {% else %}<span class="text-slate-400 text-sm">Not required</span>{% endif %}
+          </td>
+          <td>
+            {% for c in r.other_certs %}<span class="tpf-badge {{ c.state_badge }} mr-1 mb-1" title="{{ c.state_label }} — {{ c.expiry_date|date:'M d, Y' }}">{{ c.get_cert_type_display }}</span>{% empty %}<span class="text-slate-400">—</span>{% endfor %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="tpf-empty">
+    <p class="content-heading">{% if state %}No animals in this category{% else %}No active animals{% endif %}</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

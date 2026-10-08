@@ -1,52 +1,68 @@
 {% extends "user_dashboard/base_user.html" %}
+{% load tpf_tags %}
+{% block page_title %}My Dashboard — TPF Animal System{% endblock %}
 
 {% block content %}
-<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+{% operations_panel %}
 
-  <!-- Today's Tasks -->
-  <div class="bg-white p-4 shadow rounded" id="tasks-card" data-count="{{ tasks|length }}">
-    <h2 class="text-lg font-semibold mb-2">Today's Tasks</h2>
-    {% for task in tasks %}
-      <div class="border-b py-2">
-        <strong>{{ task.title }}</strong><br>
-        <span class="text-sm text-gray-600">{{ task.status }}</span>
-      </div>
-    {% empty %}
-      <p class="text-gray-500">No tasks today.</p>
-    {% endfor %}
-  </div>
+{% health_alerts_panel %}
 
-  <!-- Assigned Animals -->
-  <div class="bg-white p-4 shadow rounded" id="animals-card" data-count="{{ animals|length }}">
-    <h2 class="text-lg font-semibold mb-2">Assigned Animals</h2>
-    {% for animal in animals %}
-      <p>{{ animal.name }} ({{ animal.species }})</p>
-    {% empty %}
-      <p class="text-gray-500">No animals assigned.</p>
-    {% endfor %}
-  </div>
-
-  <!-- Notifications -->
-  <div class="bg-white p-4 shadow rounded" id="notifications-card" data-count="{{ notifications|length }}">
-    <h2 class="text-lg font-semibold mb-2">Notifications</h2>
-    {% for note in notifications %}
-      <p class="text-sm text-gray-700">{{ note.message }}</p>
-    {% empty %}
-      <p>No new notifications.</p>
-    {% endfor %}
-  </div>
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+  {% include "partials/stat_tile.html" with label="Open Tasks" value=tasks|length color="blue" hint="Latest assigned to you" %}
+  {% include "partials/stat_tile.html" with label="Assigned Animals" value=animals|length color="green" %}
+  {% include "partials/stat_tile.html" with label="Unread Notifications" value=notifications|length color="amber" %}
 </div>
 
-<script>
-  // Animate counter widgets
-  document.querySelectorAll("[data-count]").forEach(el => {
-    const count = parseInt(el.getAttribute("data-count"));
-    gsap.fromTo(el.querySelector('h2'), { innerText: 0 }, {
-      innerText: count,
-      duration: 1.5,
-      snap: { innerText: 1 },
-      ease: "power1.out"
-    });
-  });
-</script>
+<div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+  <div class="glassmorphism rounded-2xl overflow-hidden">
+    <div class="tpf-panel-head flex items-center justify-between">
+      <span>Recent Tasks</span>
+      <a href="{% url 'user_tasks' branch=branch %}" class="text-xs font-semibold text-blue-100 hover:text-white">View all</a>
+    </div>
+    <ul class="divide-y divide-slate-100">
+      {% for task in tasks %}
+      <li class="px-5 py-3 flex items-center justify-between gap-3">
+        <span class="text-sm font-semibold text-slate-800 truncate">{{ task.title }}</span>
+        {% include "partials/task_status_badge.html" with status=task.status %}
+      </li>
+      {% empty %}
+      <li class="tpf-empty !py-8 text-sm">No tasks assigned.</li>
+      {% endfor %}
+    </ul>
+  </div>
+
+  <div class="glassmorphism rounded-2xl overflow-hidden">
+    <div class="tpf-panel-head flex items-center justify-between">
+      <span>Assigned Animals</span>
+      <a href="{% url 'assigned_animals' branch=branch %}" class="text-xs font-semibold text-blue-100 hover:text-white">View all</a>
+    </div>
+    <ul class="divide-y divide-slate-100">
+      {% for animal in animals %}
+      <li class="px-5 py-3 flex items-center justify-between gap-3">
+        <span class="text-sm font-semibold text-slate-800">{{ animal.name }}</span>
+        <span class="tpf-badge tpf-badge-green">{{ animal.species|title }}</span>
+      </li>
+      {% empty %}
+      <li class="tpf-empty !py-8 text-sm">No animals assigned.</li>
+      {% endfor %}
+    </ul>
+  </div>
+
+  <div class="glassmorphism rounded-2xl overflow-hidden">
+    <div class="tpf-panel-head flex items-center justify-between">
+      <span>Notifications</span>
+      <a href="{% url 'notifications_view' branch=branch %}" class="text-xs font-semibold text-blue-100 hover:text-white">View all</a>
+    </div>
+    <ul class="divide-y divide-slate-100">
+      {% for note in notifications %}
+      <li class="px-5 py-3">
+        <p class="text-sm font-semibold text-slate-800">{{ note.title|default:"Notification" }}</p>
+        <p class="text-xs content-text">{{ note.message|truncatechars:90 }}</p>
+      </li>
+      {% empty %}
+      <li class="tpf-empty !py-8 text-sm">No new notifications.</li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
 {% endblock %}

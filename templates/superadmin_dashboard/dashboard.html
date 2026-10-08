@@ -1,4 +1,5 @@
 {% extends "superadmin_dashboard/base_dashboard.html" %}
+{% load tpf_tags %}
 
 {% block content %}
 
@@ -16,6 +17,14 @@
     {% endfor %}
   </div>
 {% endif %}
+
+{% readiness_panel %}
+
+{% operations_panel %}
+
+{% cert_alerts_panel %}
+
+{% health_alerts_panel %}
 
 <!-- ═══════════════════════════════════════════════════════════
      KPI CARDS — Row 1

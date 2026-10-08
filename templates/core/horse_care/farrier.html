@@ -1,0 +1,68 @@
+{% extends base_template %}
+{% block page_title %}Farrier Log — TPF Animal System{% endblock %}
+
+{% block content %}
+{% include "core/horse_care/_tabs.html" %}
+
+<div class="grid grid-cols-1 xl:grid-cols-5 gap-6">
+  {% if can_log %}
+  <div id="new" class="glassmorphism rounded-2xl overflow-hidden xl:col-span-2 self-start scroll-mt-6">
+    <div class="tpf-panel-head">Log Farrier Visit</div>
+    <form method="post" class="tpf-form p-6 space-y-4" novalidate>
+      {% csrf_token %}
+      {% if form.non_field_errors %}<div class="p-3 rounded-xl text-sm text-red-700 bg-red-50 border border-red-200">{{ form.non_field_errors }}</div>{% endif %}
+      {% include "core/deployments/_field.html" with field=form.animal %}
+      <div class="grid grid-cols-2 gap-3">
+        {% include "core/deployments/_field.html" with field=form.date %}
+        {% include "core/deployments/_field.html" with field=form.hooves %}
+      </div>
+      {% include "core/deployments/_field.html" with field=form.service %}
+      {% include "core/deployments/_field.html" with field=form.farrier %}
+      <div class="grid grid-cols-2 gap-3">
+        {% include "core/deployments/_field.html" with field=form.condition %}
+        {% include "core/deployments/_field.html" with field=form.next_due %}
+      </div>
+      {% include "core/deployments/_field.html" with field=form.notes %}
+      <p class="text-xs text-slate-500">Poor or lame hooves alert the branch vets automatically.</p>
+      <div class="flex justify-end"><button type="submit" class="btn-tpf btn-tpf-success">Save visit</button></div>
+    </form>
+  </div>
+  {% endif %}
+
+  <div class="glassmorphism rounded-2xl overflow-hidden {% if can_log %}xl:col-span-3{% else %}xl:col-span-5{% endif %}">
+    <div class="tpf-panel-head flex items-center justify-between gap-3">
+      <span>Visit History</span>
+      <form method="get" class="tpf-form">
+        <select name="horse" onchange="this.form.submit()" class="!py-1.5 !text-xs" style="min-width: 10rem; color: #1e293b;">
+          <option value="">All horses</option>
+          {% for h in horses %}<option value="{{ h.id }}" {% if horse_filter == h.id|stringformat:"d" %}selected{% endif %}>{{ h.name }}</option>{% endfor %}
+        </select>
+      </form>
+    </div>
+    {% if records %}
+    <div class="overflow-x-auto">
+      <table class="tpf-table">
+        <thead><tr><th>Date</th><th>Horse</th><th>Service</th><th>Farrier</th><th>Condition</th><th>Next Due</th></tr></thead>
+        <tbody>
+          {% for r in records %}
+          <tr>
+            <td class="whitespace-nowrap">{{ r.date|date:"M d, Y" }}</td>
+            <td><a href="{% url 'view_animal_detail' animal_id=r.animal.id %}" class="font-semibold text-slate-800 hover:text-blue-700">{{ r.animal.name }}</a></td>
+            <td>{{ r.get_service_display }}<span class="block text-xs text-slate-400">{{ r.get_hooves_display }}</span>{% if r.notes %}<span class="block text-xs content-text">{{ r.notes|truncatechars:70 }}</span>{% endif %}</td>
+            <td>{{ r.farrier }}</td>
+            <td><span class="tpf-badge {{ r.condition_badge }}">{{ r.get_condition_display }}</span></td>
+            <td class="whitespace-nowrap">{{ r.next_due|date:"M d, Y"|default:"—" }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="tpf-empty">
+      <p class="content-heading">No farrier visits recorded</p>
+      <p class="text-sm mt-1">Log each trim or shoeing — the next visit is scheduled {{ default_weeks }} weeks later automatically.</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

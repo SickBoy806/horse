@@ -1,26 +1,16 @@
 {% extends "veterinarian_dashboard/base_dashboard.html" %}
+{% block page_title %}Performance Reports — TPF Animal System{% endblock %}
 
+{% block content %}
+<div class="glassmorphism rounded-2xl p-6 mb-6">
+  <h2 class="content-heading text-2xl">Performance Report</h2>
+  <p class="content-text text-sm mt-1">Your workload and turnaround — Branch: {{ branch|title }}</p>
+</div>
 
-{% block page_title %}Performance Reports - {{ branch|title }}{% endblock %}
-
-{% block dashboard_content %}
-  <h1 class="text-3xl font-bold mb-6">Performance Reports for {{ branch|title }}</h1>
-
-  <div class="space-y-4">
-    <div>
-      <strong>Total Patients:</strong> {{ reports.total_patients }}
-    </div>
-    <div>
-      <strong>Tasks Completed:</strong> {{ reports.tasks_completed }}
-    </div>
-    <div>
-      <strong>Tasks Pending:</strong> {{ reports.tasks_pending }}
-    </div>
-    <div>
-      <strong>Average Response Time:</strong> {{ reports.average_response_time }}
-    </div>
-  </div>
-
-  <!-- You can add charts, graphs or detailed reports here later -->
+<div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+  {% include "partials/stat_tile.html" with label="Assigned Patients" value=total_patients color="blue" %}
+  {% include "partials/stat_tile.html" with label="Tasks Completed" value=tasks_completed color="green" %}
+  {% include "partials/stat_tile.html" with label="Tasks Pending" value=tasks_pending color="amber" %}
+  {% include "partials/stat_tile.html" with label="Avg. Response Time" value=average_response_time color="purple" %}
+</div>
 {% endblock %}
-

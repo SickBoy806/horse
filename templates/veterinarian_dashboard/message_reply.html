@@ -1,37 +1,33 @@
 {% extends "veterinarian_dashboard/base_dashboard.html" %}
+{% block page_title %}Reply — TPF Animal System{% endblock %}
 
-{% load widget_tweaks %}
 {% block content %}
-<div class="max-w-2xl mx-auto bg-white p-6 rounded shadow">
-  <h2 class="text-2xl font-bold mb-6">Reply to: {{ original_message.subject }}</h2>
+<div class="glassmorphism rounded-2xl p-6 mb-6">
+  <div class="flex items-center justify-between flex-wrap gap-4">
+    <div class="min-w-0">
+      <h2 class="content-heading text-2xl">Reply</h2>
+      <p class="content-text text-sm mt-1 truncate">Re: {{ original_message.subject }}</p>
+    </div>
+    <a href="{% url 'inbox' branch=branch %}" class="btn-tpf btn-tpf-light">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+      Inbox
+    </a>
+  </div>
+</div>
 
-  <form method="post" class="space-y-4">
+<div class="glassmorphism rounded-2xl p-6 mb-6">
+  <p class="text-xs text-slate-500 mb-2"><strong class="text-slate-700">{{ original_message.sender }}</strong> wrote on {{ original_message.timestamp|date:"M d, Y H:i" }}:</p>
+  <p class="content-text whitespace-pre-line">{{ original_message.content }}</p>
+</div>
+
+<div class="glassmorphism rounded-2xl overflow-hidden">
+  <div class="tpf-panel-head">Your Reply</div>
+  <form method="post" class="tpf-form p-6 space-y-5" novalidate>
     {% csrf_token %}
-    <div>
-      <label class="block text-gray-700 mb-1" for="id_receiver">To:</label>
-      {{ form.receiver|add_class:"w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400" }}
-      {{ form.receiver.errors }}
+    {% include "partials/form_fields.html" with form=form %}
+    <div class="pt-4 border-t border-slate-100 flex justify-end">
+      <button type="submit" class="btn-tpf">Send Reply</button>
     </div>
-
-    <div>
-      <label class="block text-gray-700 mb-1" for="id_subject">Subject:</label>
-      {{ form.subject|add_class:"w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400" }}
-      {{ form.subject.errors }}
-    </div>
-
-    <div>
-      <label class="block text-gray-700 mb-1" for="id_content">Content:</label>
-      {{ form.content|add_class:"w-full border border-gray-300 rounded px-3 py-2 h-32 focus:outline-none focus:ring-2 focus:ring-blue-400" }}
-      {{ form.content.errors }}
-    </div>
-
-    <button type="submit" class="bg-blue-600 text-white px-5 py-2 rounded hover:bg-blue-700">
-      Send Reply
-    </button>
   </form>
-
-  <a href="{% url 'inbox' branch %}" class="inline-block mt-4 text-blue-600 hover:underline">
-    ← Back to Inbox
-  </a>
 </div>
 {% endblock %}

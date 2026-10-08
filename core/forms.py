@@ -1,4 +1,5 @@
 from django import forms
+from django.utils import timezone
 from .models import TrainingRecord
 from .models import Report
 from django.forms import inlineformset_factory
@@ -56,13 +57,20 @@ class AnimalForm(forms.ModelForm):
     class Meta:
         model = Animal
         fields = [
-            'name', 'species', 'breed', 'force_number', 'age', 
-            'date_of_birth', 'owner_name', 'photo', 'assigned_users', 'assigned_vet'
+            'name', 'species', 'breed', 'force_number', 'age',
+            'date_of_birth', 'owner_name', 'photo', 'assigned_users', 'assigned_vet',
+            'status', 'status_since', 'status_notes', 'specialisation',
+            'sex', 'is_neutered', 'colour_markings', 'microchip_number', 'brand_or_tattoo',
+            'acquisition_date', 'acquisition_source', 'acquired_from',
         ]
         widgets = {
             'date_of_birth': forms.DateInput(attrs={'type': 'date'}),
             'age': forms.NumberInput(attrs={'step': '0.01'}),
             'assigned_users': forms.CheckboxSelectMultiple(),
+            'status_since': forms.DateInput(attrs={'type': 'date'}),
+            'acquisition_date': forms.DateInput(attrs={'type': 'date'}),
+            'status_notes': forms.Textarea(attrs={'rows': 2, 'placeholder': 'Reason for current status (optional)'}),
+            'colour_markings': forms.TextInput(attrs={'placeholder': 'e.g. Black & tan, white chest blaze'}),
         }
 
     def __init__(self, *args, **kwargs):
@@ -85,6 +93,21 @@ class AnimalForm(forms.ModelForm):
             if existing.exists():
                 raise ValidationError("An animal with this force number already exists.")
         return force_number
+
+    def clean_microchip_number(self):
+        # Blank must be stored as NULL so the unique constraint allows many unchipped animals.
+        return (self.cleaned_data.get('microchip_number') or '').strip() or None
+
+
+class AnimalStatusForm(forms.ModelForm):
+    """Quick duty-status change from the animal profile."""
+    class Meta:
+        model = Animal
+        fields = ['status', 'status_since', 'status_notes']
+        widgets = {
+            'status_since': forms.DateInput(attrs={'type': 'date'}),
+            'status_notes': forms.Textarea(attrs={'rows': 2, 'placeholder': 'Reason / notes'}),
+        }
 
 
 class MedicalRecordForm(forms.ModelForm):
@@ -315,3 +338,345 @@ class ReportForm(forms.ModelForm):
             else:
                 self.fields['specific_report_type'].choices = []
                 self.role_category_value = None
+
+
+# ------------------------------
+# Deployments
+# ------------------------------
+from .models import Deployment, DeploymentTeam, DeploymentFind, Branch  # noqa: E402
+
+DATETIME_LOCAL = forms.DateTimeInput(attrs={'type': 'datetime-local'}, format='%Y-%m-%dT%H:%M')
+
+
+def _branch_animals(branch, include=None):
+    """Animals that can be deployed: active strength of the branch, plus any already on the record."""
+    qs = Animal.objects.filter(status__in=Animal.ACTIVE_STATUSES)
+    if branch is not None:
+        qs = qs.filter(branch=branch)
+    if include:
+        qs = qs | Animal.objects.filter(pk__in=include)
+    return qs.distinct().order_by('name')
+
+
+class DeploymentForm(forms.ModelForm):
+    class Meta:
+        model = Deployment
+        fields = [
+            'branch', 'deployment_type', 'started_at', 'ended_at', 'location', 'ob_number', 'requested_by',
+            'status', 'outcome', 'arrests', 'persons_located', 'summary',
+        ]
+        widgets = {
+            'started_at': DATETIME_LOCAL,
+            'ended_at': DATETIME_LOCAL,
+            'summary': forms.Textarea(attrs={'rows': 4, 'placeholder': 'What happened, actions taken, notable behaviour…'}),
+            'location': forms.TextInput(attrs={'placeholder': 'e.g. Moshi bus terminal, Bay 3'}),
+            'ob_number': forms.TextInput(attrs={'placeholder': 'e.g. MOS/RB/1234/2026'}),
+        }
+
+    def __init__(self, *args, user=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        for name in ('started_at', 'ended_at'):
+            self.fields[name].input_formats = ['%Y-%m-%dT%H:%M']
+        self.fields['outcome'].required = False
+        if user is not None and user.role != 'superadmin':
+            # Branch staff always log against their own branch.
+            del self.fields['branch']
+        else:
+            self.fields['branch'].queryset = Branch.objects.filter(is_active=True).order_by('name')
+
+    def clean(self):
+        cleaned = super().clean()
+        start, end = cleaned.get('started_at'), cleaned.get('ended_at')
+        if start and end and end < start:
+            self.add_error('ended_at', 'End time cannot be before the start time.')
+        if cleaned.get('status') == 'completed':
+            if not cleaned.get('outcome'):
+                self.add_error('outcome', 'Record the outcome for a completed deployment.')
+            if not end:
+                self.add_error('ended_at', 'Record when a completed deployment ended.')
+        return cleaned
+
+
+from .health import animal_overdue  # noqa: E402
+
+
+def _deployable_label(animal):
+    """Option text that warns when an animal isn't fit or isn't certified for its role."""
+    warnings = [] if animal.is_fit_for_duty else [animal.get_status_display()]
+    if animal.required_cert_type:
+        cert = animal.role_certificate
+        if cert is None:
+            warnings.append('not certified')
+        elif cert.state == 'expired':
+            warnings.append('certificate expired')
+    if animal_overdue(animal):
+        warnings.append('treatment overdue')
+    suffix = f" ⚠ {', '.join(warnings)}" if warnings else ''
+    return f"{animal.name} · {animal.force_number} ({animal.get_species_display()}){suffix}"
+
+
+class DeploymentTeamForm(forms.ModelForm):
+    class Meta:
+        model = DeploymentTeam
+        fields = ['animal', 'handler', 'performance', 'notes']
+        widgets = {'notes': forms.TextInput(attrs={'placeholder': 'Behaviour, indications…'})}
+
+    def __init__(self, *args, branch=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        current = [self.instance.animal_id] if self.instance.pk else None
+        self.fields['animal'].queryset = _branch_animals(branch, current)
+        self.fields['animal'].label_from_instance = _deployable_label
+        handlers = CustomUser.objects.filter(is_active=True)
+        if branch is not None:
+            handlers = handlers.filter(branch=branch)
+        self.fields['handler'].queryset = handlers.order_by('first_name', 'username')
+        self.fields['handler'].label_from_instance = lambda u: u.get_full_name() or u.username
+
+
+class DeploymentFindForm(forms.ModelForm):
+    class Meta:
+        model = DeploymentFind
+        fields = ['find_type', 'description', 'quantity', 'unit', 'indicated_by']
+        widgets = {
+            'description': forms.TextInput(attrs={'placeholder': 'e.g. Cannabis in luggage'}),
+            'quantity': forms.NumberInput(attrs={'step': 'any', 'min': '0'}),
+        }
+
+    def __init__(self, *args, branch=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        current = [self.instance.indicated_by_id] if self.instance.pk and self.instance.indicated_by_id else None
+        self.fields['indicated_by'].queryset = _branch_animals(branch, current)
+
+
+class _RequireTeam(forms.BaseInlineFormSet):
+    def clean(self):
+        super().clean()
+        if any(self.errors):
+            return
+        animals = [f.cleaned_data['animal'] for f in self.forms
+                   if f.cleaned_data and not f.cleaned_data.get('DELETE') and f.cleaned_data.get('animal')]
+        if not animals:
+            raise ValidationError('Add at least one animal to the deployment team.')
+        if len(animals) != len(set(animals)):
+            raise ValidationError('The same animal is listed twice.')
+
+
+DeploymentTeamFormSet = inlineformset_factory(
+    Deployment, DeploymentTeam, form=DeploymentTeamForm, formset=_RequireTeam, extra=0, can_delete=True,
+)
+DeploymentFindFormSet = inlineformset_factory(
+    Deployment, DeploymentFind, form=DeploymentFindForm, extra=0, can_delete=True,
+)
+
+
+# ------------------------------
+# Handler teams & certifications
+# ------------------------------
+from .models import Certification, HandlerAssignment  # noqa: E402
+
+
+def _handler_label(user):
+    return f"{user.get_full_name() or user.username} ({user.get_role_display()})"
+
+
+class HandlerAssignmentForm(forms.ModelForm):
+    class Meta:
+        model = HandlerAssignment
+        fields = ['handler', 'role', 'start_date', 'notes']
+        widgets = {
+            'start_date': forms.DateInput(attrs={'type': 'date'}),
+            'notes': forms.TextInput(attrs={'placeholder': 'e.g. Handover after course completion'}),
+        }
+
+    def __init__(self, *args, animal=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.animal = animal
+        users = CustomUser.objects.filter(is_active=True)
+        if animal is not None:
+            users = users.filter(branch=animal.branch)
+        self.fields['handler'].queryset = users.order_by('role', 'first_name', 'username')
+        self.fields['handler'].label_from_instance = _handler_label
+
+    def clean(self):
+        cleaned = super().clean()
+        handler, role = cleaned.get('handler'), cleaned.get('role')
+        if self.animal is not None and handler:
+            current = self.animal.handler_assignments.filter(handler=handler, end_date__isnull=True)
+            # Promoting a secondary handler to primary is allowed; anything else is a duplicate.
+            if current.exists() and not (role == 'primary' and not current.filter(role='primary').exists()):
+                self.add_error('handler', 'This handler is already on the team.')
+        return cleaned
+
+
+class CertificationForm(forms.ModelForm):
+    class Meta:
+        model = Certification
+        fields = ['cert_type', 'handler', 'certificate_number', 'issued_by', 'issued_date', 'expiry_date',
+                  'document', 'notes']
+        widgets = {
+            'issued_date': forms.DateInput(attrs={'type': 'date'}),
+            'expiry_date': forms.DateInput(attrs={'type': 'date'}),
+            'issued_by': forms.TextInput(attrs={'placeholder': 'e.g. TPF K9 Training School, Moshi'}),
+            'notes': forms.TextInput(attrs={'placeholder': 'Score, assessor, conditions…'}),
+        }
+
+    def __init__(self, *args, animal=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        users = CustomUser.objects.filter(is_active=True)
+        if animal is not None:
+            users = users.filter(branch=animal.branch)
+            if not self.is_bound and not self.instance.pk:
+                self.initial.setdefault('cert_type', animal.required_cert_type)
+                primary = animal.primary_handler
+                if primary:
+                    self.initial.setdefault('handler', primary.pk)
+        self.fields['handler'].queryset = users.order_by('first_name', 'username')
+        self.fields['handler'].label_from_instance = _handler_label
+
+    def clean(self):
+        cleaned = super().clean()
+        issued, expiry = cleaned.get('issued_date'), cleaned.get('expiry_date')
+        if issued and expiry and expiry <= issued:
+            self.add_error('expiry_date', 'Expiry must be after the issue date.')
+        return cleaned
+
+
+# ------------------------------
+# Horse care: farrier, tack, housing
+# ------------------------------
+from .models import HoofCareRecord, HousingAssignment, HousingUnit, TackItem  # noqa: E402
+
+DATE_INPUT = forms.DateInput(attrs={'type': 'date'})
+
+
+def _branch_horses(branch):
+    qs = Animal.objects.filter(species='horse', status__in=Animal.ACTIVE_STATUSES)
+    return (qs.filter(branch=branch) if branch is not None else qs).order_by('name')
+
+
+class HoofCareForm(forms.ModelForm):
+    class Meta:
+        model = HoofCareRecord
+        fields = ['animal', 'date', 'service', 'hooves', 'farrier', 'condition', 'next_due', 'notes']
+        widgets = {
+            'date': DATE_INPUT, 'next_due': DATE_INPUT,
+            'notes': forms.Textarea(attrs={'rows': 2, 'placeholder': 'Findings, nail size, pads, follow-up...'}),
+            'farrier': forms.TextInput(attrs={'placeholder': 'e.g. J. Mushi (contract farrier)'}),
+        }
+        labels = {'animal': 'Horse'}
+
+    def __init__(self, *args, branch=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['animal'].queryset = _branch_horses(branch)
+        self.fields['next_due'].help_text = (
+            f'Leave blank to schedule {HoofCareRecord.DEFAULT_INTERVAL_DAYS // 7} weeks after this visit.')
+        if not self.is_bound and not self.instance.pk:
+            self.initial.setdefault('date', timezone.localdate())
+
+    def clean(self):
+        cleaned = super().clean()
+        date, next_due = cleaned.get('date'), cleaned.get('next_due')
+        if date and date > timezone.localdate():
+            self.add_error('date', 'A farrier visit cannot be recorded in the future.')
+        if date and next_due and next_due <= date:
+            self.add_error('next_due', 'Next visit must be after this visit.')
+        return cleaned
+
+
+class TackItemForm(forms.ModelForm):
+    class Meta:
+        model = TackItem
+        fields = ['branch', 'item_type', 'asset_tag', 'description', 'size', 'assigned_horse', 'condition',
+                  'last_inspected', 'notes', 'is_active']
+        widgets = {'last_inspected': DATE_INPUT, 'notes': forms.Textarea(attrs={'rows': 2})}
+
+    def __init__(self, *args, user=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        branch = self.instance.branch if self.instance.pk else getattr(user, 'branch', None)
+        if user is not None and user.role != 'superadmin':
+            del self.fields['branch']
+        else:
+            self.fields['branch'].queryset = Branch.objects.filter(is_active=True).order_by('name')
+            branch = None
+        horses = _branch_horses(branch)
+        if self.instance.pk and self.instance.assigned_horse_id:
+            horses = horses | Animal.objects.filter(pk=self.instance.assigned_horse_id)
+        self.fields['assigned_horse'].queryset = horses.distinct()
+        self.fields['assigned_horse'].required = False
+
+    def clean(self):
+        cleaned = super().clean()
+        horse = cleaned.get('assigned_horse')
+        branch = cleaned.get('branch') or (self.instance.branch if self.instance.branch_id else None)
+        if horse and branch and horse.branch_id != branch.id:
+            self.add_error('assigned_horse', f'{horse.name} is not in {branch.name}.')
+        if cleaned.get('last_inspected') and cleaned['last_inspected'] > timezone.localdate():
+            self.add_error('last_inspected', 'Inspection date cannot be in the future.')
+        return cleaned
+
+
+class HousingUnitForm(forms.ModelForm):
+    class Meta:
+        model = HousingUnit
+        fields = ['name', 'kind', 'capacity', 'notes', 'is_active']
+        widgets = {'name': forms.TextInput(attrs={'placeholder': 'e.g. Stable Block A, Stall 3'})}
+
+    def __init__(self, *args, branch=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.branch = branch if branch is not None else getattr(self.instance, 'branch', None)
+
+    def clean_name(self):
+        name = self.cleaned_data['name'].strip()
+        clash = HousingUnit.objects.filter(branch=self.branch, name__iexact=name).exclude(pk=self.instance.pk)
+        if self.branch is not None and clash.exists():
+            raise ValidationError('A unit with this name already exists in the branch.')
+        return name
+
+    def clean_capacity(self):
+        capacity = self.cleaned_data['capacity']
+        if capacity < 1:
+            raise ValidationError('Capacity must be at least 1.')
+        return capacity
+
+
+# Which animals each kind of unit is suitable for (None = any species).
+UNIT_SPECIES = {'stall': 'horse', 'paddock': 'horse', 'kennel': 'dog', 'isolation': None, 'other': None}
+
+
+class HousingMoveForm(forms.ModelForm):
+    class Meta:
+        model = HousingAssignment
+        fields = ['animal', 'unit', 'start_date', 'notes']
+        widgets = {'start_date': DATE_INPUT, 'notes': forms.TextInput(attrs={'placeholder': 'Reason for move (optional)'})}
+        labels = {'unit': 'Move to', 'start_date': 'From'}
+
+    def __init__(self, *args, branch=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        animals = Animal.objects.filter(status__in=Animal.ACTIVE_STATUSES)
+        units = HousingUnit.objects.filter(is_active=True)
+        if branch is not None:
+            animals, units = animals.filter(branch=branch), units.filter(branch=branch)
+        self.fields['animal'].queryset = animals.order_by('species', 'name')
+        self.fields['animal'].label_from_instance = lambda a: f"{a.name} ({a.get_species_display()})"
+        self.fields['unit'].queryset = units.order_by('kind', 'name')
+        self.fields['unit'].label_from_instance = lambda u: f"{u.name} ({u.get_kind_display()})"
+        if not self.is_bound:
+            self.initial.setdefault('start_date', timezone.localdate())
+
+    def clean(self):
+        cleaned = super().clean()
+        animal, unit = cleaned.get('animal'), cleaned.get('unit')
+        if not animal or not unit:
+            return cleaned
+        if animal.branch_id != unit.branch_id:
+            self.add_error('unit', 'Unit belongs to another branch.')
+        wanted = UNIT_SPECIES.get(unit.kind)
+        if wanted and animal.species != wanted:
+            self.add_error('unit', f'A {unit.get_kind_display().lower()} is not suitable for a {animal.get_species_display().lower()}.')
+        current = animal.housing_assignments.filter(end_date__isnull=True).first()
+        if current and current.unit_id == unit.id:
+            self.add_error('unit', f'{animal.name} is already in {unit.name}.')
+        occupied = unit.assignments.filter(end_date__isnull=True).exclude(animal=animal).count()
+        if occupied >= unit.capacity:
+            self.add_error('unit', f'{unit.name} is full ({occupied}/{unit.capacity}).')
+        return cleaned

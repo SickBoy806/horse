@@ -1,22 +1,16 @@
 {% extends "veterinarian_dashboard/base_dashboard.html" %}
+{% block page_title %}Analytics — TPF Animal System{% endblock %}
 
+{% block content %}
+<div class="glassmorphism rounded-2xl p-6 mb-6">
+  <h2 class="content-heading text-2xl">Analytics</h2>
+  <p class="content-text text-sm mt-1">Branch overview — {{ branch|title }}</p>
+</div>
 
-
-{% block page_title %}Analytics Dashboard - {{ branch|title }}{% endblock %}
-
-{% block dashboard_content %}
-<h1 class="text-3xl font-bold mb-6">Analytics Dashboard - {{ branch|title }}</h1>
-
-<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-    <div class="bg-white p-6 rounded shadow">
-        <h2 class="text-xl font-semibold mb-4">Patient Statistics</h2>
-        <p>Total Patients: {{ total_patients }}</p>
-        <p>Active Cases: {{ active_cases }}</p>
-    </div>
-    <div class="bg-white p-6 rounded shadow">
-        <h2 class="text-xl font-semibold mb-4">Tasks Overview</h2>
-        <p>Pending Tasks: {{ pending_tasks }}</p>
-        <p>Completed Tasks: {{ completed_tasks }}</p>
-    </div>
+<div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+  {% include "partials/stat_tile.html" with label="Total Patients" value=total_patients color="blue" %}
+  {% include "partials/stat_tile.html" with label="Active Cases" value=active_cases color="red" %}
+  {% include "partials/stat_tile.html" with label="Pending Tasks" value=pending_tasks color="amber" %}
+  {% include "partials/stat_tile.html" with label="Completed Tasks" value=completed_tasks color="green" %}
 </div>
 {% endblock %}

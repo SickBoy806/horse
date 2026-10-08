@@ -1,36 +1,40 @@
 {% extends "user_dashboard/base_user.html" %}
-{% block content %}
-<h2 class="text-2xl font-bold mb-4">Emergency Incident Reporting</h2>
+{% block page_title %}Report Emergency — TPF Animal System{% endblock %}
 
-<!-- Form -->
-<div class="bg-white p-4 rounded shadow mb-6">
-  <form method="POST" enctype="multipart/form-data">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit" class="bg-red-600 text-white px-4 py-2 rounded">Submit Emergency</button>
-  </form>
+{% block content %}
+<div class="glassmorphism rounded-2xl p-6 mb-6">
+  <h2 class="content-heading text-2xl">Emergency Incident Reporting</h2>
+  <p class="content-text text-sm mt-1">Report injuries, illness or incidents involving your animals</p>
 </div>
 
-<!-- Incident History -->
-<h3 class="text-lg font-semibold mb-4">Reported Incidents</h3>
-<div class="space-y-3">
-  {% for incident in incidents %}
-    <div class="bg-white p-4 rounded shadow">
-      <p><strong>Animal:</strong> {{ incident.animal.name }}</p>
-      <p><strong>Type:</strong> {{ incident.get_incident_type_display }}</p>
-      <p><strong>Description:</strong> {{ incident.description }}</p>
-      {% if incident.photo %}
-        <img src="{{ incident.photo.url }}" class="mt-2 h-40 rounded object-cover" />
-      {% endif %}
-      <p class="text-sm text-gray-400 mt-1">Date: {{ incident.date_reported|date:"Y-m-d H:i" }}</p>
-      {% if incident.resolved %}
-        <span class="text-green-600 font-medium">Resolved</span>
-      {% else %}
-        <span class="text-yellow-500 font-medium">Pending</span>
-      {% endif %}
+<div class="grid grid-cols-1 xl:grid-cols-5 gap-6">
+  <div class="glassmorphism rounded-2xl overflow-hidden xl:col-span-2 self-start">
+    <div class="tpf-panel-head" style="background: linear-gradient(135deg, #b91c1c, #ef4444);">New Incident</div>
+    <form method="POST" enctype="multipart/form-data" class="tpf-form p-6 space-y-5" novalidate>
+      {% csrf_token %}
+      {% include "partials/form_fields.html" with form=form %}
+      <div class="flex justify-end"><button type="submit" class="btn-tpf btn-tpf-danger">Submit Emergency</button></div>
+    </form>
+  </div>
+
+  <div class="xl:col-span-3 space-y-4">
+    {% for incident in incidents %}
+    <div class="glassmorphism rounded-2xl p-5 flex gap-4">
+      {% if incident.photo %}<img src="{{ incident.photo.url }}" alt="" class="w-24 h-24 rounded-xl object-cover flex-shrink-0">{% endif %}
+      <div class="min-w-0 flex-1">
+        <div class="flex items-center justify-between gap-3">
+          <p class="font-semibold text-slate-800">{{ incident.animal.name }} — {{ incident.get_incident_type_display }}</p>
+          {% if incident.resolved %}<span class="tpf-badge tpf-badge-green">Resolved</span>{% else %}<span class="tpf-badge tpf-badge-amber">Pending</span>{% endif %}
+        </div>
+        <p class="text-sm content-text mt-1">{{ incident.description }}</p>
+        <p class="text-xs text-slate-400 mt-2">{{ incident.date_reported|date:"M d, Y H:i" }}{% if incident.location %} &middot; {{ incident.location }}{% endif %}</p>
+      </div>
     </div>
-  {% empty %}
-    <p class="text-gray-600">No emergency incidents reported yet.</p>
-  {% endfor %}
+    {% empty %}
+    <div class="glassmorphism rounded-2xl tpf-empty">
+      <p class="content-heading">No incidents reported</p>
+    </div>
+    {% endfor %}
+  </div>
 </div>
 {% endblock %}

@@ -1,28 +1,43 @@
 {% extends "user_dashboard/base_user.html" %}
-{% block content %}
-<h2 class="text-2xl font-bold mb-4">End-of-Shift Report</h2>
+{% block page_title %}End-of-Shift Report — TPF Animal System{% endblock %}
 
-<!-- Report Form -->
-<div class="bg-white p-4 rounded shadow mb-6">
-  <form method="POST">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Submit Report</button>
-  </form>
+{% block content %}
+<div class="glassmorphism rounded-2xl p-6 mb-6">
+  <h2 class="content-heading text-2xl">End-of-Shift Report</h2>
+  <p class="content-text text-sm mt-1">Summarise your shift for the branch record</p>
 </div>
 
-<!-- Report History -->
-<h3 class="text-lg font-semibold mt-8 mb-4">Past Reports</h3>
-<div class="space-y-4">
-  {% for report in reports %}
-    <div class="bg-white p-4 rounded shadow">
-      <p><strong>Date:</strong> {{ report.date }}</p>
-      <p><strong>Summary:</strong> {{ report.summary }}</p>
-      <p><strong>Issues:</strong> {{ report.issues_faced|default:"-" }}</p>
-      <p><strong>Hours Worked:</strong> {{ report.hours_worked }}</p>
+<div class="grid grid-cols-1 xl:grid-cols-5 gap-6">
+  <div class="glassmorphism rounded-2xl overflow-hidden xl:col-span-2 self-start">
+    <div class="tpf-panel-head">New Report</div>
+    <form method="POST" class="tpf-form p-6 space-y-5" novalidate>
+      {% csrf_token %}
+      {% include "partials/form_fields.html" with form=form %}
+      <div class="flex justify-end"><button type="submit" class="btn-tpf">Submit Report</button></div>
+    </form>
+  </div>
+
+  <div class="glassmorphism rounded-2xl overflow-hidden xl:col-span-3">
+    <div class="tpf-panel-head">Past Reports</div>
+    {% if reports %}
+    <div class="overflow-x-auto">
+      <table class="tpf-table">
+        <thead><tr><th>Date</th><th>Summary</th><th>Issues</th><th>Hours</th></tr></thead>
+        <tbody>
+          {% for report in reports %}
+          <tr>
+            <td class="whitespace-nowrap">{{ report.date|date:"M d, Y" }}</td>
+            <td>{{ report.summary|truncatechars:90 }}</td>
+            <td>{{ report.issues_faced|default:"—"|truncatechars:60 }}</td>
+            <td class="font-semibold">{{ report.hours_worked }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
-  {% empty %}
-    <p class="text-gray-600">No reports submitted yet.</p>
-  {% endfor %}
+    {% else %}
+    <p class="tpf-empty">No reports submitted yet.</p>
+    {% endif %}
+  </div>
 </div>
 {% endblock %}

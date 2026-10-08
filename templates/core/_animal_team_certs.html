@@ -1,0 +1,125 @@
+<div class="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-6">
+
+  <!-- Handler team -->
+  <div id="team" class="glassmorphism rounded-2xl overflow-hidden scroll-mt-6">
+    <div class="tpf-panel-head">Handler Team</div>
+    <div class="p-6">
+      {% for a in team_current %}
+      <div class="flex items-center gap-3 py-3 {% if not forloop.last %}border-b border-slate-100{% endif %}">
+        <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0"
+             style="background: {% if a.role == 'primary' %}linear-gradient(135deg,#173a6b,#0a1a33); color:#f2cf63{% else %}#e2e8f0; color:#475569{% endif %};">
+          {{ a.handler.username.0|upper }}
+        </div>
+        <div class="min-w-0 flex-1">
+          <p class="text-sm font-semibold text-slate-800">{{ a.handler.get_full_name|default:a.handler.username }}</p>
+          <p class="text-xs text-slate-500">{{ a.get_role_display }} &middot; since {{ a.start_date|date:"M d, Y" }}{% if a.notes %} &middot; {{ a.notes }}{% endif %}</p>
+        </div>
+        {% if a.role == 'primary' %}<span class="tpf-badge" style="background:#fdf3d7;color:#8a6410;">Primary</span>{% endif %}
+        {% if request.user.role in 'admin,veterinarian,superadmin' %}
+        <form method="post" action="{% url 'end_assignment' assignment_id=a.id %}" onsubmit="return confirm('End this handler assignment today?');">
+          {% csrf_token %}
+          <button type="submit" class="text-xs font-semibold text-red-600 hover:text-red-800">End</button>
+        </form>
+        {% endif %}
+      </div>
+      {% empty %}
+      <div class="rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-sm px-4 py-3">No handler assigned — this animal has no responsible handler.</div>
+      {% endfor %}
+
+      {% if request.user.role in 'admin,veterinarian,superadmin' %}
+      <details class="mt-5 group" {% if not team_current %}open{% endif %}>
+        <summary class="cursor-pointer text-sm font-semibold text-blue-700 hover:text-blue-900 list-none flex items-center gap-1">
+          <svg class="w-4 h-4 transition-transform group-open:rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+          Assign handler
+        </summary>
+        <form method="post" action="{% url 'assign_handler' animal_id=animal.id %}" class="tpf-form grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
+          {% csrf_token %}
+          <div class="sm:col-span-2"><label>Handler</label>{{ assign_form.handler }}</div>
+          <div><label>Role</label>{{ assign_form.role }}</div>
+          <div><label>Start date</label>{{ assign_form.start_date }}</div>
+          <div class="sm:col-span-2"><label>Notes</label>{{ assign_form.notes }}</div>
+          <p class="sm:col-span-2 text-xs text-slate-500">A new primary handler automatically ends the current primary's assignment (handover).</p>
+          <div class="sm:col-span-2 flex justify-end"><button type="submit" class="btn-tpf btn-tpf-sm">Assign</button></div>
+        </form>
+      </details>
+      {% endif %}
+
+      {% if team_past %}
+      <details class="mt-4 group">
+        <summary class="cursor-pointer text-xs font-semibold text-slate-500 hover:text-slate-700 list-none">Previous handlers ({{ team_past|length }})</summary>
+        <ul class="mt-2 space-y-1.5">
+          {% for a in team_past %}
+          <li class="text-xs text-slate-600">{{ a.handler.get_full_name|default:a.handler.username }} — {{ a.get_role_display|lower }}, {{ a.start_date|date:"M d, Y" }} → {{ a.end_date|date:"M d, Y" }}</li>
+          {% endfor %}
+        </ul>
+      </details>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Certifications -->
+  <div id="certifications" class="glassmorphism rounded-2xl overflow-hidden scroll-mt-6">
+    <div class="tpf-panel-head flex items-center justify-between">
+      <span>Certifications</span>
+      {% if required_cert_label %}<span class="text-xs font-medium text-blue-100">Required: {{ required_cert_label }}</span>{% endif %}
+    </div>
+    <div class="p-6">
+      {% if required_cert_label and not role_cert %}
+      <div class="rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 mb-4">
+        Not certified for {{ required_cert_label }} — required for {{ animal.get_specialisation_display|lower }} duty.
+      </div>
+      {% endif %}
+
+      {% if certifications %}
+      <ul class="space-y-2">
+        {% for c in certifications %}
+        <li class="rounded-xl border px-4 py-3 flex items-start gap-3 {% if c.superseded %}border-slate-100 bg-slate-50 opacity-60{% else %}border-slate-200{% endif %}">
+          <div class="min-w-0 flex-1">
+            <div class="flex items-center gap-2 flex-wrap">
+              <p class="text-sm font-semibold text-slate-800">{{ c.get_cert_type_display }}</p>
+              {% if c.superseded %}<span class="tpf-badge">Renewed</span>{% else %}<span class="tpf-badge {{ c.state_badge }}">{{ c.state_label }}{% if c.state == 'expiring' %} · {{ c.days_left }}d{% endif %}</span>{% endif %}
+            </div>
+            <p class="text-xs text-slate-500 mt-0.5">
+              {% if c.certificate_number %}No. <span class="font-mono">{{ c.certificate_number }}</span> &middot; {% endif %}
+              {{ c.issued_date|date:"M d, Y" }} → <strong class="text-slate-700">{{ c.expiry_date|date:"M d, Y" }}</strong>
+              {% if c.issued_by %} &middot; {{ c.issued_by }}{% endif %}
+              {% if c.handler %} &middot; with {{ c.handler.get_full_name|default:c.handler.username }}{% endif %}
+            </p>
+            {% if c.notes %}<p class="text-xs content-text mt-0.5">{{ c.notes }}</p>{% endif %}
+          </div>
+          {% if c.document %}<a href="{{ c.document.url }}" target="_blank" class="text-xs font-semibold text-blue-700 hover:text-blue-900 flex-shrink-0">Document</a>{% endif %}
+          {% if request.user.role in 'admin,superadmin' %}
+          <form method="post" action="{% url 'delete_certification' cert_id=c.id %}" onsubmit="return confirm('Delete this certificate record?');">
+            {% csrf_token %}<button type="submit" class="text-xs text-slate-400 hover:text-red-600" title="Delete">✕</button>
+          </form>
+          {% endif %}
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <p class="text-sm text-slate-400">No certificates recorded.</p>
+      {% endif %}
+
+      {% if request.user.role in 'admin,veterinarian,superadmin' %}
+      <details class="mt-5 group">
+        <summary class="cursor-pointer text-sm font-semibold text-blue-700 hover:text-blue-900 list-none flex items-center gap-1">
+          <svg class="w-4 h-4 transition-transform group-open:rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+          Record certificate / renewal
+        </summary>
+        <form method="post" action="{% url 'add_certification' animal_id=animal.id %}" enctype="multipart/form-data" class="tpf-form grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
+          {% csrf_token %}
+          <div><label>Certification</label>{{ cert_form.cert_type }}</div>
+          <div><label>Handler (team cert)</label>{{ cert_form.handler }}</div>
+          <div><label>Certificate no.</label>{{ cert_form.certificate_number }}</div>
+          <div><label>Issuing authority</label>{{ cert_form.issued_by }}</div>
+          <div><label>Issued</label>{{ cert_form.issued_date }}</div>
+          <div><label>Expires</label>{{ cert_form.expiry_date }}</div>
+          <div class="sm:col-span-2"><label>Scanned certificate</label>{{ cert_form.document }}</div>
+          <div class="sm:col-span-2"><label>Notes</label>{{ cert_form.notes }}</div>
+          <div class="sm:col-span-2 flex justify-end"><button type="submit" class="btn-tpf btn-tpf-sm">Save certificate</button></div>
+        </form>
+      </details>
+      {% endif %}
+    </div>
+  </div>
+</div>

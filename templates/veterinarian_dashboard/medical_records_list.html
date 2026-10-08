@@ -1,36 +1,18 @@
 {% extends "veterinarian_dashboard/base_dashboard.html" %}
+{% block page_title %}Medical Records — TPF Animal System{% endblock %}
 
 {% block content %}
-<h2 class="text-2xl font-bold mb-4">Medical Records</h2>
-
-<table class="w-full table-auto bg-white rounded shadow">
-    <thead class="bg-gray-100">
-        <tr>
-            <th class="px-4 py-2 text-left">Date</th>
-            <th class="px-4 py-2 text-left">Animal</th>
-            <th class="px-4 py-2 text-left">Diagnosis</th>
-            <th class="px-4 py-2 text-left">Treatment</th>
-            <th class="px-4 py-2 text-left">Report</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for record in records %}
-        <tr class="border-b">
-            <td class="px-4 py-2">{{ record.date }}</td>
-            <td class="px-4 py-2">{{ record.animal.name }}</td>
-            <td class="px-4 py-2">{{ record.diagnosis }}</td>
-            <td class="px-4 py-2">{{ record.treatment }}</td>
-            <td class="px-4 py-2">
-                {% if record.document %}
-                    <a href="{{ record.document.url }}" class="text-blue-600 underline" target="_blank">View</a>
-                {% else %}
-                    -
-                {% endif %}
-            </td>
-        </tr>
-        {% empty %}
-        <tr><td colspan="5" class="text-center py-4">No records found.</td></tr>
-        {% endfor %}
-    </tbody>
-</table>
+<div class="glassmorphism rounded-2xl p-6 mb-6">
+  <div class="flex items-center justify-between flex-wrap gap-4">
+    <div>
+      <h2 class="content-heading text-2xl">Medical Records</h2>
+      <p class="content-text text-sm mt-1">Records you have created — Branch: {{ branch|title }}</p>
+    </div>
+    <a href="{% url 'add_medical_record' branch=branch %}" class="btn-tpf btn-tpf-success">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+      Add Record
+    </a>
+  </div>
+</div>
+{% include "veterinarian_dashboard/_medical_records_table.html" %}
 {% endblock %}

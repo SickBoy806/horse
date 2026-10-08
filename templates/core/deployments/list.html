@@ -1,0 +1,105 @@
+{% extends base_template %}
+{% block page_title %}Deployments — TPF Animal System{% endblock %}
+
+{% block content %}
+{% include "partials/flash_messages.html" %}
+
+<div class="glassmorphism rounded-2xl p-6 mb-6">
+  <div class="flex items-center justify-between flex-wrap gap-4">
+    <div>
+      <h2 class="content-heading text-2xl">Deployments &amp; Results</h2>
+      <p class="content-text text-sm mt-1">Operational call-outs, finds and arrests{% if request.user.role == 'superadmin' %} across all branches{% elif request.user.branch %} — {{ request.user.branch.name|title }}{% endif %}</p>
+    </div>
+    <div class="flex items-center gap-2">
+      <a href="?{{ querystring }}{% if querystring %}&{% endif %}export=csv" class="btn-tpf btn-tpf-light">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+        Export CSV
+      </a>
+      <a href="{% url 'deployment_create' %}" class="btn-tpf btn-tpf-gold">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+        Log Deployment
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- Stats for the current filter -->
+<div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4 mb-6">
+  {% include "partials/stat_tile.html" with label="Deployments" value=stats.total color="blue" %}
+  {% include "partials/stat_tile.html" with label="In Progress" value=stats.in_progress color="amber" %}
+  {% include "partials/stat_tile.html" with label="Success Rate" value=stats.success_label color="green" hint="positive / completed" %}
+  {% include "partials/stat_tile.html" with label="Finds" value=stats.finds color="purple" %}
+  {% include "partials/stat_tile.html" with label="Arrests" value=stats.arrests color="red" %}
+  {% include "partials/stat_tile.html" with label="Persons Located" value=stats.persons color="blue" %}
+</div>
+
+<!-- Filters -->
+<div class="glassmorphism rounded-2xl p-5 mb-6">
+  <form method="get" class="tpf-form grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8 gap-3 items-end">
+    <div class="xl:col-span-2"><label>Search</label><input type="text" name="q" value="{{ f.q }}" placeholder="Ref, location, OB no…"></div>
+    <div><label>Type</label>
+      <select name="type"><option value="">All types</option>{% for v, l in type_choices %}<option value="{{ v }}" {% if f.type == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select>
+    </div>
+    <div><label>Status</label>
+      <select name="status"><option value="">All</option>{% for v, l in status_choices %}<option value="{{ v }}" {% if f.status == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select>
+    </div>
+    <div><label>Outcome</label>
+      <select name="outcome"><option value="">All</option>{% for v, l in outcome_choices %}<option value="{{ v }}" {% if f.outcome == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select>
+    </div>
+    <div><label>Animal</label>
+      <select name="animal"><option value="">All animals</option>{% for a in animal_choices %}<option value="{{ a.id }}" {% if f.animal == a.id|stringformat:"d" %}selected{% endif %}>{{ a.name }}</option>{% endfor %}</select>
+    </div>
+    {% if branches %}
+    <div><label>Branch</label>
+      <select name="branch"><option value="">All branches</option>{% for b in branches %}<option value="{{ b.name }}" {% if f.branch == b.name %}selected{% endif %}>{{ b.name|title }}</option>{% endfor %}</select>
+    </div>
+    {% endif %}
+    <div><label>From</label><input type="date" name="date_from" value="{{ f.date_from }}"></div>
+    <div><label>To</label><input type="date" name="date_to" value="{{ f.date_to }}"></div>
+    <div class="flex gap-2">
+      <button type="submit" class="btn-tpf flex-1">Filter</button>
+      {% if querystring %}<a href="{% url 'deployment_list' %}" class="btn-tpf btn-tpf-light" title="Clear filters">✕</a>{% endif %}
+    </div>
+  </form>
+</div>
+
+<div class="glassmorphism rounded-2xl overflow-hidden">
+  {% if page_obj.object_list %}
+  <div class="overflow-x-auto">
+    <table class="tpf-table">
+      <thead>
+        <tr><th>Reference</th><th>Date</th><th>Type</th><th>Location</th>{% if branches %}<th>Branch</th>{% endif %}<th>Team</th><th>Finds</th><th>Arrests</th><th>Status</th><th>Outcome</th></tr>
+      </thead>
+      <tbody>
+        {% for d in page_obj %}
+        <tr class="cursor-pointer" onclick="window.location='{% url 'deployment_detail' deployment_id=d.id %}'">
+          <td><a href="{% url 'deployment_detail' deployment_id=d.id %}" class="font-mono font-semibold text-blue-700 hover:text-blue-900">{{ d.reference }}</a>{% if d.ob_number %}<p class="text-xs text-slate-400 font-mono">{{ d.ob_number }}</p>{% endif %}</td>
+          <td class="whitespace-nowrap">{{ d.started_at|date:"M d, Y" }}<p class="text-xs text-slate-400">{{ d.started_at|date:"H:i" }}</p></td>
+          <td>{{ d.get_deployment_type_display }}</td>
+          <td class="max-w-[14rem] truncate" title="{{ d.location }}">{{ d.location }}</td>
+          {% if branches %}<td>{{ d.branch.name|title }}</td>{% endif %}
+          <td class="font-semibold">{{ d.n_animals }}</td>
+          <td class="font-semibold">{{ d.n_finds }}</td>
+          <td class="font-semibold">{{ d.arrests }}</td>
+          <td><span class="tpf-badge {{ d.status_badge }}">{{ d.get_status_display }}</span></td>
+          <td>{% if d.outcome %}<span class="tpf-badge {{ d.outcome_badge }}">{{ d.get_outcome_display }}</span>{% else %}<span class="text-slate-400">—</span>{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if page_obj.has_other_pages %}
+  <div class="flex items-center justify-between px-6 py-4 border-t border-slate-100 text-sm">
+    {% if page_obj.has_previous %}<a class="btn-tpf btn-tpf-light btn-tpf-sm" href="?{{ querystring }}{% if querystring %}&{% endif %}page={{ page_obj.previous_page_number }}">Previous</a>{% else %}<span></span>{% endif %}
+    <span class="content-text">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}<a class="btn-tpf btn-tpf-light btn-tpf-sm" href="?{{ querystring }}{% if querystring %}&{% endif %}page={{ page_obj.next_page_number }}">Next</a>{% else %}<span></span>{% endif %}
+  </div>
+  {% endif %}
+  {% else %}
+  <div class="tpf-empty">
+    <p class="content-heading">No deployments {% if querystring %}match these filters{% else %}logged yet{% endif %}</p>
+    <p class="text-sm mt-1">Use <strong>Log Deployment</strong> after every call-out to build the unit's operational record.</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

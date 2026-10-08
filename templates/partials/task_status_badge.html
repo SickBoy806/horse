@@ -1,0 +1,1 @@
+<span class="tpf-badge {% if status == 'completed' or status == 'approved' %}tpf-badge-green{% elif status == 'in_progress' %}tpf-badge-blue{% elif status == 'overdue' or status == 'rejected' or status == 'cancelled' %}tpf-badge-red{% else %}tpf-badge-amber{% endif %}">{{ status|cut:"_"|title }}</span>

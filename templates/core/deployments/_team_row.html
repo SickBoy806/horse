@@ -1,0 +1,11 @@
+<div class="formset-row relative rounded-xl border border-slate-200 bg-slate-50/60 p-4 pr-12">
+  {% for hidden in row.hidden_fields %}{{ hidden }}{% endfor %}
+  <span class="hidden">{{ row.DELETE }}</span>
+  <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
+    <div><label>Animal <span class="text-red-500">*</span></label>{{ row.animal }}{% if row.animal.errors %}<p class="text-xs text-red-600 mt-1">{{ row.animal.errors.0 }}</p>{% endif %}</div>
+    <div><label>Handler</label>{{ row.handler }}</div>
+    <div><label>Performance</label>{{ row.performance }}</div>
+    <div><label>Notes</label>{{ row.notes }}</div>
+  </div>
+  <button type="button" class="remove-row absolute top-3 right-3 w-7 h-7 rounded-full flex items-center justify-center text-white text-sm font-bold bg-red-500 hover:bg-red-600" aria-label="Remove">&times;</button>
+</div>

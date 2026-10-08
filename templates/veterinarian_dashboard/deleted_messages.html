@@ -1,12 +1,10 @@
 {% extends "veterinarian_dashboard/base_dashboard.html" %}
+{% block page_title %}Deleted Messages — TPF Animal System{% endblock %}
 
 {% block content %}
-<h1>Deleted Messages</h1>
-<ul>
-  {% for msg in messages %}
-    <li>{{ msg.subject }} - {{ msg.timestamp }}</li>
-  {% empty %}
-    <li>No deleted messages.</li>
-  {% endfor %}
-</ul>
+<div class="glassmorphism rounded-2xl p-6 mb-6">
+  <h2 class="content-heading text-2xl">Deleted Messages</h2>
+  <p class="content-text text-sm mt-1">Messages moved to trash</p>
+</div>
+{% include "partials/message_list.html" with items=messages empty_title="No deleted messages" %}
 {% endblock %}

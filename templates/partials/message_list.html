@@ -1,0 +1,26 @@
+{% comment %}List of Message objects in `items`. Optional: empty_title, empty_text.{% endcomment %}
+<div class="glassmorphism rounded-2xl overflow-hidden">
+  {% if items %}
+  <ul class="divide-y divide-slate-100">
+    {% for msg in items %}
+    <li class="flex items-center justify-between px-6 py-4 gap-4">
+      <div class="flex items-center gap-4 min-w-0">
+        <div class="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 text-sm font-bold text-white" style="background: linear-gradient(135deg, #3b82f6, #6366f1);">
+          {{ msg.sender.username|first|upper }}
+        </div>
+        <div class="min-w-0">
+          <p class="text-sm font-semibold text-slate-800 truncate">{{ msg.subject }}</p>
+          <p class="text-xs content-text mt-0.5">From {{ msg.sender }} &middot; To {{ msg.receiver }}</p>
+        </div>
+      </div>
+      <p class="text-xs content-text flex-shrink-0 font-mono">{{ msg.timestamp|date:"M d, Y H:i" }}</p>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <div class="tpf-empty">
+    <p class="content-heading">{{ empty_title|default:"No messages" }}</p>
+    {% if empty_text %}<p class="text-sm mt-1">{{ empty_text }}</p>{% endif %}
+  </div>
+  {% endif %}
+</div>

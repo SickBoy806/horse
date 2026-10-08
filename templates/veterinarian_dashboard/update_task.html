@@ -1,19 +1,29 @@
 {% extends "veterinarian_dashboard/base_dashboard.html" %}
-
+{% block page_title %}My Tasks — TPF Animal System{% endblock %}
 
 {% block content %}
-  <h1>Update Task</h1>
+<div class="glassmorphism rounded-2xl p-6 mb-6">
+  <h2 class="content-heading text-2xl">My Tasks</h2>
+  <p class="content-text text-sm mt-1">Tasks assigned to you</p>
+</div>
 
+<div class="glassmorphism rounded-2xl overflow-hidden">
   {% if tasks %}
-    <ul>
+  <table class="tpf-table">
+    <thead><tr><th>Task</th><th>Animal</th><th>Due</th><th>Status</th></tr></thead>
+    <tbody>
       {% for task in tasks %}
-        <li>{{ task.name }} - Status: {{ task.status }}</li>
+      <tr>
+        <td class="font-semibold text-slate-800">{{ task.title }}</td>
+        <td>{{ task.animal.name }}</td>
+        <td class="whitespace-nowrap">{{ task.due_date|date:"M d, Y H:i" }}</td>
+        <td>{% include "partials/task_status_badge.html" with status=task.status %}</td>
+      </tr>
       {% endfor %}
-    </ul>
+    </tbody>
+  </table>
   {% else %}
-    <p>No tasks to update.</p>
+  <p class="tpf-empty">No tasks to update.</p>
   {% endif %}
-  
-  <!-- Add your update form or details here -->
-
+</div>
 {% endblock %}

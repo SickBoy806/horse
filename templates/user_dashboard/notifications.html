@@ -1,27 +1,35 @@
 {% extends "user_dashboard/base_user.html" %}
+{% block page_title %}Notifications — TPF Animal System{% endblock %}
+
 {% block content %}
-<h2 class="text-2xl font-bold mb-4">Notifications</h2>
+<div class="glassmorphism rounded-2xl p-6 mb-6">
+  <h2 class="content-heading text-2xl">Notifications</h2>
+  <p class="content-text text-sm mt-1">Updates about your tasks, animals and messages</p>
+</div>
 
 <div class="space-y-3">
   {% for notif in notifications %}
-    <div class="bg-white p-4 rounded shadow {% if notif.is_read %}bg-gray-100{% else %}bg-blue-50{% endif %}">
-      <div class="flex justify-between items-center">
-        <p>{{ notif.message }}</p>
-        <form method="POST">
-          {% csrf_token %}
-          <input type="hidden" name="notif_id" value="{{ notif.id }}">
-          {% if notif.link %}
-            <a href="{{ notif.link }}" class="text-blue-600 text-sm underline">View</a>
-          {% endif %}
-          {% if not notif.is_read %}
-            <button type="submit" class="ml-3 text-xs text-gray-500 underline">Mark as Read</button>
-          {% endif %}
-        </form>
-      </div>
-      <p class="text-xs text-gray-400 mt-1">{{ notif.created_at|date:"Y-m-d H:i" }}</p>
+  <div class="glassmorphism rounded-2xl p-5 flex items-start gap-4 {% if not notif.is_read %}border-l-4 border-blue-500{% endif %}">
+    <div class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 {% if not notif.is_read %}bg-blue-100 text-blue-600{% else %}bg-slate-100 text-slate-400{% endif %}">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
     </div>
+    <div class="min-w-0 flex-1">
+      <p class="font-semibold text-slate-800">{{ notif.title|default:"Notification" }}</p>
+      <p class="text-sm content-text">{{ notif.message }}</p>
+      <p class="text-xs text-slate-400 mt-1">{{ notif.created_at|date:"M d, Y H:i" }}</p>
+    </div>
+    <form method="POST" class="flex items-center gap-3 flex-shrink-0">
+      {% csrf_token %}
+      <input type="hidden" name="notif_id" value="{{ notif.id }}">
+      {% if notif.link %}<a href="{{ notif.link }}" class="text-xs font-semibold text-blue-600 hover:text-blue-800">Open</a>{% endif %}
+      {% if not notif.is_read %}<button type="submit" class="btn-tpf btn-tpf-light btn-tpf-sm">Mark as read</button>{% endif %}
+    </form>
+  </div>
   {% empty %}
-    <p>No notifications available.</p>
+  <div class="glassmorphism rounded-2xl tpf-empty">
+    <p class="content-heading">You're all caught up</p>
+    <p class="text-sm mt-1">No notifications available.</p>
+  </div>
   {% endfor %}
 </div>
 {% endblock %}

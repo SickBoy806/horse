@@ -1,0 +1,111 @@
+{% extends base_template %}
+{% block page_title %}{{ deployment.reference }} — TPF Animal System{% endblock %}
+
+{% block content %}
+{% include "partials/flash_messages.html" %}
+
+<div class="glassmorphism rounded-2xl p-6 mb-6">
+  <div class="flex items-start justify-between flex-wrap gap-4">
+    <div class="min-w-0">
+      <p class="font-mono text-xs font-semibold text-slate-500">{{ deployment.reference }}{% if deployment.ob_number %} &middot; OB {{ deployment.ob_number }}{% endif %}</p>
+      <h2 class="content-heading text-3xl mt-0.5">{{ deployment.get_deployment_type_display }}</h2>
+      <p class="content-text text-sm mt-1">{{ deployment.location }} &middot; {{ deployment.branch.name|title }}</p>
+      <div class="flex flex-wrap gap-2 mt-3">
+        <span class="tpf-badge {{ deployment.status_badge }} !text-xs !px-3 !py-1">{{ deployment.get_status_display }}</span>
+        {% if deployment.outcome %}<span class="tpf-badge {{ deployment.outcome_badge }} !text-xs !px-3 !py-1">{{ deployment.get_outcome_display }}</span>{% endif %}
+      </div>
+    </div>
+    <div class="flex items-center gap-2">
+      <a href="{% url 'deployment_list' %}" class="btn-tpf btn-tpf-light">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        All Deployments
+      </a>
+      {% if can_edit %}
+      <a href="{% url 'deployment_edit' deployment_id=deployment.id %}" class="btn-tpf">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+        {% if deployment.status == 'in_progress' %}Update / Close Out{% else %}Edit{% endif %}
+      </a>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+  {% include "partials/stat_tile.html" with label="Animals Deployed" value=team|length color="blue" %}
+  {% include "partials/stat_tile.html" with label="Finds" value=finds|length color="purple" %}
+  {% include "partials/stat_tile.html" with label="Arrests" value=deployment.arrests color="red" %}
+  {% include "partials/stat_tile.html" with label="Persons Located" value=deployment.persons_located color="green" %}
+</div>
+
+<div class="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-6">
+  <div class="glassmorphism rounded-2xl overflow-hidden">
+    <div class="tpf-panel-head">Operation Details</div>
+    <dl class="p-6 space-y-4 text-sm">
+      <div><dt class="text-xs font-semibold uppercase text-slate-500">Started</dt><dd class="content-text font-medium">{{ deployment.started_at|date:"D, M d, Y H:i" }}</dd></div>
+      <div><dt class="text-xs font-semibold uppercase text-slate-500">Ended</dt><dd class="content-text font-medium">{% if deployment.ended_at %}{{ deployment.ended_at|date:"D, M d, Y H:i" }}{% else %}<span class="text-blue-600">Still in progress</span>{% endif %}</dd></div>
+      {% if deployment.duration %}<div><dt class="text-xs font-semibold uppercase text-slate-500">Duration</dt><dd class="content-text font-medium">{{ deployment.ended_at|timeuntil:deployment.started_at }}</dd></div>{% endif %}
+      <div><dt class="text-xs font-semibold uppercase text-slate-500">Requested By</dt><dd class="content-text font-medium">{{ deployment.requested_by|default:"—" }}</dd></div>
+      <div><dt class="text-xs font-semibold uppercase text-slate-500">Logged By</dt><dd class="content-text font-medium">{% if deployment.created_by %}{{ deployment.created_by.get_full_name|default:deployment.created_by.username }}{% else %}—{% endif %} <span class="text-slate-400">&middot; {{ deployment.created_at|date:"M d, Y H:i" }}</span></dd></div>
+    </dl>
+  </div>
+
+  <div class="glassmorphism rounded-2xl overflow-hidden xl:col-span-2">
+    <div class="tpf-panel-head">Summary</div>
+    <div class="p-6">
+      {% if deployment.summary %}<p class="content-text whitespace-pre-line">{{ deployment.summary }}</p>{% else %}<p class="text-sm text-slate-400">No summary recorded.</p>{% endif %}
+    </div>
+  </div>
+</div>
+
+<div class="glassmorphism rounded-2xl overflow-hidden mb-6">
+  <div class="tpf-panel-head">Team</div>
+  <div class="overflow-x-auto">
+    <table class="tpf-table">
+      <thead><tr><th>Animal</th><th>Specialisation</th><th>Handler</th><th>Performance</th><th>Notes</th></tr></thead>
+      <tbody>
+        {% for member in team %}
+        <tr>
+          <td>
+            <a href="{% url 'view_animal_detail' animal_id=member.animal.id %}" class="flex items-center gap-3 group">
+              {% if member.animal.photo %}<img src="{{ member.animal.photo.url }}" alt="" class="w-9 h-9 rounded-lg object-cover">{% endif %}
+              <span><span class="font-semibold text-slate-800 group-hover:text-blue-700">{{ member.animal.name }}</span><span class="block text-xs text-slate-400 font-mono">{{ member.animal.force_number }}</span></span>
+            </a>
+          </td>
+          <td>{{ member.animal.get_specialisation_display }}</td>
+          <td>{% if member.handler %}{{ member.handler.get_full_name|default:member.handler.username }}{% else %}—{% endif %}</td>
+          <td>
+            {% if member.performance %}
+            <span class="whitespace-nowrap" title="{{ member.performance }} / 5">{% for i in "12345" %}<span style="color: {% if forloop.counter <= member.performance %}#d4a72c{% else %}#cbd5e1{% endif %};">★</span>{% endfor %}</span>
+            {% else %}<span class="text-slate-400">—</span>{% endif %}
+          </td>
+          <td>{{ member.notes|default:"—" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="glassmorphism rounded-2xl overflow-hidden">
+  <div class="tpf-panel-head">Finds &amp; Results</div>
+  {% if finds %}
+  <div class="overflow-x-auto">
+    <table class="tpf-table">
+      <thead><tr><th>Type</th><th>Description</th><th>Quantity</th><th>Indicated By</th></tr></thead>
+      <tbody>
+        {% for find in finds %}
+        <tr>
+          <td><span class="tpf-badge tpf-badge-purple">{{ find.get_find_type_display }}</span></td>
+          <td>{{ find.description|default:"—" }}</td>
+          <td class="font-semibold whitespace-nowrap">{% if find.quantity is not None %}{{ find.quantity|floatformat:"-3" }} {{ find.get_unit_display }}{% else %}—{% endif %}</td>
+          <td>{% if find.indicated_by %}<a href="{% url 'view_animal_detail' animal_id=find.indicated_by.id %}" class="font-semibold text-blue-700 hover:text-blue-900">{{ find.indicated_by.name }}</a>{% else %}—{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="tpf-empty">No finds recorded for this deployment.</p>
+  {% endif %}
+</div>
+{% endblock %}

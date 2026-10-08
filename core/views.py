@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseForbidden, JsonResponse
 from django.contrib import messages
-from django.db.models import Q
+from django.db.models import Avg, Q
 from django.core.paginator import Paginator
 from django.utils import timezone
 from django.forms import inlineformset_factory
@@ -24,7 +24,10 @@ from .models import (
     SupportTicket, TicketReply, MedicalRecord, AnimalLog,
     EquipmentLog, EmergencyIncident, DailyActivityReport
 )
-from .forms import MessageForm, MessageReplyForm, VetTaskForm, SupportTicketForm, TicketReplyForm, AnimalForm
+from .forms import MessageForm, MessageReplyForm, VetTaskForm, SupportTicketForm, TicketReplyForm, AnimalForm, AnimalStatusForm
+from .forms import CertificationForm, HandlerAssignmentForm
+from .models import AnimalStatusChange, Certification
+from . import health
 from .utils import log_action, create_notification, notify_users, can_access_branch, get_user_dashboard_url
 from accounts.models import CustomUser
 
@@ -51,7 +54,7 @@ TrainingRecordFormSet = inlineformset_factory(
 )
 
 @login_required
-def add_animal(request):
+def add_animal(request, branch=None):
     """Add a new animal with training records"""
     if request.user.role not in ['admin', 'veterinarian', 'superadmin']:
         return render(request, 'errors/unauthorized.html', status=403)
@@ -65,8 +68,11 @@ def add_animal(request):
         if form.is_valid() and formset.is_valid():
             animal = form.save(commit=False)
             animal.branch = branch
+            if not animal.status_since:
+                animal.status_since = animal.acquisition_date or timezone.localdate()
             animal.save()
             form.save_m2m()
+            _record_status_change(animal, None, request.user, 'Registered')
 
             # Link training records to this animal
             formset.instance = animal
@@ -126,6 +132,7 @@ def animal_list(request):
     # Apply filters
     branch_filter = request.GET.get('branch')
     species_filter = request.GET.get('species')
+    status_filter = request.GET.get('status')
     search = request.GET.get('q')
 
     if branch_filter and user.role == 'superadmin':
@@ -133,6 +140,11 @@ def animal_list(request):
 
     if species_filter:
         animals = animals.filter(species=species_filter)
+
+    if status_filter == 'active':
+        animals = animals.filter(status__in=Animal.ACTIVE_STATUSES)
+    elif status_filter:
+        animals = animals.filter(status=status_filter)
 
     if search:
         animals = animals.filter(
@@ -154,6 +166,8 @@ def animal_list(request):
         'branch_filter': branch_filter,
         'species_filter': species_filter,
         'species_choices': Animal.SPECIES_CHOICES,
+        'status_filter': status_filter,
+        'status_choices': Animal.STATUS_CHOICES,
     })
 
     if user.role == 'superadmin':
@@ -485,11 +499,11 @@ def unread_message_count_api(request):
 
 
 @login_required
-def view_animal_detail(request, animal_id):
-    if request.user.role not in ['admin', 'veterinarian', 'superadmin']:
+def view_animal_detail(request, animal_id, branch=None):
+    if request.user.role not in ANIMAL_MANAGER_ROLES:
         return render(request, 'errors/unauthorized.html', status=403)
 
-    animal = get_object_or_404(Animal, pk=animal_id, branch=request.user.branch)
+    animal = _get_managed_animal(request.user, animal_id)
 
     medical_records = animal.medical_records.all().order_by('-date_recorded')
     tasks = animal.vet_tasks.all().order_by('-due_date')      # use correct related_name
@@ -505,25 +519,142 @@ def view_animal_detail(request, animal_id):
         'animal': animal,
         'medical_records': medical_records,
         'tasks': tasks,
-        'training_records': training_records
+        'training_records': training_records,
+        'status_form': AnimalStatusForm(instance=animal),
+        'status_history': animal.status_history.select_related('changed_by')[:10],
+        **_operational_record(animal),
+        **_team_and_certs(animal),
+        'health_items': health.schedule(Animal.objects.filter(pk=animal.pk)),
+        'health_missing': [k for _, k in health.missing_records([animal])],
+        'housing_now': animal.housing_assignments.filter(end_date__isnull=True).select_related('unit').first(),
+        'housing_past': animal.housing_assignments.filter(end_date__isnull=False).select_related('unit')[:5],
+        'hoof_visits': animal.hoof_records.all()[:3] if animal.species == 'horse' else [],
+        'fitted_tack': animal.tack_items.filter(is_active=True) if animal.species == 'horse' else [],
     }
 
     return render(request, 'core/animal_detail.html', context)
 
 
+ANIMAL_MANAGER_ROLES = ('admin', 'veterinarian', 'superadmin')
 
-_BASE_TEMPLATE_MAP = {
-    'superadmin': 'superadmin_dashboard/base_dashboard.html',
-    'admin':      'admin_dashboard/base_admin.html',
-    'veterinarian': 'veterinarian_dashboard/base_dashboard.html',
-    'staff':      'staff_dashboard/base_staff.html',
-}
+
+def _team_and_certs(animal):
+    assignments = animal.handler_assignments.select_related('handler', 'assigned_by')
+    certs = list(animal.certifications.select_related('handler').order_by('-expiry_date', '-id'))
+    seen = set()
+    for c in certs:  # newest per type is current; older ones were renewed
+        c.superseded = c.cert_type in seen
+        seen.add(c.cert_type)
+    return {
+        'team_current': [a for a in assignments if a.is_current],
+        'team_past': [a for a in assignments if not a.is_current],
+        'certifications': certs,
+        'role_cert': animal.role_certificate,
+        'required_cert_label': dict(Certification.TYPE_CHOICES).get(animal.required_cert_type),
+        'assign_form': HandlerAssignmentForm(animal=animal, initial={'start_date': timezone.localdate()}),
+        'cert_form': CertificationForm(animal=animal),
+    }
+
+
+def _operational_record(animal):
+    """Deployment history and headline numbers for an animal's profile."""
+    assignments = (animal.deployment_assignments
+                   .exclude(deployment__status='cancelled')
+                   .select_related('deployment', 'handler')
+                   .order_by('-deployment__started_at'))
+    agg = assignments.aggregate(avg=Avg('performance'))
+    return {
+        'recent_deployments': assignments[:5],
+        'ops': {
+            'deployments': assignments.count(),
+            'positive': assignments.filter(deployment__outcome='positive').count(),
+            'finds': animal.finds_indicated.count(),
+            'avg_rating': round(agg['avg'], 1) if agg['avg'] else None,
+            'last': assignments[0].deployment.started_at if assignments else None,
+        },
+    }
+
+
+def _get_managed_animal(user, animal_id):
+    """Superadmins reach every branch; everyone else only their own."""
+    if user.role == 'superadmin':
+        return get_object_or_404(Animal, pk=animal_id)
+    return get_object_or_404(Animal, pk=animal_id, branch=user.branch)
+
+
+def _record_status_change(animal, old_status, user, notes=''):
+    """Audit entry for a duty-status change (old_status=None for a newly registered animal)."""
+    if old_status == animal.status:
+        return
+    AnimalStatusChange.objects.create(
+        animal=animal, old_status=old_status or '', new_status=animal.status,
+        changed_by=user, notes=notes,
+    )
+    log_action(
+        user=user, action='update',
+        message=f"Status of #{animal.force_number} {animal.name}: "
+                f"{old_status or 'new'} → {animal.status}",
+    )
+
+
+@login_required
+def edit_animal(request, animal_id):
+    if request.user.role not in ANIMAL_MANAGER_ROLES:
+        return render(request, 'errors/unauthorized.html', status=403)
+
+    animal = _get_managed_animal(request.user, animal_id)
+    old_status, old_since = animal.status, animal.status_since
+
+    if request.method == 'POST':
+        form = AnimalForm(request.POST, request.FILES, instance=animal, user=request.user)
+        formset = TrainingRecordFormSet(request.POST, instance=animal)
+        if form.is_valid() and formset.is_valid():
+            animal = form.save(commit=False)
+            if animal.status != old_status and animal.status_since == old_since:
+                animal.status_since = timezone.localdate()
+            animal.save()
+            form.save_m2m()
+            formset.save()
+            _record_status_change(animal, old_status, request.user, animal.status_notes)
+            log_action(user=request.user, action='update',
+                       message=f"Edited animal #{animal.force_number} - {animal.name}")
+            messages.success(request, f"{animal.name} updated.")
+            return redirect('view_animal_detail', animal_id=animal.id)
+        messages.error(request, "Please correct the errors below.")
+    else:
+        form = AnimalForm(instance=animal, user=request.user)
+        formset = TrainingRecordFormSet(instance=animal)
+
+    ctx = _role_base_context(request.user)
+    ctx.update({'form': form, 'formset': formset, 'animal': animal, 'is_edit': True})
+    return render(request, 'core/add_animal.html', ctx)
+
+
+@login_required
+def animal_set_status(request, animal_id):
+    if request.user.role not in ANIMAL_MANAGER_ROLES or request.method != 'POST':
+        return redirect('view_animal_detail', animal_id=animal_id)
+
+    animal = _get_managed_animal(request.user, animal_id)
+    old_status, old_since = animal.status, animal.status_since
+    form = AnimalStatusForm(request.POST, instance=animal)
+    if form.is_valid():
+        animal = form.save(commit=False)
+        if animal.status != old_status and animal.status_since in (None, old_since):
+            animal.status_since = timezone.localdate()
+        animal.save()
+        _record_status_change(animal, old_status, request.user, animal.status_notes)
+        messages.success(request, f"{animal.name} is now {animal.get_status_display()}.")
+    else:
+        messages.error(request, "Could not update status — check the form.")
+    return redirect('view_animal_detail', animal_id=animal.id)
+
+
 
 def _role_base_context(user):
-    role = getattr(user, 'role', None)
-    branch = user.branch.name.lower() if user.branch else ''
-    base_template = _BASE_TEMPLATE_MAP.get(role, 'user_dashboard/base_user.html')
-    return {'base_template': base_template, 'branch': branch}
+    from core.context_processors import role_base
+    from types import SimpleNamespace
+    return role_base(SimpleNamespace(user=user))
 
 
 @login_required

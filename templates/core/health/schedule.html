@@ -1,0 +1,117 @@
+{% extends base_template %}
+{% block page_title %}Health Schedule — TPF Animal System{% endblock %}
+
+{% block content %}
+{% include "partials/flash_messages.html" %}
+
+<div class="glassmorphism rounded-2xl p-6 mb-6">
+  <div class="flex items-center justify-between flex-wrap gap-4">
+    <div>
+      <h2 class="content-heading text-2xl">Health &amp; Farrier Schedule</h2>
+      <p class="content-text text-sm mt-1">Vaccinations, deworming and farrier visits — recording the next one clears the alert. "Due soon" means within {{ due_soon_days }} days.</p>
+    </div>
+    <a href="?{% if state %}state={{ state }}&{% endif %}{% if kind %}kind={{ kind }}&{% endif %}{% if branch_filter %}branch={{ branch_filter|urlencode }}&{% endif %}export=csv" class="btn-tpf btn-tpf-light">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+      Export CSV
+    </a>
+  </div>
+</div>
+
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+  {% include "partials/stat_tile.html" with label="Overdue" value=counts.overdue color="red" %}
+  {% include "partials/stat_tile.html" with label="Due soon" value=counts.due_soon color="amber" %}
+  {% include "partials/stat_tile.html" with label="Upcoming" value=counts.upcoming color="green" %}
+  {% include "partials/stat_tile.html" with label="No record" value=counts.missing color="purple" hint="active animals never treated" %}
+</div>
+
+<div class="glassmorphism rounded-2xl p-5 mb-6">
+  <form method="get" class="tpf-form grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 items-end">
+    <div><label>State</label>
+      <select name="state">
+        <option value="">All</option>
+        <option value="overdue" {% if state == 'overdue' %}selected{% endif %}>Overdue</option>
+        <option value="due_soon" {% if state == 'due_soon' %}selected{% endif %}>Due soon</option>
+        <option value="upcoming" {% if state == 'upcoming' %}selected{% endif %}>Upcoming</option>
+        <option value="missing" {% if state == 'missing' %}selected{% endif %}>No record</option>
+      </select>
+    </div>
+    <div><label>Type</label>
+      <select name="kind"><option value="">All types</option>{% for v, l in kinds %}<option value="{{ v }}" {% if kind == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select>
+    </div>
+    {% if branches %}
+    <div><label>Branch</label>
+      <select name="branch"><option value="">All branches</option>{% for b in branches %}<option value="{{ b.name }}" {% if b.name == branch_filter %}selected{% endif %}>{{ b.name|title }}</option>{% endfor %}</select>
+    </div>
+    {% endif %}
+    <div class="flex gap-2">
+      <button type="submit" class="btn-tpf flex-1">Filter</button>
+      {% if state or kind or branch_filter %}<a href="{% url 'health_schedule' %}" class="btn-tpf btn-tpf-light" title="Clear filters">✕</a>{% endif %}
+    </div>
+  </form>
+</div>
+
+<div class="glassmorphism rounded-2xl overflow-hidden">
+  {% if items or missing %}
+  <div class="overflow-x-auto">
+    <table class="tpf-table">
+      <thead><tr><th>Animal</th>{% if branches %}<th>Branch</th>{% endif %}<th>Treatment</th><th>Last Given</th><th>Due</th><th>State</th><th></th></tr></thead>
+      <tbody>
+        {% for i in items %}
+        <tr>
+          <td>
+            <a href="{% url 'view_animal_detail' animal_id=i.animal.id %}" class="group">
+              <span class="font-semibold text-slate-800 group-hover:text-blue-700">{{ i.animal.name }}</span>
+              <span class="block text-xs text-slate-400 font-mono">{{ i.animal.force_number }}</span>
+            </a>
+          </td>
+          {% if branches %}<td>{{ i.animal.branch.name|title }}</td>{% endif %}
+          <td>{{ i.kind_label }}<span class="block text-xs text-slate-500">{{ i.label }}</span></td>
+          <td class="whitespace-nowrap">{{ i.last_given|date:"M d, Y" }}{% if i.by %}<span class="block text-xs text-slate-400">{{ i.by }}</span>{% endif %}</td>
+          <td class="whitespace-nowrap font-semibold">{{ i.due_date|date:"M d, Y" }}
+            <span class="block text-xs font-normal {% if i.state == 'overdue' %}text-red-600{% else %}text-slate-400{% endif %}">
+              {% if i.days < 0 %}{{ i.days_late }} day{{ i.days_late|pluralize }} late{% elif i.days == 0 %}today{% else %}in {{ i.days }} days{% endif %}
+            </span>
+          </td>
+          <td><span class="tpf-badge {{ i.badge }}">{{ i.state_label }}</span></td>
+          <td class="text-right">
+            {% if i.is_farrier %}
+              {% if can_log_farrier and i.state != 'upcoming' %}<a href="{% url 'farrier_log' %}?animal={{ i.animal.id }}#new" class="btn-tpf btn-tpf-sm whitespace-nowrap">Log visit</a>{% endif %}
+            {% elif can_record and i.state != 'upcoming' %}
+            <a href="{% url 'add_medical_record' branch=request.user.branch.name %}?animal={{ i.animal.id }}&report_type={{ i.kind }}{% if i.kind == 'vaccination' %}&vaccine_name={{ i.label|urlencode }}{% else %}&dewormer_name={{ i.label|urlencode }}{% endif %}&next={{ request.get_full_path|urlencode }}" class="btn-tpf btn-tpf-sm whitespace-nowrap">Record dose</a>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+        {% for animal, k in missing %}
+        <tr>
+          <td>
+            <a href="{% url 'view_animal_detail' animal_id=animal.id %}" class="group">
+              <span class="font-semibold text-slate-800 group-hover:text-blue-700">{{ animal.name }}</span>
+              <span class="block text-xs text-slate-400 font-mono">{{ animal.force_number }}</span>
+            </a>
+          </td>
+          {% if branches %}<td>{{ animal.branch.name|title }}</td>{% endif %}
+          <td>{% if k == 'vaccination' %}Vaccination{% elif k == 'farrier' %}Farrier{% else %}Deworming{% endif %}</td>
+          <td class="text-slate-400">Never recorded</td>
+          <td class="text-slate-400">—</td>
+          <td><span class="tpf-badge tpf-badge-purple">No record</span></td>
+          <td class="text-right">
+            {% if k == 'farrier' %}
+              {% if can_log_farrier %}<a href="{% url 'farrier_log' %}?animal={{ animal.id }}#new" class="btn-tpf btn-tpf-light btn-tpf-sm whitespace-nowrap">Log visit</a>{% endif %}
+            {% elif can_record %}
+            <a href="{% url 'add_medical_record' branch=request.user.branch.name %}?animal={{ animal.id }}&report_type={{ k }}&next={{ request.get_full_path|urlencode }}" class="btn-tpf btn-tpf-light btn-tpf-sm whitespace-nowrap">Record</a>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="tpf-empty">
+    <p class="content-heading">Nothing {% if state %}in this category{% else %}scheduled{% endif %}</p>
+    <p class="text-sm mt-1">Vaccination and deworming records with a "next due" date appear here automatically.</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

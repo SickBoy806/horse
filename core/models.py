@@ -1,4 +1,7 @@
+from datetime import timedelta
+
 from django.db import models
+from django.utils import timezone
 from accounts.models import CustomUser
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -19,7 +22,45 @@ class Animal(models.Model):
         ('dog', 'Dog'),
         ('horse', 'Horse'),
     ]
-    
+
+    STATUS_OPERATIONAL = 'operational'
+    STATUS_CHOICES = [
+        ('operational', 'Operational'),
+        ('in_training', 'In Training'),
+        ('sick', 'Sick / Injured'),
+        ('retired', 'Retired'),
+        ('deceased', 'Deceased'),
+        ('transferred', 'Transferred Out'),
+    ]
+    # Statuses that still count towards a branch's active strength.
+    ACTIVE_STATUSES = ('operational', 'in_training', 'sick')
+
+    SPECIALISATION_CHOICES = [
+        ('general', 'General Purpose'),
+        ('explosives', 'Explosives Detection'),
+        ('narcotics', 'Narcotics Detection'),
+        ('tracking', 'Tracking'),
+        ('search_rescue', 'Search & Rescue'),
+        ('patrol', 'Patrol'),
+        ('wildlife', 'Wildlife / Trophy Detection'),
+        ('crowd_control', 'Crowd Control'),
+        ('ceremonial', 'Ceremonial'),
+        ('breeding', 'Breeding'),
+    ]
+
+    SEX_CHOICES = [
+        ('male', 'Male'),
+        ('female', 'Female'),
+    ]
+
+    ACQUISITION_CHOICES = [
+        ('bred', 'Bred In-house'),
+        ('purchased', 'Purchased'),
+        ('donated', 'Donated'),
+        ('transferred', 'Transferred In'),
+        ('seized', 'Seized / Confiscated'),
+    ]
+
     name = models.CharField(max_length=255)
     species = models.CharField(max_length=100, choices=SPECIES_CHOICES)
     breed = models.CharField(max_length=100, blank=True, null=True)
@@ -31,14 +72,92 @@ class Animal(models.Model):
     branch = models.ForeignKey(Branch, on_delete=models.CASCADE)
     assigned_users = models.ManyToManyField(CustomUser, related_name='assigned_animals', blank=True)
     assigned_vet = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True, related_name='vet_animals')
+
+    # Duty status
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_OPERATIONAL, db_index=True)
+    status_since = models.DateField(null=True, blank=True)
+    status_notes = models.TextField(blank=True)
+    specialisation = models.CharField(max_length=20, choices=SPECIALISATION_CHOICES, default='general')
+
+    # Identification
+    sex = models.CharField(max_length=10, choices=SEX_CHOICES, blank=True)
+    is_neutered = models.BooleanField(default=False)
+    colour_markings = models.CharField('Colour & markings', max_length=255, blank=True)
+    microchip_number = models.CharField(max_length=64, unique=True, null=True, blank=True)
+    brand_or_tattoo = models.CharField('Brand / tattoo mark', max_length=64, blank=True)
+
+    # Acquisition
+    acquisition_date = models.DateField(null=True, blank=True)
+    acquisition_source = models.CharField(max_length=20, choices=ACQUISITION_CHOICES, blank=True)
+    acquired_from = models.CharField('Acquired from', max_length=255, blank=True,
+                                     help_text='Breeder, supplier, donor or originating branch.')
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f"{self.name} ({self.force_number})"
 
+    @property
+    def is_fit_for_duty(self):
+        return self.status == self.STATUS_OPERATIONAL
+
+    @property
+    def current_handlers(self):
+        return self.handler_assignments.filter(end_date__isnull=True).select_related('handler')
+
+    @property
+    def primary_handler(self):
+        assignment = self.handler_assignments.filter(end_date__isnull=True, role='primary').select_related('handler').first()
+        return assignment.handler if assignment else None
+
+    @property
+    def current_housing(self):
+        assignment = self.housing_assignments.filter(end_date__isnull=True).select_related('unit').first()
+        return assignment.unit if assignment else None
+
+    @property
+    def required_cert_type(self):
+        return Certification.REQUIRED_FOR_SPECIALISATION.get(self.specialisation)
+
+    @property
+    def role_certificate(self):
+        """Most recent certificate for the animal's specialisation (None if never certified)."""
+        cert_type = self.required_cert_type
+        if not cert_type:
+            return None
+        return self.certifications.filter(cert_type=cert_type).order_by('-expiry_date', '-id').first()
+
+    @property
+    def status_badge(self):
+        """tpf-badge colour modifier for this status."""
+        return {
+            'operational': 'tpf-badge-green',
+            'in_training': 'tpf-badge-blue',
+            'sick': 'tpf-badge-amber',
+            'retired': 'tpf-badge-purple',
+            'deceased': '',
+            'transferred': '',
+        }.get(self.status, '')
+
     class Meta:
         ordering = ['-created_at']
+
+
+class AnimalStatusChange(models.Model):
+    """Audit trail of duty-status changes."""
+    animal = models.ForeignKey(Animal, on_delete=models.CASCADE, related_name='status_history')
+    old_status = models.CharField(max_length=20, choices=Animal.STATUS_CHOICES, blank=True)
+    new_status = models.CharField(max_length=20, choices=Animal.STATUS_CHOICES)
+    changed_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True)
+    changed_at = models.DateTimeField(auto_now_add=True)
+    notes = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ['-changed_at']
+
+    def __str__(self):
+        return f"{self.animal.name}: {self.old_status or '—'} → {self.new_status}"
 
 
 class VetTask(models.Model):
@@ -525,3 +644,400 @@ class TrainingSession(models.Model):
 
     def __str__(self):
         return f"Session for {self.training_record.animal.name} on {self.date}"
+
+# ------------------------------
+# Operations: deployments & results
+# ------------------------------
+
+class Deployment(models.Model):
+    TYPE_CHOICES = [
+        ('narcotics_search', 'Narcotics Search'),
+        ('explosives_sweep', 'Explosives Sweep'),
+        ('tracking', 'Suspect Tracking'),
+        ('search_rescue', 'Search & Rescue'),
+        ('patrol', 'Patrol'),
+        ('crowd_control', 'Crowd / Public Order'),
+        ('screening', 'Border / Airport Screening'),
+        ('wildlife', 'Wildlife / Trophy Detection'),
+        ('vip_escort', 'VIP Protection / Escort'),
+        ('ceremonial', 'Ceremonial / Parade'),
+        ('demonstration', 'Public Demonstration'),
+        ('other', 'Other'),
+    ]
+    STATUS_CHOICES = [
+        ('in_progress', 'In Progress'),
+        ('completed', 'Completed'),
+        ('cancelled', 'Cancelled'),
+    ]
+    OUTCOME_CHOICES = [
+        ('positive', 'Positive Result'),
+        ('negative', 'Nothing Found'),
+        ('inconclusive', 'Inconclusive'),
+    ]
+
+    reference = models.CharField(max_length=20, unique=True, editable=False)
+    branch = models.ForeignKey(Branch, on_delete=models.PROTECT, related_name='deployments')
+    deployment_type = models.CharField(max_length=20, choices=TYPE_CHOICES)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='in_progress', db_index=True)
+    outcome = models.CharField(max_length=20, choices=OUTCOME_CHOICES, blank=True)
+
+    started_at = models.DateTimeField(db_index=True)
+    ended_at = models.DateTimeField(null=True, blank=True)
+    location = models.CharField(max_length=255)
+    ob_number = models.CharField('OB / case number', max_length=64, blank=True)
+    requested_by = models.CharField('Requested by', max_length=255, blank=True,
+                                    help_text='Unit or officer that requested support, e.g. CID Moshi.')
+    summary = models.TextField('Operation summary', blank=True)
+
+    arrests = models.PositiveIntegerField(default=0)
+    persons_located = models.PositiveIntegerField('Persons located', default=0)
+
+    animals = models.ManyToManyField(Animal, through='DeploymentTeam', related_name='deployments')
+    created_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, related_name='deployments_logged')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-started_at']
+
+    def __str__(self):
+        return f"{self.reference} — {self.get_deployment_type_display()}"
+
+    def save(self, *args, **kwargs):
+        if not self.reference:
+            year = (self.started_at or timezone.now()).year
+            prefix = f"DEP-{year}-"
+            last = (Deployment.objects.filter(reference__startswith=prefix)
+                    .order_by('-reference').values_list('reference', flat=True).first())
+            seq = int(last.rsplit('-', 1)[1]) + 1 if last else 1
+            self.reference = f"{prefix}{seq:04d}"
+        super().save(*args, **kwargs)
+
+    @property
+    def duration(self):
+        if self.ended_at and self.started_at and self.ended_at > self.started_at:
+            return self.ended_at - self.started_at
+        return None
+
+    @property
+    def outcome_badge(self):
+        return {'positive': 'tpf-badge-green', 'negative': '', 'inconclusive': 'tpf-badge-amber'}.get(self.outcome, '')
+
+    @property
+    def status_badge(self):
+        return {'in_progress': 'tpf-badge-blue', 'completed': 'tpf-badge-green', 'cancelled': 'tpf-badge-red'}.get(self.status, '')
+
+
+class DeploymentTeam(models.Model):
+    """An animal (and its handler) on a deployment."""
+    RATING_CHOICES = [(i, f'{i} / 5') for i in range(1, 6)]
+
+    deployment = models.ForeignKey(Deployment, on_delete=models.CASCADE, related_name='team')
+    animal = models.ForeignKey(Animal, on_delete=models.PROTECT, related_name='deployment_assignments')
+    handler = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True,
+                                related_name='handled_deployments')
+    performance = models.PositiveSmallIntegerField('Performance rating', choices=RATING_CHOICES, null=True, blank=True)
+    notes = models.CharField(max_length=255, blank=True)
+
+    class Meta:
+        unique_together = ('deployment', 'animal')
+
+    def __str__(self):
+        return f"{self.animal.name} on {self.deployment.reference}"
+
+
+class DeploymentFind(models.Model):
+    FIND_CHOICES = [
+        ('narcotics', 'Narcotics'),
+        ('explosives', 'Explosives'),
+        ('firearms', 'Firearms'),
+        ('ammunition', 'Ammunition'),
+        ('currency', 'Currency'),
+        ('wildlife', 'Wildlife Trophy (ivory, horn, skins)'),
+        ('person', 'Missing / Wanted Person'),
+        ('evidence', 'Evidence / Property'),
+        ('other', 'Other'),
+    ]
+    UNIT_CHOICES = [
+        ('kg', 'kg'), ('g', 'g'), ('items', 'items'), ('rounds', 'rounds'),
+        ('tzs', 'TZS'), ('usd', 'USD'), ('persons', 'persons'),
+    ]
+
+    deployment = models.ForeignKey(Deployment, on_delete=models.CASCADE, related_name='finds')
+    find_type = models.CharField(max_length=20, choices=FIND_CHOICES)
+    description = models.CharField(max_length=255, blank=True)
+    quantity = models.DecimalField(max_digits=14, decimal_places=3, null=True, blank=True)
+    unit = models.CharField(max_length=10, choices=UNIT_CHOICES, blank=True)
+    indicated_by = models.ForeignKey(Animal, on_delete=models.SET_NULL, null=True, blank=True,
+                                     related_name='finds_indicated',
+                                     help_text='Animal that made the indication.')
+
+    def __str__(self):
+        return f"{self.get_find_type_display()} ({self.deployment.reference})"
+
+
+# ------------------------------
+# Handler teams & certifications
+# ------------------------------
+
+class HandlerAssignment(models.Model):
+    """A handler's period of responsibility for an animal. Open-ended (no end_date) means current."""
+    ROLE_CHOICES = [('primary', 'Primary Handler'), ('secondary', 'Secondary Handler')]
+
+    animal = models.ForeignKey(Animal, on_delete=models.CASCADE, related_name='handler_assignments')
+    handler = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='handler_assignments')
+    role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='primary')
+    start_date = models.DateField()
+    end_date = models.DateField(null=True, blank=True)
+    notes = models.CharField(max_length=255, blank=True)
+    assigned_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True,
+                                    related_name='handler_assignments_made')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['end_date', 'role', '-start_date']
+        constraints = [
+            models.UniqueConstraint(fields=['animal'], condition=models.Q(end_date__isnull=True, role='primary'),
+                                    name='one_current_primary_handler'),
+        ]
+
+    def __str__(self):
+        return f"{self.handler} → {self.animal.name} ({self.get_role_display()})"
+
+    @property
+    def is_current(self):
+        return self.end_date is None
+
+
+class Certification(models.Model):
+    TYPE_CHOICES = [
+        ('explosives', 'Explosives Detection'),
+        ('narcotics', 'Narcotics Detection'),
+        ('tracking', 'Tracking'),
+        ('search_rescue', 'Search & Rescue'),
+        ('patrol', 'Patrol / Apprehension'),
+        ('wildlife', 'Wildlife / Trophy Detection'),
+        ('crowd_control', 'Crowd Control (Mounted)'),
+        ('ceremonial', 'Ceremonial (Mounted)'),
+        ('obedience', 'General Obedience'),
+        ('fitness', 'Veterinary Fitness for Duty'),
+    ]
+    # Certification an animal needs for its specialisation to count as deployable.
+    REQUIRED_FOR_SPECIALISATION = {
+        'explosives': 'explosives', 'narcotics': 'narcotics', 'tracking': 'tracking',
+        'search_rescue': 'search_rescue', 'patrol': 'patrol', 'wildlife': 'wildlife',
+        'crowd_control': 'crowd_control', 'ceremonial': 'ceremonial', 'general': 'obedience',
+    }
+    EXPIRING_DAYS = 60
+
+    animal = models.ForeignKey(Animal, on_delete=models.CASCADE, related_name='certifications')
+    handler = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True,
+                                related_name='team_certifications',
+                                help_text='Leave blank for animal-only certificates (e.g. fitness).')
+    cert_type = models.CharField('Certification', max_length=20, choices=TYPE_CHOICES)
+    certificate_number = models.CharField(max_length=64, blank=True)
+    issued_by = models.CharField('Issuing authority', max_length=255, blank=True)
+    issued_date = models.DateField()
+    expiry_date = models.DateField(db_index=True)
+    document = models.FileField(upload_to='certificates/', blank=True, null=True)
+    notes = models.CharField(max_length=255, blank=True)
+    # Last reminder threshold notified ('expiring' / 'expired') so the reminder job never repeats itself.
+    reminder_sent = models.CharField(max_length=10, blank=True, editable=False)
+    recorded_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True,
+                                    related_name='certifications_recorded')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-expiry_date']
+
+    def __str__(self):
+        return f"{self.animal.name}: {self.get_cert_type_display()} (exp. {self.expiry_date})"
+
+    @property
+    def days_left(self):
+        return (self.expiry_date - timezone.localdate()).days
+
+    @property
+    def state(self):
+        days = self.days_left
+        if days < 0:
+            return 'expired'
+        if days <= self.EXPIRING_DAYS:
+            return 'expiring'
+        return 'valid'
+
+    @property
+    def state_label(self):
+        return {'expired': 'Expired', 'expiring': 'Expiring', 'valid': 'Valid'}[self.state]
+
+    @property
+    def state_badge(self):
+        return {'expired': 'tpf-badge-red', 'expiring': 'tpf-badge-amber', 'valid': 'tpf-badge-green'}[self.state]
+
+    @classmethod
+    def current(cls, queryset=None):
+        """Latest certificate per (animal, type) — older ones are superseded by renewals."""
+        qs = queryset if queryset is not None else cls.objects.all()
+        latest = (cls.objects.filter(animal=models.OuterRef('animal'), cert_type=models.OuterRef('cert_type'))
+                  .order_by('-expiry_date', '-id').values('id')[:1])
+        return qs.filter(id=models.Subquery(latest))
+
+
+class HealthReminderLog(models.Model):
+    """Which preventive-care reminders have gone out, so the daily job never repeats one."""
+    # Exactly one of these is set: a vet record (vaccination/deworming) or a farrier visit.
+    record = models.ForeignKey(MedicalRecord, on_delete=models.CASCADE, related_name='reminders_sent',
+                               null=True, blank=True)
+    hoof_record = models.ForeignKey('HoofCareRecord', on_delete=models.CASCADE, related_name='reminders_sent',
+                                    null=True, blank=True)
+    state = models.CharField(max_length=10)  # 'due_soon' | 'overdue'
+    sent_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['record', 'state'], name='one_reminder_per_record_state'),
+            models.UniqueConstraint(fields=['hoof_record', 'state'], name='one_reminder_per_hoof_record_state'),
+        ]
+
+
+# ------------------------------
+# Horse care: farrier, tack, housing
+# ------------------------------
+
+class HoofCareRecord(models.Model):
+    DEFAULT_INTERVAL_DAYS = 42  # typical trim / reshoe cycle
+
+    SERVICE_CHOICES = [
+        ('trim', 'Trim'),
+        ('full_shoe', 'Full set of shoes'),
+        ('front_shoes', 'Front shoes only'),
+        ('reset', 'Reset existing shoes'),
+        ('corrective', 'Corrective / remedial shoeing'),
+        ('treatment', 'Hoof treatment (abscess, thrush)'),
+        ('inspection', 'Inspection only'),
+    ]
+    HOOVES_CHOICES = [
+        ('all', 'All four'), ('front', 'Both front'), ('hind', 'Both hind'),
+        ('lf', 'Left fore'), ('rf', 'Right fore'), ('lh', 'Left hind'), ('rh', 'Right hind'),
+    ]
+    CONDITION_CHOICES = [
+        ('good', 'Good'), ('fair', 'Fair'), ('poor', 'Poor - needs attention'), ('lame', 'Lame'),
+    ]
+
+    animal = models.ForeignKey(Animal, on_delete=models.CASCADE, related_name='hoof_records',
+                               limit_choices_to={'species': 'horse'})
+    date = models.DateField()
+    service = models.CharField(max_length=20, choices=SERVICE_CHOICES)
+    hooves = models.CharField(max_length=10, choices=HOOVES_CHOICES, default='all')
+    farrier = models.CharField(max_length=255, help_text='Farrier name or firm.')
+    condition = models.CharField('Hoof condition', max_length=10, choices=CONDITION_CHOICES, default='good')
+    notes = models.TextField(blank=True)
+    next_due = models.DateField('Next farrier visit', null=True, blank=True)
+    recorded_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True,
+                                    related_name='hoof_records_logged')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-date', '-id']
+
+    def __str__(self):
+        return f"{self.animal.name}: {self.get_service_display()} ({self.date})"
+
+    @property
+    def condition_badge(self):
+        return {'good': 'tpf-badge-green', 'fair': 'tpf-badge-blue', 'poor': 'tpf-badge-amber',
+                'lame': 'tpf-badge-red'}.get(self.condition, '')
+
+
+class TackItem(models.Model):
+    INSPECTION_INTERVAL_DAYS = 90
+
+    TYPE_CHOICES = [
+        ('saddle', 'Saddle'), ('bridle', 'Bridle'), ('bit', 'Bit'), ('girth', 'Girth'),
+        ('saddle_pad', 'Saddle pad / numnah'), ('breastplate', 'Breastplate'), ('halter', 'Head collar / halter'),
+        ('lead_rope', 'Lead rope'), ('rug', 'Rug / blanket'), ('boots', 'Boots / bandages'),
+        ('riot_gear', 'Riot gear (visor, shields)'), ('ceremonial', 'Ceremonial regalia'), ('other', 'Other'),
+    ]
+    CONDITION_CHOICES = [
+        ('good', 'Good'), ('fair', 'Fair'), ('needs_repair', 'Needs repair'), ('condemned', 'Condemned'),
+    ]
+
+    branch = models.ForeignKey(Branch, on_delete=models.PROTECT, related_name='tack_items')
+    item_type = models.CharField(max_length=20, choices=TYPE_CHOICES)
+    asset_tag = models.CharField('Asset tag', max_length=64, blank=True,
+                                 help_text='Stamped / engraved inventory number.')
+    description = models.CharField(max_length=255, blank=True, help_text='Make, model, colour.')
+    size = models.CharField(max_length=32, blank=True)
+    assigned_horse = models.ForeignKey(Animal, on_delete=models.SET_NULL, null=True, blank=True,
+                                       related_name='tack_items', limit_choices_to={'species': 'horse'})
+    condition = models.CharField(max_length=15, choices=CONDITION_CHOICES, default='good')
+    last_inspected = models.DateField(null=True, blank=True)
+    notes = models.TextField(blank=True)
+    is_active = models.BooleanField('In service', default=True, help_text='Untick when written off or disposed of.')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['item_type', 'asset_tag']
+
+    def __str__(self):
+        return f"{self.get_item_type_display()} {self.asset_tag}".strip()
+
+    @property
+    def next_inspection(self):
+        return self.last_inspected + timedelta(days=self.INSPECTION_INTERVAL_DAYS) if self.last_inspected else None
+
+    @property
+    def inspection_overdue(self):
+        return self.next_inspection is None or self.next_inspection < timezone.localdate()
+
+    @property
+    def needs_attention(self):
+        return self.condition in ('needs_repair', 'condemned') or self.inspection_overdue
+
+    @property
+    def condition_badge(self):
+        return {'good': 'tpf-badge-green', 'fair': 'tpf-badge-blue', 'needs_repair': 'tpf-badge-amber',
+                'condemned': 'tpf-badge-red'}.get(self.condition, '')
+
+
+class HousingUnit(models.Model):
+    KIND_CHOICES = [
+        ('stall', 'Stable stall'), ('paddock', 'Paddock'), ('kennel', 'Kennel'),
+        ('isolation', 'Isolation / sick bay'), ('other', 'Other'),
+    ]
+
+    branch = models.ForeignKey(Branch, on_delete=models.PROTECT, related_name='housing_units')
+    name = models.CharField(max_length=100, help_text='e.g. Stable Block A, Stall 3')
+    kind = models.CharField(max_length=10, choices=KIND_CHOICES)
+    capacity = models.PositiveSmallIntegerField(default=1)
+    notes = models.CharField(max_length=255, blank=True)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ['kind', 'name']
+        constraints = [models.UniqueConstraint(fields=['branch', 'name'], name='unique_housing_name_per_branch')]
+
+    def __str__(self):
+        return self.name
+
+
+class HousingAssignment(models.Model):
+    """Where an animal is kept. Open-ended (no end_date) means its current place."""
+    animal = models.ForeignKey(Animal, on_delete=models.CASCADE, related_name='housing_assignments')
+    unit = models.ForeignKey(HousingUnit, on_delete=models.PROTECT, related_name='assignments')
+    start_date = models.DateField()
+    end_date = models.DateField(null=True, blank=True)
+    moved_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True,
+                                 related_name='housing_moves')
+    notes = models.CharField(max_length=255, blank=True)
+
+    class Meta:
+        ordering = ['-start_date', '-id']
+        constraints = [
+            models.UniqueConstraint(fields=['animal'], condition=models.Q(end_date__isnull=True),
+                                    name='one_current_housing_per_animal'),
+        ]
+
+    def __str__(self):
+        return f"{self.animal.name} in {self.unit.name}"

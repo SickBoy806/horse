@@ -110,7 +110,7 @@ def report_activity(request, branch):
     if request.method == 'POST' and form.is_valid():
         report = form.save(commit=False)
         report.user = request.user
-        report.branch = branch
+        report.branch = request.user.branch
         report.save()
         return redirect('report_activity', branch=branch)
 

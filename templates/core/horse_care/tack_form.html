@@ -1,0 +1,28 @@
+{% extends base_template %}
+{% block page_title %}{% if is_new %}Add Tack{% else %}Edit {{ item }}{% endif %} — TPF Animal System{% endblock %}
+
+{% block content %}
+{% include "core/horse_care/_tabs.html" %}
+
+<div class="glassmorphism rounded-2xl overflow-hidden max-w-3xl">
+  <div class="tpf-panel-head">{% if is_new %}Add Tack Item{% else %}Edit {{ item }}{% endif %}</div>
+  <form method="post" class="tpf-form p-6 grid grid-cols-1 sm:grid-cols-2 gap-4" novalidate>
+    {% csrf_token %}
+    {% if form.non_field_errors %}<div class="sm:col-span-2 p-3 rounded-xl text-sm text-red-700 bg-red-50 border border-red-200">{{ form.non_field_errors }}</div>{% endif %}
+    {% if form.branch %}{% include "core/deployments/_field.html" with field=form.branch %}{% endif %}
+    {% include "core/deployments/_field.html" with field=form.item_type %}
+    {% include "core/deployments/_field.html" with field=form.asset_tag %}
+    {% include "core/deployments/_field.html" with field=form.description %}
+    {% include "core/deployments/_field.html" with field=form.size %}
+    {% include "core/deployments/_field.html" with field=form.assigned_horse %}
+    {% include "core/deployments/_field.html" with field=form.condition %}
+    {% include "core/deployments/_field.html" with field=form.last_inspected %}
+    <div class="sm:col-span-2">{% include "core/deployments/_field.html" with field=form.notes %}</div>
+    <label class="sm:col-span-2 !flex items-center gap-2">{{ form.is_active }} {{ form.is_active.label }} <span class="text-xs font-normal text-slate-400">— {{ form.is_active.help_text }}</span></label>
+    <div class="sm:col-span-2 flex items-center justify-end gap-4 pt-2 border-t border-slate-100">
+      <a href="{% url 'tack_list' %}" class="text-sm font-semibold text-slate-500 hover:text-slate-700">Cancel</a>
+      <button type="submit" class="btn-tpf btn-tpf-success">{% if is_new %}Add item{% else %}Save changes{% endif %}</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

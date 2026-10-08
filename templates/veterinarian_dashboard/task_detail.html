@@ -1,21 +1,37 @@
 {% extends "veterinarian_dashboard/base_dashboard.html" %}
+{% block page_title %}{{ task.title }} — TPF Animal System{% endblock %}
 
 {% block content %}
-<h2 class="text-2xl font-bold mb-4">Task: {{ task.title }}</h2>
-
-<div class="bg-white p-6 shadow rounded mb-4">
-    <p><strong>Animal:</strong> {{ task.animal.name }}</p>
-    <p><strong>Assigned To:</strong> {{ task.assigned_to.username }}</p>
-    <p><strong>Status:</strong> {{ task.status }}</p>
-    <p><strong>Description:</strong> {{ task.description }}</p>
-    <p><strong>Due Date:</strong> {{ task.due_date }}</p>
+<div class="glassmorphism rounded-2xl p-6 mb-6">
+  <div class="flex items-start justify-between flex-wrap gap-4">
+    <div>
+      <h2 class="content-heading text-2xl">{{ task.title }}</h2>
+      <div class="mt-2">{% include "partials/task_status_badge.html" with status=task.status %}</div>
+    </div>
+    <a href="{% url 'vet_task_list' branch=branch %}" class="btn-tpf btn-tpf-light">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+      All Tasks
+    </a>
+  </div>
 </div>
 
-<form method="POST" class="flex gap-4">
-    {% csrf_token %}
-    {% if task.status == 'completed' %}
-        <button name="action" value="approve" class="bg-green-600 px-4 py-2 text-white rounded shadow">Approve</button>
-        <button name="action" value="reject" class="bg-red-600 px-4 py-2 text-white rounded shadow">Reject</button>
-    {% endif %}
+<div class="glassmorphism rounded-2xl overflow-hidden mb-6">
+  <div class="tpf-panel-head">Task Details</div>
+  <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 p-6 text-sm">
+    <div><dt class="text-xs font-semibold uppercase text-slate-500">Animal</dt><dd class="content-text font-medium">{{ task.animal.name }}</dd></div>
+    <div><dt class="text-xs font-semibold uppercase text-slate-500">Assigned To</dt><dd class="content-text font-medium">{{ task.assigned_to.get_full_name|default:task.assigned_to.username }}</dd></div>
+    <div><dt class="text-xs font-semibold uppercase text-slate-500">Priority</dt><dd class="content-text font-medium">{{ task.priority|title|default:"—" }}</dd></div>
+    <div><dt class="text-xs font-semibold uppercase text-slate-500">Due Date</dt><dd class="content-text font-medium">{{ task.due_date|date:"M d, Y H:i" }}</dd></div>
+    <div class="sm:col-span-2"><dt class="text-xs font-semibold uppercase text-slate-500">Description</dt><dd class="content-text whitespace-pre-line">{{ task.description|default:"—" }}</dd></div>
+    {% if task.notes %}<div class="sm:col-span-2"><dt class="text-xs font-semibold uppercase text-slate-500">Handler Notes</dt><dd class="content-text whitespace-pre-line">{{ task.notes }}</dd></div>{% endif %}
+  </dl>
+</div>
+
+{% if task.status == 'completed' %}
+<form method="POST" class="flex gap-3 justify-end">
+  {% csrf_token %}
+  <button name="action" value="reject" class="btn-tpf btn-tpf-danger">Reject</button>
+  <button name="action" value="approve" class="btn-tpf btn-tpf-success">Approve</button>
 </form>
+{% endif %}
 {% endblock %}

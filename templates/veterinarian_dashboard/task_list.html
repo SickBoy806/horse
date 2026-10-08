@@ -1,33 +1,44 @@
 {% extends "veterinarian_dashboard/base_dashboard.html" %}
+{% block page_title %}Assigned Tasks — TPF Animal System{% endblock %}
 
 {% block content %}
+<div class="glassmorphism rounded-2xl p-6 mb-6">
+  <div class="flex items-center justify-between flex-wrap gap-4">
+    <div>
+      <h2 class="content-heading text-2xl">Assigned Tasks</h2>
+      <p class="content-text text-sm mt-1">Tasks you have assigned — Branch: {{ branch|title }}</p>
+    </div>
+    <a href="{% url 'assign_task' branch=branch %}" class="btn-tpf btn-tpf-success">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+      Assign Task
+    </a>
+  </div>
+</div>
 
-<br>
-<h2 class="text-2xl font-bold mb-4">Assigned Tasks</h2>
-<br>
-
-<table class="w-full table-auto bg-white rounded shadow">
-    <thead class="bg-gray-100">
-        <tr>
-            <th class="px-4 py-2">Animal</th>
-            <th class="px-4 py-2">Assigned To</th>
-            <th class="px-4 py-2">Due</th>
-            <th class="px-4 py-2">Status</th>
-            <th class="px-4 py-2">Action</th>
-        </tr>
-    </thead>
-    <tbody>
+<div class="glassmorphism rounded-2xl overflow-hidden">
+  {% if tasks %}
+  <div class="overflow-x-auto">
+    <table class="tpf-table">
+      <thead><tr><th>Task</th><th>Animal</th><th>Assigned To</th><th>Due</th><th>Status</th><th></th></tr></thead>
+      <tbody>
         {% for task in tasks %}
-        <tr class="border-b">
-            <td class="px-4 py-2">{{ task.animal.name }}</td>
-            <td class="px-4 py-2">{{ task.assigned_to.username }}</td>
-            <td class="px-4 py-2">{{ task.due_date }}</td>
-            <td class="px-4 py-2">{{ task.status }}</td>
-            <td class="px-4 py-2">
-                <a href="{% url 'vet_task_detail' branch=branch task_id=task.id %}" class="text-blue-600 underline">View</a>
-            </td>
+        <tr>
+          <td class="font-semibold text-slate-800">{{ task.title }}</td>
+          <td>{{ task.animal.name }}</td>
+          <td>{{ task.assigned_to.get_full_name|default:task.assigned_to.username }}</td>
+          <td class="whitespace-nowrap">{{ task.due_date|date:"M d, Y H:i" }}</td>
+          <td>{% include "partials/task_status_badge.html" with status=task.status %}</td>
+          <td class="text-right"><a href="{% url 'vet_task_detail' branch=branch task_id=task.id %}" class="text-xs font-semibold text-blue-600 hover:text-blue-800">View</a></td>
         </tr>
         {% endfor %}
-    </tbody>
-</table>
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="tpf-empty">
+    <p class="content-heading">No tasks assigned yet</p>
+    <p class="text-sm mt-1">Use Assign Task to create one.</p>
+  </div>
+  {% endif %}
+</div>
 {% endblock %}

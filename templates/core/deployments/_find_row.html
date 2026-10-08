@@ -1,0 +1,14 @@
+<div class="formset-row relative rounded-xl border border-slate-200 bg-slate-50/60 p-4 pr-12">
+  {% for hidden in row.hidden_fields %}{{ hidden }}{% endfor %}
+  <span class="hidden">{{ row.DELETE }}</span>
+  <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-3">
+    <div><label>Type <span class="text-red-500">*</span></label>{{ row.find_type }}{% if row.find_type.errors %}<p class="text-xs text-red-600 mt-1">{{ row.find_type.errors.0 }}</p>{% endif %}</div>
+    <div class="xl:col-span-2"><label>Description</label>{{ row.description }}</div>
+    <div class="grid grid-cols-2 gap-2">
+      <div><label>Qty</label>{{ row.quantity }}</div>
+      <div><label>Unit</label>{{ row.unit }}</div>
+    </div>
+    <div><label>Indicated by</label>{{ row.indicated_by }}</div>
+  </div>
+  <button type="button" class="remove-row absolute top-3 right-3 w-7 h-7 rounded-full flex items-center justify-center text-white text-sm font-bold bg-red-500 hover:bg-red-600" aria-label="Remove">&times;</button>
+</div>

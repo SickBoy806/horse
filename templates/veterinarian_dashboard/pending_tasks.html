@@ -1,23 +1,10 @@
 {% extends "veterinarian_dashboard/base_dashboard.html" %}
-
+{% block page_title %}Pending Tasks — TPF Animal System{% endblock %}
 
 {% block content %}
-  <div class="p-6">
-    <h1 class="text-2xl font-bold mb-4">Pending Tasks - {{ branch|title }}</h1>
-
-    {% if tasks %}
-      <ul class="space-y-4">
-        {% for task in tasks %}
-          <li class="p-4 bg-white rounded-lg shadow-md">
-            <h2 class="text-xl font-semibold">{{ task.title }}</h2>
-            <p class="text-gray-600">Assigned to: {{ task.assigned_to.get_full_name }}</p>
-            <p class="text-sm text-gray-500">Date Assigned: {{ task.date_assigned|date:"M d, Y" }}</p>
-            <p class="mt-2 text-gray-700">{{ task.description }}</p>
-          </li>
-        {% endfor %}
-      </ul>
-    {% else %}
-      <p class="text-gray-600">No pending tasks found for this branch.</p>
-    {% endif %}
-  </div>
+<div class="glassmorphism rounded-2xl p-6 mb-6">
+  <h2 class="content-heading text-2xl">Pending Tasks</h2>
+  <p class="content-text text-sm mt-1">Branch: {{ branch|title }}</p>
+</div>
+{% include "veterinarian_dashboard/_task_cards.html" with empty_text="No pending tasks found for this branch." %}
 {% endblock %}

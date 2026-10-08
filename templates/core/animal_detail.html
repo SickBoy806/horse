@@ -1,95 +1,260 @@
-{% extends "base.html" %}
+{% extends base_template %}
+{% block page_title %}{{ animal.name }} — TPF Animal System{% endblock %}
 
 {% block content %}
-<div class="p-6 bg-gray-100 min-h-screen">
-  <div class="max-w-3xl mx-auto bg-white shadow rounded-lg p-6">
-    <div class="flex items-center justify-between mb-4">
-      <h2 class="text-2xl font-bold text-gray-800">{{ animal.name }} ({{ animal.species }})</h2>
-      <a href="{% url 'animal_list' %}" class="text-blue-600 hover:underline">← Back to List</a>
-    </div>
+{% if messages %}
+<div class="mb-5 space-y-2">
+  {% for message in messages %}
+  <div class="px-4 py-3 rounded-xl text-sm font-medium {% if message.tags == 'success' %}bg-green-50 border border-green-200 text-green-700{% elif message.tags == 'error' %}bg-red-50 border border-red-200 text-red-700{% else %}bg-blue-50 border border-blue-200 text-blue-700{% endif %}">{{ message }}</div>
+  {% endfor %}
+</div>
+{% endif %}
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <div>
-        {% if animal.photo %}
-          <img src="{{ animal.photo.url }}" alt="{{ animal.name }}" width="300">
-        {% else %}
-          <p>No image available.</p>
-        {% endif %}
+<div class="glassmorphism rounded-2xl p-6 mb-6">
+  <div class="flex items-center justify-between flex-wrap gap-4">
+    <div class="min-w-0">
+      <div class="flex items-center gap-3 flex-wrap">
+        <h2 class="content-heading text-3xl">{{ animal.name }}</h2>
+        <span class="tpf-badge {{ animal.status_badge }} !text-xs !px-3 !py-1">{{ animal.get_status_display }}</span>
+        {% if role_cert %}<a href="#certifications" class="tpf-badge {{ role_cert.state_badge }} !text-xs !px-3 !py-1">{{ role_cert.get_cert_type_display }}: {{ role_cert.state_label }}{% if role_cert.state != "expired" %} to {{ role_cert.expiry_date|date:"M Y" }}{% endif %}</a>{% elif required_cert_label %}<a href="#certifications" class="tpf-badge tpf-badge-red !text-xs !px-3 !py-1">Not certified</a>{% endif %}
       </div>
-
-      <div class="space-y-2">
-        <p><strong>Species:</strong> {{ animal.species }}</p>
-        <p><strong>Age:</strong> {{ animal.age }}</p>
-        <p><strong>Owner:</strong> {{ animal.owner_name }}</p>
-        <p><strong>Branch:</strong> {{ animal.branch }}</p>
-        <p><strong>Force ID:</strong> AN-{{ animal.id|default:"--" }}</p>
-      </div>
+      <p class="content-text text-sm mt-1">
+        {{ animal.get_species_display }}{% if animal.breed %} &middot; {{ animal.breed }}{% endif %}
+        &middot; {{ animal.get_specialisation_display }} &middot; Force No. <span class="font-semibold text-slate-800">{{ animal.force_number }}</span>
+      </p>
     </div>
-
-    <div class="mt-6">
-      <h3 class="text-lg font-semibold mb-2">Assigned Users</h3>
-      {% if animal.assigned_users.all %}
-        <ul class="list-disc pl-6">
-          {% for user in animal.assigned_users.all %}
-            <li>{{ user.get_full_name }} ({{ user.role }})</li>
-          {% empty %}
-            <li class="text-gray-400 italic">No users assigned</li>
-          {% endfor %}
-        </ul>
-      {% endif %}
-    </div>
-
-    <!-- Training Records -->
-    <div class="mt-6">
-      <h3 class="text-lg font-semibold mb-2">Training Records</h3>
-      {% if training_records %}
-        <ul class="list-disc pl-6">
-          {% for record in training_records %}
-            <li>
-              {{ record.training_type }} - {{ record.date_completed|date:"M d, Y" }}
-              (Handler: {{ record.handler }})
-            </li>
-          {% endfor %}
-        </ul>
-      {% else %}
-        <p class="text-gray-400 italic">No training records available</p>
-      {% endif %}
-    </div>
-
-    <!-- Medical Records -->
-    <div class="mt-6">
-      <h3 class="text-lg font-semibold mb-2">Medical Records</h3>
-      {% if medical_records %}
-        <ul class="list-disc pl-6">
-          {% for record in medical_records %}
-            <li>{{ record.date|date:"M d, Y" }} - {{ record.description }}</li>
-          {% endfor %}
-        </ul>
-      {% else %}
-        <p class="text-gray-400 italic">No medical records available</p>
-      {% endif %}
-    </div>
-
-    <!-- Tasks -->
-    <div class="mt-6">
-      <h3 class="text-lg font-semibold mb-2">Tasks</h3>
-      {% if tasks %}
-        <ul class="list-disc pl-6">
-          {% for task in tasks %}
-            <li>{{ task.due_date|date:"M d, Y" }} - {{ task.title }} ({{ task.status }})</li>
-          {% endfor %}
-        </ul>
-      {% else %}
-        <p class="text-gray-400 italic">No tasks assigned</p>
-      {% endif %}
-    </div>
-
-    {% if request.user.role == 'user' %}
-    <div class="mt-6 text-right">
-      <a href="{% url 'edit_animal' animal.id %}" class="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600">
-        Edit Animal
+    <div class="flex items-center gap-2">
+      <a href="{% url 'animal_list' %}" class="btn-tpf btn-tpf-light">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        All Animals
+      </a>
+      <a href="{% url 'edit_animal' animal_id=animal.id %}" class="btn-tpf">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+        Edit
       </a>
     </div>
+  </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+  <!-- Photo + duty status -->
+  <div class="space-y-6">
+    <div class="glassmorphism rounded-2xl overflow-hidden">
+      {% if animal.photo %}
+        <img src="{{ animal.photo.url }}" alt="{{ animal.name }}" class="w-full h-64 object-cover">
+      {% else %}
+        <div class="w-full h-64 flex items-center justify-center bg-slate-100 text-slate-400 text-sm">No photo available</div>
+      {% endif %}
+    </div>
+
+    <div class="glassmorphism rounded-2xl overflow-hidden">
+      <div class="tpf-panel-head">Duty Status</div>
+      <div class="p-5">
+        <div class="flex items-center justify-between">
+          <span class="tpf-badge {{ animal.status_badge }} !text-sm !px-3 !py-1">{{ animal.get_status_display }}</span>
+          <span class="text-xs text-slate-500">since {{ animal.status_since|date:"M d, Y"|default:"—" }}</span>
+        </div>
+        {% if animal.status_notes %}<p class="text-sm content-text mt-3">{{ animal.status_notes }}</p>{% endif %}
+
+        <details class="mt-4 group">
+          <summary class="cursor-pointer text-sm font-semibold text-blue-700 hover:text-blue-900 list-none flex items-center gap-1">
+            <svg class="w-4 h-4 transition-transform group-open:rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+            Change status
+          </summary>
+          <form method="post" action="{% url 'animal_set_status' animal_id=animal.id %}" class="tpf-form space-y-3 mt-3">
+            {% csrf_token %}
+            {{ status_form.status }}
+            {{ status_form.status_since }}
+            {{ status_form.status_notes }}
+            <button type="submit" class="btn-tpf w-full">Update status</button>
+          </form>
+        </details>
+      </div>
+    </div>
+
+    <div class="glassmorphism rounded-2xl overflow-hidden">
+      <div class="tpf-panel-head flex items-center justify-between">
+        <span>Preventive Care</span>
+        <a href="{% url 'health_schedule' %}" class="text-xs font-semibold text-blue-100 hover:text-white">Schedule →</a>
+      </div>
+      <div class="p-5 space-y-2.5">
+        {% for i in health_items %}
+        <div class="flex items-center justify-between gap-3">
+          <div class="min-w-0">
+            <p class="text-sm font-semibold text-slate-800 truncate">{{ i.label }}</p>
+            <p class="text-xs text-slate-500">{{ i.kind_label }} &middot; due {{ i.due_date|date:"M d, Y" }}</p>
+          </div>
+          <span class="tpf-badge {{ i.badge }} flex-shrink-0">{% if i.state == 'overdue' %}{{ i.days_late }}d overdue{% else %}{{ i.state_label }}{% endif %}</span>
+        </div>
+        {% endfor %}
+        {% for k in health_missing %}
+        <div class="flex items-center justify-between gap-3">
+          <p class="text-sm text-slate-600">{% if k == 'vaccination' %}Vaccination{% elif k == 'farrier' %}Farrier{% else %}Deworming{% endif %}</p>
+          <span class="tpf-badge tpf-badge-purple">No record</span>
+        </div>
+        {% endfor %}
+        {% if not health_items and not health_missing %}<p class="text-sm text-slate-400">No upcoming treatments scheduled.</p>{% endif %}
+        {% if request.user.role == 'veterinarian' and request.user.branch %}
+        <a href="{% url 'add_medical_record' branch=request.user.branch.name %}?animal={{ animal.id }}&report_type=vaccination&next={{ request.get_full_path|urlencode }}" class="inline-block text-sm font-semibold text-blue-700 hover:text-blue-900 pt-1">+ Record treatment</a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Profile -->
+  <div class="glassmorphism rounded-2xl overflow-hidden lg:col-span-2">
+    <div class="tpf-panel-head">Profile &amp; Identification</div>
+    <dl class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-x-6 gap-y-4 p-6 text-sm">
+      <div><dt class="text-xs font-semibold uppercase text-slate-500">Force Number</dt><dd class="content-text font-medium">{{ animal.force_number|default:"—" }}</dd></div>
+      <div><dt class="text-xs font-semibold uppercase text-slate-500">Branch</dt><dd class="content-text font-medium">{{ animal.branch|default:"—" }}</dd></div>
+      <div><dt class="text-xs font-semibold uppercase text-slate-500">Specialisation</dt><dd class="content-text font-medium">{{ animal.get_specialisation_display }}</dd></div>
+      <div><dt class="text-xs font-semibold uppercase text-slate-500">Sex</dt><dd class="content-text font-medium">{{ animal.get_sex_display|default:"—" }}{% if animal.is_neutered %} (neutered){% endif %}</dd></div>
+      <div><dt class="text-xs font-semibold uppercase text-slate-500">Date of Birth</dt><dd class="content-text font-medium">{{ animal.date_of_birth|date:"M d, Y"|default:"—" }}</dd></div>
+      <div><dt class="text-xs font-semibold uppercase text-slate-500">Age</dt><dd class="content-text font-medium">{% if animal.date_of_birth %}{{ animal.date_of_birth|timesince }}{% else %}{{ animal.age|default:"—" }}{% endif %}</dd></div>
+      <div><dt class="text-xs font-semibold uppercase text-slate-500">Colour &amp; Markings</dt><dd class="content-text font-medium">{{ animal.colour_markings|default:"—" }}</dd></div>
+      <div><dt class="text-xs font-semibold uppercase text-slate-500">Microchip</dt><dd class="content-text font-medium font-mono">{{ animal.microchip_number|default:"—" }}</dd></div>
+      <div><dt class="text-xs font-semibold uppercase text-slate-500">Brand / Tattoo</dt><dd class="content-text font-medium font-mono">{{ animal.brand_or_tattoo|default:"—" }}</dd></div>
+      <div><dt class="text-xs font-semibold uppercase text-slate-500">Acquired</dt><dd class="content-text font-medium">{{ animal.acquisition_date|date:"M d, Y"|default:"—" }}{% if animal.acquisition_source %} &middot; {{ animal.get_acquisition_source_display }}{% endif %}</dd></div>
+      <div><dt class="text-xs font-semibold uppercase text-slate-500">Acquired From</dt><dd class="content-text font-medium">{{ animal.acquired_from|default:"—" }}</dd></div>
+      <div><dt class="text-xs font-semibold uppercase text-slate-500">Owner / Handler</dt><dd class="content-text font-medium">{{ animal.owner_name|default:"—" }}</dd></div>
+      <div><dt class="text-xs font-semibold uppercase text-slate-500">Assigned Vet</dt><dd class="content-text font-medium">{{ animal.assigned_vet.get_full_name|default:animal.assigned_vet|default:"—" }}</dd></div>
+      <div class="sm:col-span-2">
+        <dt class="text-xs font-semibold uppercase text-slate-500 mb-1">All Assigned Personnel</dt>
+        <dd class="flex flex-wrap gap-2">
+          {% for user in animal.assigned_users.all %}
+            <span class="tpf-badge tpf-badge-blue">{{ user.get_full_name|default:user.username }} ({{ user.role }})</span>
+          {% empty %}
+            <span class="text-slate-400 italic">No personnel assigned</span>
+          {% endfor %}
+        </dd>
+      </div>
+    </dl>
+
+    <div class="border-t border-slate-100 px-6 py-5">
+      <h4 class="text-xs font-bold uppercase tracking-wide text-slate-500 mb-3">Status History</h4>
+      {% if status_history %}
+      <ol class="relative border-l-2 border-slate-200 ml-1.5 space-y-4">
+        {% for change in status_history %}
+        <li class="ml-4">
+          <span class="absolute -left-[7px] w-3 h-3 rounded-full border-2 border-white" style="background: #d4a72c;"></span>
+          <p class="text-sm text-slate-800">
+            {% if change.old_status %}<span class="text-slate-500">{{ change.get_old_status_display }}</span> → {% endif %}<strong>{{ change.get_new_status_display }}</strong>
+          </p>
+          <p class="text-xs text-slate-500">{{ change.changed_at|date:"M d, Y H:i" }} &middot; {% if change.changed_by %}{{ change.changed_by.get_full_name|default:change.changed_by.username }}{% else %}System{% endif %}</p>
+          {% if change.notes %}<p class="text-xs content-text mt-0.5">{{ change.notes }}</p>{% endif %}
+        </li>
+        {% endfor %}
+      </ol>
+      {% else %}
+      <p class="text-sm text-slate-400">No status changes recorded yet.</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<div class="glassmorphism rounded-2xl overflow-hidden mb-6">
+  <div class="tpf-panel-head flex items-center justify-between">
+    <span>Operational Record</span>
+    {% if ops.deployments %}<a href="{% url 'deployment_list' %}?animal={{ animal.id }}" class="text-xs font-semibold text-blue-100 hover:text-white">All deployments →</a>{% endif %}
+  </div>
+  <div class="p-6">
+    <div class="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-5">
+      <div class="rounded-xl bg-slate-50 border border-slate-100 p-4"><p class="text-xs font-semibold uppercase text-slate-500">Deployments</p><p class="text-2xl font-bold text-slate-900 mt-1">{{ ops.deployments }}</p></div>
+      <div class="rounded-xl bg-slate-50 border border-slate-100 p-4"><p class="text-xs font-semibold uppercase text-slate-500">Positive</p><p class="text-2xl font-bold text-emerald-600 mt-1">{{ ops.positive }}</p></div>
+      <div class="rounded-xl bg-slate-50 border border-slate-100 p-4"><p class="text-xs font-semibold uppercase text-slate-500">Finds Indicated</p><p class="text-2xl font-bold text-violet-600 mt-1">{{ ops.finds }}</p></div>
+      <div class="rounded-xl bg-slate-50 border border-slate-100 p-4"><p class="text-xs font-semibold uppercase text-slate-500">Avg. Rating</p><p class="text-2xl font-bold mt-1" style="color: #b8860b;">{% if ops.avg_rating %}{{ ops.avg_rating }}<span class="text-sm text-slate-400"> / 5</span>{% else %}—{% endif %}</p></div>
+      <div class="rounded-xl bg-slate-50 border border-slate-100 p-4"><p class="text-xs font-semibold uppercase text-slate-500">Last Deployed</p><p class="text-base font-bold text-slate-900 mt-2">{% if ops.last %}{{ ops.last|date:"M d, Y" }}{% else %}Never{% endif %}</p></div>
+    </div>
+    {% if recent_deployments %}
+    <div class="overflow-x-auto -mx-6">
+      <table class="tpf-table">
+        <thead><tr><th>Reference</th><th>Date</th><th>Type</th><th>Location</th><th>Handler</th><th>Outcome</th></tr></thead>
+        <tbody>
+          {% for a in recent_deployments %}
+          <tr>
+            <td><a href="{% url 'deployment_detail' deployment_id=a.deployment.id %}" class="font-mono font-semibold text-blue-700 hover:text-blue-900">{{ a.deployment.reference }}</a></td>
+            <td class="whitespace-nowrap">{{ a.deployment.started_at|date:"M d, Y" }}</td>
+            <td>{{ a.deployment.get_deployment_type_display }}</td>
+            <td class="max-w-[12rem] truncate">{{ a.deployment.location }}</td>
+            <td>{% if a.handler %}{{ a.handler.get_full_name|default:a.handler.username }}{% else %}—{% endif %}</td>
+            <td>{% if a.deployment.outcome %}<span class="tpf-badge {{ a.deployment.outcome_badge }}">{{ a.deployment.get_outcome_display }}</span>{% else %}<span class="tpf-badge {{ a.deployment.status_badge }}">{{ a.deployment.get_status_display }}</span>{% endif %}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="text-sm text-slate-400 text-center">Not deployed yet. <a href="{% url 'deployment_create' %}" class="font-semibold text-blue-700 hover:text-blue-900">Log a deployment</a></p>
+    {% endif %}
+  </div>
+</div>
+
+{% include "core/_animal_team_certs.html" %}
+
+{% include "core/_animal_care.html" %}
+
+<div class="glassmorphism rounded-2xl overflow-hidden mb-6">
+  <div class="tpf-panel-head">Medical Records</div>
+  {% if medical_records %}
+  <div class="overflow-x-auto">
+    <table class="tpf-table">
+      <thead><tr><th>Date</th><th>Type</th><th>Diagnosis</th><th>Treatment</th><th>Vet</th></tr></thead>
+      <tbody>
+        {% for record in medical_records %}
+        <tr>
+          <td class="whitespace-nowrap">{{ record.date_recorded|date:"M d, Y" }}</td>
+          <td><span class="tpf-badge tpf-badge-purple">{{ record.get_report_type_display|default:record.report_type }}</span></td>
+          <td>{{ record.diagnosis|default:"—"|truncatechars:60 }}</td>
+          <td>{{ record.treatment|default:"—"|truncatechars:60 }}</td>
+          <td>{{ record.veterinarian|default:"—" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="tpf-empty">No medical records available</p>
+  {% endif %}
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+  <div class="glassmorphism rounded-2xl overflow-hidden">
+    <div class="tpf-panel-head">Training Records</div>
+    {% if training_records %}
+    <table class="tpf-table">
+      <thead><tr><th>Date</th><th>Place</th><th>Handler</th></tr></thead>
+      <tbody>
+        {% for record in training_records %}
+        <tr>
+          <td class="whitespace-nowrap">{{ record.date_recorded|date:"M d, Y" }}</td>
+          <td>{{ record.training_place|default:"—" }}</td>
+          <td>{{ record.training_handler|default:"—" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p class="tpf-empty">No training records available</p>
+    {% endif %}
+  </div>
+
+  <div class="glassmorphism rounded-2xl overflow-hidden">
+    <div class="tpf-panel-head">Tasks</div>
+    {% if tasks %}
+    <table class="tpf-table">
+      <thead><tr><th>Due</th><th>Task</th><th>Status</th></tr></thead>
+      <tbody>
+        {% for task in tasks %}
+        <tr>
+          <td class="whitespace-nowrap">{{ task.due_date|date:"M d, Y" }}</td>
+          <td>{{ task.title }}</td>
+          <td><span class="tpf-badge {% if task.status == 'completed' %}tpf-badge-green{% elif task.status == 'in_progress' %}tpf-badge-blue{% else %}tpf-badge-amber{% endif %}">{{ task.get_status_display|default:task.status }}</span></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p class="tpf-empty">No tasks assigned</p>
     {% endif %}
   </div>
 </div>

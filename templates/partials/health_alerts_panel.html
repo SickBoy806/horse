@@ -1,0 +1,36 @@
+<div class="glassmorphism rounded-2xl overflow-hidden mb-6">
+  <div class="tpf-panel-head flex items-center justify-between">
+    <span>Preventive Care &middot; Vaccination, Deworming &amp; Farrier</span>
+    <a href="{% url 'health_schedule' %}" class="text-xs font-semibold text-blue-100 hover:text-white">Schedule →</a>
+  </div>
+  <div class="p-6">
+    <div class="flex flex-wrap gap-2 mb-4">
+      <a href="{% url 'health_schedule' %}?state=overdue" class="tpf-badge {% if overdue %}tpf-badge-red{% endif %} !text-xs !px-3 !py-1.5">Overdue <strong class="ml-1">{{ overdue }}</strong></a>
+      <a href="{% url 'health_schedule' %}?state=due_soon" class="tpf-badge {% if due_soon %}tpf-badge-amber{% endif %} !text-xs !px-3 !py-1.5">Due soon <strong class="ml-1">{{ due_soon }}</strong></a>
+      <a href="{% url 'health_schedule' %}?state=missing" class="tpf-badge {% if missing %}tpf-badge-purple{% endif %} !text-xs !px-3 !py-1.5">No record <strong class="ml-1">{{ missing }}</strong></a>
+    </div>
+    {% if urgent %}
+    <ul class="divide-y divide-slate-100">
+      {% for i in urgent %}
+      <li class="py-2.5 flex items-center gap-3">
+        <span class="w-2 h-2 rounded-full flex-shrink-0 {% if i.state == 'overdue' %}bg-red-500{% else %}bg-amber-500{% endif %}"></span>
+        <a href="{% url 'view_animal_detail' animal_id=i.animal.id %}" class="min-w-0 flex-1 group">
+          <span class="text-sm font-semibold text-slate-800 group-hover:text-blue-700">{{ i.animal.name }}</span>
+          <span class="text-xs text-slate-500">— {{ i.label }} {% if i.state == 'overdue' %}<strong class="text-red-600">{{ i.days_late }} day{{ i.days_late|pluralize }} overdue</strong>{% elif i.days == 0 %}due today{% else %}due in {{ i.days }} day{{ i.days|pluralize }}{% endif %}</span>
+        </a>
+        {% if i.is_farrier %}
+        <a href="{% url 'farrier_log' %}?animal={{ i.animal.id }}#new" class="text-xs font-semibold text-blue-700 hover:text-blue-900 flex-shrink-0">Log visit</a>
+        {% elif can_record %}
+        <a href="{% url 'add_medical_record' branch=request.user.branch.name %}?animal={{ i.animal.id }}&report_type={{ i.kind }}{% if i.kind == 'vaccination' %}&vaccine_name={{ i.label|urlencode }}{% else %}&dewormer_name={{ i.label|urlencode }}{% endif %}&next={{ request.get_full_path|urlencode }}" class="text-xs font-semibold text-blue-700 hover:text-blue-900 flex-shrink-0">Record dose</a>
+        {% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+    {% if more %}<p class="text-xs text-slate-500 mt-2"><a href="{% url 'health_schedule' %}" class="font-semibold text-blue-700">+ {{ more }} more</a></p>{% endif %}
+    {% elif missing %}
+    <p class="text-sm text-violet-700 font-medium">Nothing overdue — but {{ missing }} vaccination, deworming or farrier record{{ missing|pluralize }} {{ missing|pluralize:"is,are" }} missing for active animals. <a href="{% url 'health_schedule' %}?state=missing" class="underline">Review</a></p>
+    {% else %}
+    <p class="text-sm text-emerald-700 font-medium">✓ Nothing overdue or due in the next two weeks.{% if next_item %} <span class="text-slate-500 font-normal">Next: {{ next_item.animal.name }} — {{ next_item.label }}, {{ next_item.due_date|date:"M d" }}.</span>{% endif %}</p>
+    {% endif %}
+  </div>
+</div>

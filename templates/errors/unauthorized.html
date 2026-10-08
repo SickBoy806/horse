@@ -1,8 +1,16 @@
-{% extends "base.html" %}
+{% extends base_template %}
+{% block page_title %}Access Denied — TPF Animal System{% endblock %}
+
 {% block content %}
-<div class="p-6 bg-red-100 text-red-800 rounded-xl mt-6">
-    <h1 class="text-2xl font-bold mb-2">Unauthorized Access</h1>
-    <p>You do not have permission to access this branch's dashboard.</p>
-    <a href="{% url 'login' %}" class="text-blue-600 underline mt-4 inline-block">Return to login</a>
+<div class="tpf-empty max-w-lg mx-auto">
+  <div class="w-16 h-16 mx-auto mb-5 rounded-full flex items-center justify-center bg-red-100 text-red-600">
+    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+  </div>
+  <h2 class="content-heading text-2xl mb-2">Unauthorized Access</h2>
+  <p class="content-text">You do not have permission to view this page.</p>
+  <div class="flex justify-center gap-3 mt-6">
+    <a href="/" class="btn-tpf">Go to my dashboard</a>
+    <a href="{% url 'logout' %}" class="btn-tpf btn-tpf-light">Sign out</a>
+  </div>
 </div>
 {% endblock %}

@@ -1,0 +1,15 @@
+{% include "partials/flash_messages.html" %}
+<div class="glassmorphism rounded-2xl p-6 mb-6">
+  <div class="flex items-center justify-between flex-wrap gap-4">
+    <div>
+      <h2 class="content-heading text-2xl">Horse Care</h2>
+      <p class="content-text text-sm mt-1">Mounted unit stable management — farrier, tack and housing{% if request.user.role != 'superadmin' and request.user.branch %} · {{ request.user.branch.name|title }}{% endif %}</p>
+    </div>
+  </div>
+  <nav class="flex flex-wrap gap-1 mt-5 -mb-1 border-b border-slate-200">
+    <a href="{% url 'horse_care' %}" class="px-4 py-2.5 text-sm font-semibold border-b-2 -mb-px {% if tab == 'overview' %}border-amber-500 text-slate-900{% else %}border-transparent text-slate-500 hover:text-slate-800{% endif %}">Overview</a>
+    <a href="{% url 'farrier_log' %}" class="px-4 py-2.5 text-sm font-semibold border-b-2 -mb-px {% if tab == 'farrier' %}border-amber-500 text-slate-900{% else %}border-transparent text-slate-500 hover:text-slate-800{% endif %}">Farrier</a>
+    <a href="{% url 'tack_list' %}" class="px-4 py-2.5 text-sm font-semibold border-b-2 -mb-px {% if tab == 'tack' %}border-amber-500 text-slate-900{% else %}border-transparent text-slate-500 hover:text-slate-800{% endif %}">Tack</a>
+    <a href="{% url 'stables_board' %}" class="px-4 py-2.5 text-sm font-semibold border-b-2 -mb-px {% if tab == 'stables' %}border-amber-500 text-slate-900{% else %}border-transparent text-slate-500 hover:text-slate-800{% endif %}">Stables &amp; Kennels</a>
+  </nav>
+</div>

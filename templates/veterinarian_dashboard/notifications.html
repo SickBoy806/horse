@@ -1,26 +1,10 @@
 {% extends "veterinarian_dashboard/base_dashboard.html" %}
-
+{% block page_title %}Notifications — TPF Animal System{% endblock %}
 
 {% block content %}
-  <div class="p-6">
-    <h2 class="text-2xl font-bold mb-4">Notifications for {{ branch.name }}</h2>
-
-      <br>
-      <br>
-
-
-    {% if notifications %}
-      <ul class="space-y-4">
-        {% for notification in notifications %}
-          <li class="bg-white p-4 shadow rounded">
-            <p class="font-medium">{{ notification.title }}</p>
-            <p class="text-gray-600 text-sm">{{ notification.message }}</p>
-            <p class="text-xs text-gray-400">Received: {{ notification.created_at }}</p>
-          </li>
-        {% endfor %}
-      </ul>
-    {% else %}
-      <p class="text-gray-500">No notifications available.</p>
-    {% endif %}
-  </div>
+<div class="glassmorphism rounded-2xl p-6 mb-6">
+  <h2 class="content-heading text-2xl">Notifications</h2>
+  <p class="content-text text-sm mt-1">Branch: {{ branch.name|default:branch|title }}</p>
+</div>
+{% include "partials/notification_list.html" %}
 {% endblock %}

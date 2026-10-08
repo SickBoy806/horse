@@ -1,0 +1,120 @@
+{% extends base_template %}
+{% block page_title %}Stables &amp; Kennels — TPF Animal System{% endblock %}
+
+{% block content %}
+{% include "core/horse_care/_tabs.html" %}
+
+<div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+  <!-- Occupancy board -->
+  <div class="xl:col-span-2 space-y-6">
+    <div class="flex items-center justify-between flex-wrap gap-3">
+      <p class="text-sm content-text"><strong class="text-slate-900">{{ totals.occupied }}</strong> of {{ totals.capacity }} places occupied across {{ totals.units }} unit{{ totals.units|pluralize }}.</p>
+      {% if branches %}
+      <form method="get" class="tpf-form">
+        <select name="branch" onchange="this.form.submit()" style="min-width: 12rem;">
+          <option value="">All branches</option>
+          {% for b in branches %}<option value="{{ b.name }}" {% if b.name == branch_filter %}selected{% endif %}>{{ b.name|title }}</option>{% endfor %}
+        </select>
+      </form>
+      {% endif %}
+    </div>
+
+    {% for kind, units in groups.items %}
+    <div>
+      <h3 class="text-xs font-bold uppercase tracking-wide text-slate-500 mb-3">{{ kind }}</h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {% for u in units %}
+        <div class="glassmorphism rounded-2xl p-4 {% if u.kind == 'isolation' and u.current %}border-l-4 border-red-400{% endif %}">
+          <div class="flex items-start justify-between gap-3">
+            <div class="min-w-0">
+              <p class="font-semibold text-slate-800 truncate">{{ u.name }}</p>
+              <p class="text-xs text-slate-500">{% if branches %}{{ u.branch.name|title }} &middot; {% endif %}{{ u.current|length }} / {{ u.capacity }}{% if u.notes %} &middot; {{ u.notes }}{% endif %}</p>
+            </div>
+            <span class="tpf-badge {% if u.current|length >= u.capacity %}tpf-badge-amber{% elif u.current %}tpf-badge-blue{% else %}tpf-badge-green{% endif %} flex-shrink-0">
+              {% if u.current|length >= u.capacity %}Full{% elif u.current %}Occupied{% else %}Empty{% endif %}
+            </span>
+          </div>
+          <ul class="mt-3 space-y-1.5">
+            {% for stay in u.current %}
+            <li class="flex items-center justify-between gap-2 rounded-lg bg-slate-50 px-3 py-2">
+              <a href="{% url 'view_animal_detail' animal_id=stay.animal.id %}" class="text-sm font-medium text-slate-800 hover:text-blue-700 truncate">
+                {{ stay.animal.name }} <span class="text-xs text-slate-400">since {{ stay.start_date|date:"M d" }}</span>
+              </a>
+              {% if can_move %}
+              <form method="post" action="{% url 'housing_vacate' assignment_id=stay.id %}" onsubmit="return confirm('Remove {{ stay.animal.name|escapejs }} from {{ u.name|escapejs }}?');">
+                {% csrf_token %}<button type="submit" class="text-xs text-slate-400 hover:text-red-600" title="Remove">✕</button>
+              </form>
+              {% endif %}
+            </li>
+            {% empty %}
+            <li class="text-xs text-slate-400">No animals.</li>
+            {% endfor %}
+          </ul>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% empty %}
+    <div class="glassmorphism rounded-2xl tpf-empty">
+      <p class="content-heading">No stables or kennels set up</p>
+      <p class="text-sm mt-1">{% if can_manage_units %}Add your stalls, paddocks, kennels and isolation units on the right.{% else %}Ask your branch admin to set up housing units.{% endif %}</p>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Side panels -->
+  <div class="space-y-6">
+    {% if can_move %}
+    <div id="move" class="glassmorphism rounded-2xl overflow-hidden scroll-mt-6">
+      <div class="tpf-panel-head">Move / House an Animal</div>
+      <form method="post" action="{% url 'housing_move' %}" class="tpf-form p-5 space-y-3">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ request.get_full_path }}">
+        <div><label>Animal</label>{{ move_form.animal }}</div>
+        <div><label>Move to</label>{{ move_form.unit }}</div>
+        <div><label>From</label>{{ move_form.start_date }}</div>
+        <div><label>Notes</label>{{ move_form.notes }}</div>
+        <p class="text-xs text-slate-500">The animal's current place ends automatically. Moves to isolation alert the vets.</p>
+        <button type="submit" class="btn-tpf w-full">Move</button>
+      </form>
+    </div>
+    {% endif %}
+
+    <div class="glassmorphism rounded-2xl overflow-hidden">
+      <div class="tpf-panel-head">Not Housed ({{ unhoused|length }})</div>
+      <ul class="p-5 space-y-2">
+        {% for a in unhoused %}
+        <li class="flex items-center justify-between gap-2">
+          <a href="{% url 'view_animal_detail' animal_id=a.id %}" class="text-sm font-medium text-slate-800 hover:text-blue-700">{{ a.name }} <span class="text-xs text-slate-400">{{ a.get_species_display }}</span></a>
+          {% if can_move %}<a href="?animal={{ a.id }}{% if branch_filter %}&branch={{ branch_filter|urlencode }}{% endif %}#move" class="text-xs font-semibold text-blue-700 hover:text-blue-900">Assign</a>{% endif %}
+        </li>
+        {% empty %}
+        <li class="text-sm text-emerald-700">✓ Every active animal has a place.</li>
+        {% endfor %}
+      </ul>
+    </div>
+
+    {% if can_manage_units %}
+    <div class="glassmorphism rounded-2xl overflow-hidden">
+      <div class="tpf-panel-head">Add Stall / Kennel</div>
+      <form method="post" action="{% url 'housing_unit_create' %}" class="tpf-form p-5 space-y-3">
+        {% csrf_token %}
+        {% if branches %}
+        <div><label>Branch</label>
+          <select name="branch" required>{% for b in branches %}<option value="{{ b.id }}" {% if b.name == branch_filter or not branch_filter and b.id == request.user.branch_id %}selected{% endif %}>{{ b.name|title }}</option>{% endfor %}</select>
+        </div>
+        {% endif %}
+        <div><label>Name</label>{{ unit_form.name }}</div>
+        <div class="grid grid-cols-2 gap-3">
+          <div><label>Kind</label>{{ unit_form.kind }}</div>
+          <div><label>Capacity</label>{{ unit_form.capacity }}</div>
+        </div>
+        <div><label>Notes</label>{{ unit_form.notes }}</div>
+        <input type="hidden" name="is_active" value="on">
+        <button type="submit" class="btn-tpf btn-tpf-gold w-full">Add unit</button>
+      </form>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -113,11 +113,13 @@ def approve_activities(request, branch):
 
 # ✅ Admin Reports (placeholder)
 @login_required
-def admin_reports(request, branch):
+def admin_reports(request, branch, task_id=None):
     if not is_admin(request.user) or request.user.branch.name.lower() != branch.lower():
         return HttpResponseForbidden("Unauthorized access")
 
-    return HttpResponse(f"Admin reports for branch: {branch} (placeholder view)")
+    reports = (DailyActivityReport.objects.filter(branch=request.user.branch)
+               .select_related('user').order_by('-date'))
+    return render(request, 'admin_dashboard/admin_reports.html', {'reports': reports, 'branch': branch})
 
 # ✅ Animal List (placeholder)
 @login_required
@@ -125,7 +127,7 @@ def animal_list(request, branch):
     if not is_admin(request.user) or request.user.branch.name.lower() != branch.lower():
         return HttpResponseForbidden("Unauthorized access")
 
-    return HttpResponse(f"Animal list for branch: {branch} (placeholder view)")
+    return admin_animals(request, branch)
 
 # List users
 def admin_user_list(request, branch):
@@ -162,7 +164,7 @@ def user_edit(request, branch, user_id):
     if request.user.role != 'admin' and request.user.branch.name.lower() != branch.lower():
         return render(request, 'errors/unauthorized.html', status=403)
 
-    user = get_object_or_404(CustomUser, id=user_id, branch__iexact=branch)
+    user = get_object_or_404(CustomUser, id=user_id, branch__name__iexact=branch)
     form = CustomUserForm(request.POST or None, instance=user)
 
     if request.method == 'POST' and form.is_valid():
@@ -363,9 +365,8 @@ def create_task(request):
 
 @login_required
 def generate_report(request):
-    branch_obj = request.user.branch
-    reports = Report.objects.filter(branch=branch_obj).order_by('-created_at') if branch_obj else []
-    return render(request, 'admin_dashboard/admin_reports.html', {'reports': reports, 'branch': getattr(branch_obj, 'name', '')})
+    # Generated reports live in the shared Reports page.
+    return redirect('reports_list')
 
 
 @login_required
