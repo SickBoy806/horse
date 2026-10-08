@@ -74,7 +74,9 @@
           </td>
           <td><span class="tpf-badge {{ i.badge }}">{{ i.state_label }}</span></td>
           <td class="text-right">
-            {% if i.is_farrier %}
+            {% if i.is_birth %}
+              <a href="{% url 'litter_detail' litter_id=i.record.id %}" class="btn-tpf btn-tpf-light btn-tpf-sm whitespace-nowrap">Breeding record</a>
+            {% elif i.is_farrier %}
               {% if can_log_farrier and i.state != 'upcoming' %}<a href="{% url 'farrier_log' %}?animal={{ i.animal.id }}#new" class="btn-tpf btn-tpf-sm whitespace-nowrap">Log visit</a>{% endif %}
             {% elif can_record and i.state != 'upcoming' %}
             <a href="{% url 'add_medical_record' branch=request.user.branch.name %}?animal={{ i.animal.id }}&report_type={{ i.kind }}{% if i.kind == 'vaccination' %}&vaccine_name={{ i.label|urlencode }}{% else %}&dewormer_name={{ i.label|urlencode }}{% endif %}&next={{ request.get_full_path|urlencode }}" class="btn-tpf btn-tpf-sm whitespace-nowrap">Record dose</a>

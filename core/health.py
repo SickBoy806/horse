@@ -8,10 +8,11 @@ from datetime import date
 
 from django.utils import timezone
 
-from .models import Animal, HoofCareRecord, MedicalRecord
+from .models import Animal, HoofCareRecord, Litter, MedicalRecord
 
 DUE_SOON_DAYS = 14
-KINDS = {'vaccination': 'Vaccination', 'deworming': 'Deworming', 'farrier': 'Farrier'}
+KINDS = {'vaccination': 'Vaccination', 'deworming': 'Deworming', 'farrier': 'Farrier', 'birth': 'Expected birth'}
+RECORDABLE_KINDS = ('vaccination', 'deworming', 'farrier')  # kinds that can be 'never recorded'
 MEDICAL_KINDS = ('vaccination', 'deworming')
 
 
@@ -22,7 +23,7 @@ class HealthItem:
     label: str              # vaccine / dewormer name, or farrier service
     due_date: date
     last_given: date
-    record: object          # MedicalRecord or HoofCareRecord
+    record: object          # MedicalRecord, HoofCareRecord or Litter
     by: str = ''            # vet or farrier who did the last one
 
     @property
@@ -57,6 +58,10 @@ class HealthItem:
     def is_farrier(self):
         return self.kind == 'farrier'
 
+    @property
+    def is_birth(self):
+        return self.kind == 'birth'
+
 
 def _key_and_due(record):
     if record.report_type == 'vaccination':
@@ -90,6 +95,14 @@ def schedule(animals):
             animal=visit.animal, kind='farrier', label=visit.get_service_display(), due_date=visit.next_due,
             last_given=visit.date, record=visit, by=visit.farrier)
 
+    litters = (Litter.objects.filter(dam__in=animals, status__in=Litter.OPEN_STATUSES, expected_date__isnull=False)
+               .select_related('dam', 'dam__branch', 'sire'))
+    for litter in litters:
+        label = 'Expected foaling' if litter.dam.species == 'horse' else 'Expected whelping'
+        latest[(litter.dam_id, 'birth', litter.id)] = HealthItem(
+            animal=litter.dam, kind='birth', label=label, due_date=litter.expected_date,
+            last_given=litter.mating_date, record=litter, by=f'Sire: {litter.sire_name}')
+
     # A latest record without a next date means the course / cycle is finished.
     items = [item for item in latest.values() if item.due_date]
     return sorted(items, key=lambda i: (i.due_date, i.animal.name))
@@ -103,7 +116,7 @@ def missing_records(animals):
              .values_list('animal_id', flat=True).distinct()}
     missing = []
     for a in animals:
-        for kind in KINDS:
+        for kind in RECORDABLE_KINDS:
             if kind == 'farrier' and a.species != 'horse':
                 continue
             if (a.id, kind) not in have:

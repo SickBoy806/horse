@@ -1,5 +1,6 @@
 from django.urls import path
-from . import views, deployment_views, team_views, health_views, horse_views, stock_views
+from . import (views, deployment_views, team_views, health_views, horse_views, stock_views,
+               transfer_views, breeding_views)
 
 urlpatterns = [
     # Dashboard redirect
@@ -10,6 +11,13 @@ urlpatterns = [
     path('animals/add/', views.add_animal, name='add_animal'),
     path('animals/<int:animal_id>/', views.view_animal_detail, name='view_animal_detail'),
     path('animals/<int:animal_id>/edit/', views.edit_animal, name='edit_animal'),
+
+    # Transfers & breeding
+    path('transfers/', transfer_views.transfer_list, name='transfer_list'),
+    path('transfers/<int:transfer_id>/action/', transfer_views.transfer_action, name='transfer_action'),
+    path('animals/<int:animal_id>/transfer/', transfer_views.transfer_request, name='transfer_request'),
+    path('breeding/', breeding_views.breeding_register, name='breeding_register'),
+    path('breeding/<int:litter_id>/', breeding_views.litter_detail, name='litter_detail'),
 
     # Stores
     path('stock/', stock_views.stock_list, name='stock_list'),

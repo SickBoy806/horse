@@ -26,7 +26,7 @@ from .models import (
 )
 from .forms import MessageForm, MessageReplyForm, VetTaskForm, SupportTicketForm, TicketReplyForm, AnimalForm, AnimalStatusForm
 from .forms import CertificationForm, HandlerAssignmentForm
-from .models import AnimalStatusChange, Certification
+from .models import AnimalStatusChange, AnimalTransfer, Certification, Litter
 from . import health
 from .utils import log_action, create_notification, notify_users, can_access_branch, get_user_dashboard_url
 from accounts.models import CustomUser
@@ -530,6 +530,7 @@ def view_animal_detail(request, animal_id, branch=None):
         'housing_past': animal.housing_assignments.filter(end_date__isnull=False).select_related('unit')[:5],
         'hoof_visits': animal.hoof_records.all()[:3] if animal.species == 'horse' else [],
         'fitted_tack': animal.tack_items.filter(is_active=True) if animal.species == 'horse' else [],
+        **_pedigree_and_transfers(animal, request.user),
     }
 
     return render(request, 'core/animal_detail.html', context)
@@ -553,6 +554,19 @@ def _team_and_certs(animal):
         'required_cert_label': dict(Certification.TYPE_CHOICES).get(animal.required_cert_type),
         'assign_form': HandlerAssignmentForm(animal=animal, initial={'start_date': timezone.localdate()}),
         'cert_form': CertificationForm(animal=animal),
+    }
+
+
+def _pedigree_and_transfers(animal, user):
+    transfers = animal.transfers.select_related('from_branch', 'to_branch', 'requested_by')
+    open_transfer = next((t for t in transfers if t.status in AnimalTransfer.OPEN_STATUSES), None)
+    return {
+        'offspring': Animal.objects.filter(Q(sire=animal) | Q(dam=animal)).order_by('-date_of_birth', 'name'),
+        'litters': Litter.objects.filter(Q(dam=animal) | Q(sire=animal)).select_related('dam', 'sire')[:5],
+        'transfers': transfers[:5],
+        'open_transfer': open_transfer,
+        'can_request_transfer': (user.role in ('admin', 'veterinarian', 'superadmin') and open_transfer is None
+                                 and animal.status in Animal.ACTIVE_STATUSES),
     }
 
 

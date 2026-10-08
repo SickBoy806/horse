@@ -101,3 +101,20 @@ class StockItemAdmin(admin.ModelAdmin):
     list_filter = ('category', 'branch', 'is_active')
     search_fields = ('name', 'supplier')
     inlines = [StockMovementInline]
+
+
+from .models import AnimalTransfer, Litter  # noqa: E402
+
+
+@admin.register(AnimalTransfer)
+class AnimalTransferAdmin(admin.ModelAdmin):
+    list_display = ('animal', 'from_branch', 'to_branch', 'status', 'requested_at', 'received_at')
+    list_filter = ('status', 'from_branch', 'to_branch')
+    search_fields = ('animal__name', 'animal__force_number')
+
+
+@admin.register(Litter)
+class LitterAdmin(admin.ModelAdmin):
+    list_display = ('dam', 'sire', 'external_sire', 'mating_date', 'expected_date', 'status', 'born_alive')
+    list_filter = ('status', 'dam__species')
+    search_fields = ('dam__name', 'sire__name', 'external_sire')

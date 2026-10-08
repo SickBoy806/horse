@@ -61,7 +61,7 @@ class AnimalForm(forms.ModelForm):
             'date_of_birth', 'owner_name', 'photo', 'assigned_users', 'assigned_vet',
             'status', 'status_since', 'status_notes', 'specialisation',
             'sex', 'is_neutered', 'colour_markings', 'microchip_number', 'brand_or_tattoo',
-            'acquisition_date', 'acquisition_source', 'acquired_from',
+            'acquisition_date', 'acquisition_source', 'acquired_from', 'sire', 'dam',
         ]
         widgets = {
             'date_of_birth': forms.DateInput(attrs={'type': 'date'}),
@@ -93,6 +93,17 @@ class AnimalForm(forms.ModelForm):
             if existing.exists():
                 raise ValidationError("An animal with this force number already exists.")
         return force_number
+
+    def clean(self):
+        cleaned = super().clean()
+        species = cleaned.get('species')
+        for parent in ('sire', 'dam'):
+            p = cleaned.get(parent)
+            if p and species and p.species != species:
+                self.add_error(parent, f'{p.name} is a {p.get_species_display().lower()}.')
+            if p and self.instance.pk and p.pk == self.instance.pk:
+                self.add_error(parent, 'An animal cannot be its own parent.')
+        return cleaned
 
     def clean_microchip_number(self):
         # Blank must be stored as NULL so the unique constraint allows many unchipped animals.
@@ -766,3 +777,124 @@ class StockTakeForm(forms.Form):
                                  widget=forms.NumberInput(attrs={'step': 'any', 'min': '0'}))
     notes = forms.CharField(required=False, max_length=255,
                             widget=forms.TextInput(attrs={'placeholder': 'Reason for any difference'}))
+
+
+# ------------------------------
+# Transfers & breeding
+# ------------------------------
+from .models import AnimalTransfer, Litter  # noqa: E402
+
+
+class TransferRequestForm(forms.ModelForm):
+    class Meta:
+        model = AnimalTransfer
+        fields = ['to_branch', 'planned_date', 'reason']
+        widgets = {
+            'planned_date': forms.DateInput(attrs={'type': 'date'}),
+            'reason': forms.Textarea(attrs={'rows': 3, 'placeholder': 'Operational need, reinforcement, breeding, retraining...'}),
+        }
+        labels = {'to_branch': 'Transfer to', 'planned_date': 'Planned move date'}
+
+    def __init__(self, *args, animal=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.animal = animal
+        branches = Branch.objects.filter(is_active=True).order_by('name')
+        if animal is not None:
+            branches = branches.exclude(pk=animal.branch_id)
+        self.fields['to_branch'].queryset = branches
+
+    def clean(self):
+        cleaned = super().clean()
+        if self.animal is not None:
+            if self.animal.transfers.filter(status__in=AnimalTransfer.OPEN_STATUSES).exists():
+                raise ValidationError(f'{self.animal.name} already has a transfer in progress.')
+            if self.animal.status not in Animal.ACTIVE_STATUSES:
+                raise ValidationError(f'{self.animal.name} is {self.animal.get_status_display().lower()} and cannot be transferred.')
+        planned = cleaned.get('planned_date')
+        if planned and planned < timezone.localdate():
+            self.add_error('planned_date', 'Planned date cannot be in the past.')
+        return cleaned
+
+
+def _breeding_animals(branch, sex, species=None):
+    qs = Animal.objects.filter(sex=sex, status__in=Animal.ACTIVE_STATUSES)
+    if branch is not None:
+        qs = qs.filter(branch=branch)
+    if species:
+        qs = qs.filter(species=species)
+    return qs.order_by('species', 'name')
+
+
+class LitterForm(forms.ModelForm):
+    class Meta:
+        model = Litter
+        fields = ['dam', 'sire', 'external_sire', 'mating_date', 'expected_date', 'notes']
+        widgets = {
+            'mating_date': forms.DateInput(attrs={'type': 'date'}),
+            'expected_date': forms.DateInput(attrs={'type': 'date'}),
+            'notes': forms.Textarea(attrs={'rows': 2, 'placeholder': 'Method (natural / AI), heat cycle, vet notes...'}),
+        }
+        labels = {'dam': 'Dam (female)', 'sire': 'Sire (TPF male)'}
+
+    def __init__(self, *args, branch=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['dam'].queryset = _breeding_animals(branch, 'female')
+        # Sires may come from any branch (stud dogs / stallions are often shared).
+        self.fields['sire'].queryset = _breeding_animals(None, 'male')
+        self.fields['sire'].required = False
+        label = lambda a: f"{a.name} ({a.get_species_display()}, {a.branch.name})"  # noqa: E731
+        self.fields['dam'].label_from_instance = label
+        self.fields['sire'].label_from_instance = label
+        self.fields['expected_date'].help_text = 'Leave blank to calculate (dogs 63 days, horses 340 days).'
+
+    def clean(self):
+        cleaned = super().clean()
+        dam, sire, outside = cleaned.get('dam'), cleaned.get('sire'), (cleaned.get('external_sire') or '').strip()
+        if not sire and not outside:
+            self.add_error('sire', 'Choose a TPF sire or enter an outside sire.')
+        if sire and outside:
+            self.add_error('external_sire', 'Use either a TPF sire or an outside sire, not both.')
+        if dam and sire and dam.species != sire.species:
+            self.add_error('sire', f'{sire.name} is a {sire.get_species_display().lower()}; {dam.name} is a {dam.get_species_display().lower()}.')
+        mating = cleaned.get('mating_date')
+        if mating and mating > timezone.localdate():
+            self.add_error('mating_date', 'Mating date cannot be in the future.')
+        if mating and cleaned.get('expected_date') and cleaned['expected_date'] <= mating:
+            self.add_error('expected_date', 'Expected date must be after mating.')
+        if dam and self.instance.pk is None and dam.litters_as_dam.filter(status__in=Litter.OPEN_STATUSES).exists():
+            self.add_error('dam', f'{dam.name} already has an open mating/pregnancy record.')
+        return cleaned
+
+
+class LitterOutcomeForm(forms.ModelForm):
+    class Meta:
+        model = Litter
+        fields = ['status', 'birth_date', 'born_alive', 'stillborn', 'notes']
+        widgets = {'birth_date': forms.DateInput(attrs={'type': 'date'}), 'notes': forms.Textarea(attrs={'rows': 2})}
+
+    def clean(self):
+        cleaned = super().clean()
+        if cleaned.get('status') == 'born':
+            if not cleaned.get('birth_date'):
+                self.add_error('birth_date', 'Record the date of birth.')
+            if cleaned.get('born_alive') is None:
+                self.add_error('born_alive', 'How many were born alive?')
+        birth = cleaned.get('birth_date')
+        if birth and birth > timezone.localdate():
+            self.add_error('birth_date', 'Birth date cannot be in the future.')
+        if birth and birth < self.instance.mating_date:
+            self.add_error('birth_date', 'Birth cannot be before mating.')
+        return cleaned
+
+
+class OffspringForm(forms.Form):
+    name = forms.CharField(max_length=255)
+    force_number = forms.CharField(max_length=100)
+    sex = forms.ChoiceField(choices=Animal.SEX_CHOICES)
+    colour_markings = forms.CharField(max_length=255, required=False)
+
+    def clean_force_number(self):
+        number = self.cleaned_data['force_number'].strip()
+        if Animal.objects.filter(force_number__iexact=number).exists():
+            raise ValidationError('An animal with this force number already exists.')
+        return number

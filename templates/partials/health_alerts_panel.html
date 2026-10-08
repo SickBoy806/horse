@@ -18,7 +18,9 @@
           <span class="text-sm font-semibold text-slate-800 group-hover:text-blue-700">{{ i.animal.name }}</span>
           <span class="text-xs text-slate-500">— {{ i.label }} {% if i.state == 'overdue' %}<strong class="text-red-600">{{ i.days_late }} day{{ i.days_late|pluralize }} overdue</strong>{% elif i.days == 0 %}due today{% else %}due in {{ i.days }} day{{ i.days|pluralize }}{% endif %}</span>
         </a>
-        {% if i.is_farrier %}
+        {% if i.is_birth %}
+        <a href="{% url 'litter_detail' litter_id=i.record.id %}" class="text-xs font-semibold text-blue-700 hover:text-blue-900 flex-shrink-0">Breeding record</a>
+        {% elif i.is_farrier %}
         <a href="{% url 'farrier_log' %}?animal={{ i.animal.id }}#new" class="text-xs font-semibold text-blue-700 hover:text-blue-900 flex-shrink-0">Log visit</a>
         {% elif can_record %}
         <a href="{% url 'add_medical_record' branch=request.user.branch.name %}?animal={{ i.animal.id }}&report_type={{ i.kind }}{% if i.kind == 'vaccination' %}&vaccine_name={{ i.label|urlencode }}{% else %}&dewormer_name={{ i.label|urlencode }}{% endif %}&next={{ request.get_full_path|urlencode }}" class="text-xs font-semibold text-blue-700 hover:text-blue-900 flex-shrink-0">Record dose</a>

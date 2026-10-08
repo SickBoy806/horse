@@ -1,0 +1,61 @@
+<div class="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-6">
+  <!-- Pedigree -->
+  <div class="glassmorphism rounded-2xl overflow-hidden">
+    <div class="tpf-panel-head flex items-center justify-between">
+      <span>Pedigree &amp; Breeding</span>
+      <a href="{% url 'breeding_register' %}" class="text-xs font-semibold text-blue-100 hover:text-white">Register →</a>
+    </div>
+    <div class="p-6 space-y-4 text-sm">
+      <div class="grid grid-cols-2 gap-4">
+        <div><p class="text-xs font-semibold uppercase text-slate-500">Sire</p>
+          {% if animal.sire %}<a href="{% url 'view_animal_detail' animal_id=animal.sire.id %}" class="font-semibold text-blue-700">{{ animal.sire.name }}</a>{% else %}<span class="text-slate-400">Not recorded</span>{% endif %}</div>
+        <div><p class="text-xs font-semibold uppercase text-slate-500">Dam</p>
+          {% if animal.dam %}<a href="{% url 'view_animal_detail' animal_id=animal.dam.id %}" class="font-semibold text-blue-700">{{ animal.dam.name }}</a>{% else %}<span class="text-slate-400">Not recorded</span>{% endif %}</div>
+      </div>
+      {% if offspring %}
+      <div><p class="text-xs font-semibold uppercase text-slate-500 mb-1">Offspring ({{ offspring|length }})</p>
+        <div class="flex flex-wrap gap-1.5">{% for o in offspring %}<a href="{% url 'view_animal_detail' animal_id=o.id %}" class="tpf-badge tpf-badge-blue hover:opacity-80">{{ o.name }}</a>{% endfor %}</div>
+      </div>
+      {% endif %}
+      {% if litters %}
+      <div><p class="text-xs font-semibold uppercase text-slate-500 mb-1">Breeding records</p>
+        <ul class="space-y-1">{% for l in litters %}<li><a href="{% url 'litter_detail' litter_id=l.id %}" class="text-blue-700 hover:text-blue-900">{{ l.dam.name }} × {{ l.sire_name }}</a> <span class="text-xs text-slate-500">· {{ l.mating_date|date:"M Y" }}</span> <span class="tpf-badge {{ l.status_badge }}">{{ l.get_status_display }}</span></li>{% endfor %}</ul>
+      </div>
+      {% endif %}
+      {% if animal.sex == 'female' and request.user.role in 'admin,veterinarian,superadmin' and animal.status in 'operational,in_training,sick' %}
+      <a href="{% url 'breeding_register' %}?dam={{ animal.id }}#new" class="inline-block text-xs font-semibold text-blue-700 hover:text-blue-900">+ Record mating</a>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Transfers -->
+  <div id="transfers" class="glassmorphism rounded-2xl overflow-hidden scroll-mt-6">
+    <div class="tpf-panel-head flex items-center justify-between">
+      <span>Branch Transfers</span>
+      <a href="{% url 'transfer_list' %}" class="text-xs font-semibold text-blue-100 hover:text-white">All transfers →</a>
+    </div>
+    <div class="p-6 text-sm">
+      {% if open_transfer %}
+      <div class="rounded-xl bg-blue-50 border border-blue-200 px-4 py-3 mb-4">
+        <p class="font-semibold text-blue-900">{{ open_transfer.get_status_display }}: to {{ open_transfer.to_branch.name|title }}</p>
+        <p class="text-xs text-blue-800 mt-0.5">{{ open_transfer.reason|truncatechars:120 }}</p>
+      </div>
+      {% endif %}
+      {% if transfers %}
+      <ul class="space-y-2">
+        {% for t in transfers %}
+        <li class="flex items-center justify-between gap-2">
+          <span>{{ t.from_branch.name|title }} → <strong>{{ t.to_branch.name|title }}</strong> <span class="text-xs text-slate-500">· {{ t.requested_at|date:"M d, Y" }}</span></span>
+          <span class="tpf-badge {{ t.status_badge }}">{{ t.get_status_display }}</span>
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <p class="text-slate-400">Never transferred.</p>
+      {% endif %}
+      {% if can_request_transfer %}
+      <a href="{% url 'transfer_request' animal_id=animal.id %}" class="btn-tpf btn-tpf-light btn-tpf-sm mt-4">Request transfer</a>
+      {% endif %}
+    </div>
+  </div>
+</div>

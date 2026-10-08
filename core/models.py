@@ -92,6 +92,13 @@ class Animal(models.Model):
     acquired_from = models.CharField('Acquired from', max_length=255, blank=True,
                                      help_text='Breeder, supplier, donor or originating branch.')
 
+    # Pedigree
+    sire = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='sired',
+                             limit_choices_to={'sex': 'male'})
+    dam = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='mothered',
+                            limit_choices_to={'sex': 'female'})
+    litter = models.ForeignKey('Litter', on_delete=models.SET_NULL, null=True, blank=True, related_name='offspring')
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -890,6 +897,8 @@ class HealthReminderLog(models.Model):
                                null=True, blank=True)
     hoof_record = models.ForeignKey('HoofCareRecord', on_delete=models.CASCADE, related_name='reminders_sent',
                                     null=True, blank=True)
+    litter = models.ForeignKey('Litter', on_delete=models.CASCADE, related_name='reminders_sent',
+                               null=True, blank=True)
     state = models.CharField(max_length=10)  # 'due_soon' | 'overdue'
     sent_at = models.DateTimeField(auto_now_add=True)
 
@@ -897,6 +906,7 @@ class HealthReminderLog(models.Model):
         constraints = [
             models.UniqueConstraint(fields=['record', 'state'], name='one_reminder_per_record_state'),
             models.UniqueConstraint(fields=['hoof_record', 'state'], name='one_reminder_per_hoof_record_state'),
+            models.UniqueConstraint(fields=['litter', 'state'], name='one_reminder_per_litter_state'),
         ]
 
 
@@ -1150,3 +1160,100 @@ class StockMovement(models.Model):
     @property
     def is_expired(self):
         return self.expiry_date is not None and self.expiry_date < timezone.localdate()
+
+
+# ------------------------------
+# Branch transfers
+# ------------------------------
+
+class AnimalTransfer(models.Model):
+    STATUS_CHOICES = [
+        ('pending', 'Awaiting approval'), ('approved', 'Approved - in transit'), ('completed', 'Received'),
+        ('rejected', 'Rejected'), ('cancelled', 'Cancelled'),
+    ]
+    OPEN_STATUSES = ('pending', 'approved')
+
+    animal = models.ForeignKey(Animal, on_delete=models.CASCADE, related_name='transfers')
+    from_branch = models.ForeignKey(Branch, on_delete=models.PROTECT, related_name='transfers_out')
+    to_branch = models.ForeignKey(Branch, on_delete=models.PROTECT, related_name='transfers_in')
+    reason = models.TextField()
+    planned_date = models.DateField(null=True, blank=True)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending', db_index=True)
+
+    requested_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, related_name='transfers_requested')
+    requested_at = models.DateTimeField(auto_now_add=True)
+    decided_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True,
+                                   related_name='transfers_decided')
+    decided_at = models.DateTimeField(null=True, blank=True)
+    decision_notes = models.CharField(max_length=255, blank=True)
+    received_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True,
+                                    related_name='transfers_received')
+    received_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-requested_at']
+        constraints = [
+            models.UniqueConstraint(fields=['animal'], condition=models.Q(status__in=('pending', 'approved')),
+                                    name='one_open_transfer_per_animal'),
+        ]
+
+    def __str__(self):
+        return f"{self.animal.name}: {self.from_branch} -> {self.to_branch} ({self.get_status_display()})"
+
+    @property
+    def status_badge(self):
+        return {'pending': 'tpf-badge-amber', 'approved': 'tpf-badge-blue', 'completed': 'tpf-badge-green',
+                'rejected': 'tpf-badge-red', 'cancelled': ''}.get(self.status, '')
+
+
+# ------------------------------
+# Breeding
+# ------------------------------
+
+class Litter(models.Model):
+    """A mating and its outcome (a litter of puppies or a foal)."""
+    GESTATION_DAYS = {'dog': 63, 'horse': 340}
+    STATUS_CHOICES = [
+        ('mated', 'Mated'), ('pregnant', 'Pregnancy confirmed'), ('born', 'Born'),
+        ('failed', 'Not pregnant / lost'),
+    ]
+    OPEN_STATUSES = ('mated', 'pregnant')
+
+    dam = models.ForeignKey(Animal, on_delete=models.CASCADE, related_name='litters_as_dam',
+                            limit_choices_to={'sex': 'female'})
+    sire = models.ForeignKey(Animal, on_delete=models.SET_NULL, null=True, blank=True, related_name='litters_as_sire',
+                             limit_choices_to={'sex': 'male'})
+    external_sire = models.CharField('Outside sire', max_length=255, blank=True,
+                                     help_text='Name / registration if the sire is not a TPF animal.')
+    mating_date = models.DateField()
+    expected_date = models.DateField(null=True, blank=True)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='mated', db_index=True)
+    birth_date = models.DateField(null=True, blank=True)
+    born_alive = models.PositiveSmallIntegerField(null=True, blank=True)
+    stillborn = models.PositiveSmallIntegerField(null=True, blank=True)
+    notes = models.TextField(blank=True)
+    recorded_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True,
+                                    related_name='litters_recorded')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-mating_date', '-id']
+
+    def __str__(self):
+        return f"{self.dam.name} x {self.sire_name} ({self.mating_date})"
+
+    @property
+    def sire_name(self):
+        return self.sire.name if self.sire else (self.external_sire or 'Unknown sire')
+
+    @property
+    def status_badge(self):
+        return {'mated': 'tpf-badge-blue', 'pregnant': 'tpf-badge-purple', 'born': 'tpf-badge-green',
+                'failed': ''}.get(self.status, '')
+
+    def save(self, *args, **kwargs):
+        if self.mating_date and not self.expected_date:
+            days = self.GESTATION_DAYS.get(self.dam.species)
+            if days:
+                self.expected_date = self.mating_date + timedelta(days=days)
+        super().save(*args, **kwargs)

@@ -1,0 +1,92 @@
+{% extends base_template %}
+{% block page_title %}Breeding — TPF Animal System{% endblock %}
+
+{% block content %}
+{% include "partials/flash_messages.html" %}
+
+<div class="glassmorphism rounded-2xl p-6 mb-6">
+  <h2 class="content-heading text-2xl">Breeding Programme</h2>
+  <p class="content-text text-sm mt-1">Matings, pregnancies and litters. Expected births also appear in the Health Schedule.</p>
+</div>
+
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+  {% include "partials/stat_tile.html" with label="Open Pregnancies" value=stats.open color="purple" %}
+  {% include "partials/stat_tile.html" with label="Due in 14 Days" value=stats.due_soon color="amber" %}
+  {% include "partials/stat_tile.html" with label="Born This Year" value=stats.born_this_year color="green" %}
+  {% include "partials/stat_tile.html" with label="Offspring Registered" value=stats.offspring color="blue" %}
+</div>
+
+<div class="grid grid-cols-1 xl:grid-cols-5 gap-6">
+  {% if can_manage %}
+  <div id="new" class="glassmorphism rounded-2xl overflow-hidden xl:col-span-2 self-start scroll-mt-6">
+    <div class="tpf-panel-head">Record Mating</div>
+    <form method="post" class="tpf-form p-6 space-y-4" novalidate>
+      {% csrf_token %}
+      {% if form.non_field_errors %}<div class="p-3 rounded-xl text-sm text-red-700 bg-red-50 border border-red-200">{{ form.non_field_errors }}</div>{% endif %}
+      {% include "core/deployments/_field.html" with field=form.dam %}
+      {% include "core/deployments/_field.html" with field=form.sire %}
+      {% include "core/deployments/_field.html" with field=form.external_sire %}
+      <div class="grid grid-cols-2 gap-3">
+        {% include "core/deployments/_field.html" with field=form.mating_date %}
+        {% include "core/deployments/_field.html" with field=form.expected_date %}
+      </div>
+      {% include "core/deployments/_field.html" with field=form.notes %}
+      <div class="flex justify-end"><button type="submit" class="btn-tpf btn-tpf-success">Save mating</button></div>
+    </form>
+  </div>
+  {% endif %}
+
+  <div class="{% if can_manage %}xl:col-span-3{% else %}xl:col-span-5{% endif %} space-y-6">
+    <div class="glassmorphism rounded-2xl overflow-hidden">
+      <div class="tpf-panel-head">Open — Mated &amp; Pregnant</div>
+      {% if open_litters %}
+      <div class="overflow-x-auto">
+        <table class="tpf-table">
+          <thead><tr><th>Dam</th><th>Sire</th><th>Mated</th><th>Expected</th><th>Status</th><th></th></tr></thead>
+          <tbody>
+            {% for l in open_litters %}
+            <tr>
+              <td><a href="{% url 'view_animal_detail' animal_id=l.dam.id %}" class="font-semibold text-slate-800 hover:text-blue-700">{{ l.dam.name }}</a><span class="block text-xs text-slate-400">{{ l.dam.get_species_display }}{% if request.user.role == 'superadmin' %} &middot; {{ l.dam.branch.name|title }}{% endif %}</span></td>
+              <td>{{ l.sire_name }}</td>
+              <td class="whitespace-nowrap">{{ l.mating_date|date:"M d, Y" }}</td>
+              <td class="whitespace-nowrap font-semibold">{{ l.expected_date|date:"M d, Y"|default:"—" }}
+                {% if l.days_to_go is not None %}<span class="block text-xs font-normal {% if l.days_to_go < 0 %}text-red-600{% elif l.days_to_go <= 14 %}text-amber-600{% else %}text-slate-400{% endif %}">{% if l.days_to_go < 0 %}overdue — record outcome{% elif l.days_to_go == 0 %}today{% else %}in {{ l.days_to_go }} days{% endif %}</span>{% endif %}
+              </td>
+              <td><span class="tpf-badge {{ l.status_badge }}">{{ l.get_status_display }}</span></td>
+              <td class="text-right"><a href="{% url 'litter_detail' litter_id=l.id %}" class="btn-tpf btn-tpf-light btn-tpf-sm">Open</a></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <p class="tpf-empty">No open matings or pregnancies.</p>
+      {% endif %}
+    </div>
+
+    <div class="glassmorphism rounded-2xl overflow-hidden">
+      <div class="tpf-panel-head">History</div>
+      {% if history %}
+      <div class="overflow-x-auto">
+        <table class="tpf-table">
+          <thead><tr><th>Dam &times; Sire</th><th>Mated</th><th>Outcome</th><th>Born Alive</th><th></th></tr></thead>
+          <tbody>
+            {% for l in history %}
+            <tr>
+              <td><span class="font-semibold text-slate-800">{{ l.dam.name }}</span> &times; {{ l.sire_name }}</td>
+              <td class="whitespace-nowrap">{{ l.mating_date|date:"M d, Y" }}</td>
+              <td><span class="tpf-badge {{ l.status_badge }}">{{ l.get_status_display }}</span>{% if l.birth_date %}<span class="block text-xs text-slate-400">{{ l.birth_date|date:"M d, Y" }}</span>{% endif %}</td>
+              <td class="font-semibold">{{ l.born_alive|default_if_none:"—" }}</td>
+              <td class="text-right"><a href="{% url 'litter_detail' litter_id=l.id %}" class="text-xs font-semibold text-blue-700 hover:text-blue-900">Open</a></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <p class="tpf-empty">No completed records yet.</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

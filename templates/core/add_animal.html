@@ -156,6 +156,11 @@
         {% include "core/_animal_field.html" with field=form.acquisition_source %}
         {% include "core/_animal_field.html" with field=form.acquired_from %}
       </div>
+      <div class="h-px bg-slate-100"></div>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        {% include "core/_animal_field.html" with field=form.sire %}
+        {% include "core/_animal_field.html" with field=form.dam %}
+      </div>
     </div>
   </div>
 

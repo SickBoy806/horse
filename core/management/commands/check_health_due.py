@@ -21,16 +21,21 @@ class Command(BaseCommand):
 
     def handle(self, *args, dry_run=False, **options):
         animals = Animal.objects.filter(status__in=Animal.ACTIVE_STATUSES)
-        already = {(('farrier' if hoof else 'medical'), hoof or rec, state)
-                   for rec, hoof, state in HealthReminderLog.objects.values_list('record_id', 'hoof_record_id', 'state')}
+        already = set()
+        for rec, hoof, litter, state in HealthReminderLog.objects.values_list('record_id', 'hoof_record_id', 'litter_id', 'state'):
+            already.add(('birth', litter, state) if litter else ('farrier', hoof, state) if hoof else ('medical', rec, state))
 
         sent = 0
         for item in schedule(animals):
-            series = 'farrier' if item.is_farrier else 'medical'
+            series = 'birth' if item.is_birth else 'farrier' if item.is_farrier else 'medical'
             if item.state == 'upcoming' or (series, item.record.id, item.state) in already:
                 continue
             animal = item.animal
-            if item.state == 'overdue':
+            if item.is_birth and item.state == 'overdue':
+                title = 'Birth overdue - record the outcome'
+                message = (f"{animal.name} ({animal.force_number}) was due to give birth {item.due_date:%d %b %Y} "
+                           f"({item.days_late} day(s) ago). Record the outcome in the breeding register.")
+            elif item.state == 'overdue':
                 title = f'{item.kind_label} overdue'
                 message = (f"{animal.name} ({animal.force_number}): {item.label} was due "
                            f"{item.due_date:%d %b %Y} — {item.days_late} day(s) overdue.")
@@ -52,7 +57,9 @@ class Command(BaseCommand):
                 continue
             notify_users(users=recipients, notification_type='system_alert', title=title, message=message,
                          link=f'/core/animals/{animal.id}/')
-            if item.is_farrier:
+            if item.is_birth:
+                HealthReminderLog.objects.create(litter=item.record, state=item.state)
+            elif item.is_farrier:
                 HealthReminderLog.objects.create(hoof_record=item.record, state=item.state)
             else:
                 HealthReminderLog.objects.create(record=item.record, state=item.state)

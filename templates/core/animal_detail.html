@@ -36,6 +36,12 @@
   </div>
 </div>
 
+{% if open_transfer %}
+<a href="#transfers" class="block rounded-2xl px-5 py-3 mb-6 text-sm font-medium bg-blue-50 border border-blue-200 text-blue-900">
+  Transfer {{ open_transfer.get_status_display|lower }}: {{ open_transfer.from_branch.name|title }} → {{ open_transfer.to_branch.name|title }}
+</a>
+{% endif %}
+
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
   <!-- Photo + duty status -->
   <div class="space-y-6">
@@ -192,6 +198,8 @@
 {% include "core/_animal_team_certs.html" %}
 
 {% include "core/_animal_care.html" %}
+
+{% include "core/_animal_lineage.html" %}
 
 <div class="glassmorphism rounded-2xl overflow-hidden mb-6">
   <div class="tpf-panel-head">Medical Records</div>

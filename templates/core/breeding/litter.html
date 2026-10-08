@@ -1,0 +1,91 @@
+{% extends base_template %}
+{% block page_title %}{{ litter.dam.name }} × {{ litter.sire_name }} — Breeding{% endblock %}
+
+{% block content %}
+{% include "partials/flash_messages.html" %}
+
+<div class="glassmorphism rounded-2xl p-6 mb-6">
+  <div class="flex items-start justify-between flex-wrap gap-4">
+    <div>
+      <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">{{ litter.dam.get_species_display }} breeding record</p>
+      <h2 class="content-heading text-3xl mt-0.5">{{ litter.dam.name }} &times; {{ litter.sire_name }}</h2>
+      <div class="flex flex-wrap items-center gap-2 mt-2">
+        <span class="tpf-badge {{ litter.status_badge }} !text-xs !px-3 !py-1">{{ litter.get_status_display }}</span>
+        <span class="text-xs text-slate-500">Mated {{ litter.mating_date|date:"M d, Y" }}{% if litter.expected_date %} &middot; expected {{ litter.expected_date|date:"M d, Y" }}{% endif %}{% if litter.birth_date %} &middot; born {{ litter.birth_date|date:"M d, Y" }}{% endif %}</span>
+      </div>
+    </div>
+    <a href="{% url 'breeding_register' %}" class="btn-tpf btn-tpf-light">Breeding register</a>
+  </div>
+</div>
+
+<div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+  <div class="space-y-6">
+    <div class="glassmorphism rounded-2xl overflow-hidden">
+      <div class="tpf-panel-head">Parents</div>
+      <div class="p-5 space-y-3 text-sm">
+        <p><span class="text-xs font-semibold uppercase text-slate-500 block">Dam</span><a href="{% url 'view_animal_detail' animal_id=litter.dam.id %}" class="font-semibold text-blue-700">{{ litter.dam.name }}</a> <span class="text-slate-400">{{ litter.dam.breed|default:"" }}</span></p>
+        <p><span class="text-xs font-semibold uppercase text-slate-500 block">Sire</span>{% if litter.sire %}<a href="{% url 'view_animal_detail' animal_id=litter.sire.id %}" class="font-semibold text-blue-700">{{ litter.sire.name }}</a> <span class="text-slate-400">{{ litter.sire.branch.name|title }}</span>{% else %}{{ litter.external_sire|default:"Unknown" }} <span class="text-slate-400">(outside sire)</span>{% endif %}</p>
+        {% if litter.notes %}<p class="content-text whitespace-pre-line">{{ litter.notes }}</p>{% endif %}
+      </div>
+    </div>
+
+    {% if can_manage %}
+    <div class="glassmorphism rounded-2xl overflow-hidden">
+      <div class="tpf-panel-head">Update Outcome</div>
+      <form method="post" class="tpf-form p-5 space-y-3" novalidate>
+        {% csrf_token %}<input type="hidden" name="action" value="outcome">
+        {% include "core/deployments/_field.html" with field=outcome_form.status %}
+        {% include "core/deployments/_field.html" with field=outcome_form.birth_date %}
+        <div class="grid grid-cols-2 gap-3">
+          {% include "core/deployments/_field.html" with field=outcome_form.born_alive %}
+          {% include "core/deployments/_field.html" with field=outcome_form.stillborn %}
+        </div>
+        {% include "core/deployments/_field.html" with field=outcome_form.notes %}
+        <button type="submit" class="btn-tpf w-full">Save outcome</button>
+      </form>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="xl:col-span-2 space-y-6">
+    <div class="glassmorphism rounded-2xl overflow-hidden">
+      <div class="tpf-panel-head flex items-center justify-between">
+        <span>Offspring</span>
+        {% if litter.born_alive is not None %}<span class="text-xs text-blue-100">{{ offspring|length }} of {{ litter.born_alive }} registered</span>{% endif %}
+      </div>
+      {% if offspring %}
+      <table class="tpf-table">
+        <thead><tr><th>Name</th><th>Force No.</th><th>Sex</th><th>Status</th></tr></thead>
+        <tbody>
+          {% for o in offspring %}
+          <tr>
+            <td><a href="{% url 'view_animal_detail' animal_id=o.id %}" class="font-semibold text-slate-800 hover:text-blue-700">{{ o.name }}</a></td>
+            <td class="font-mono text-sm">{{ o.force_number }}</td>
+            <td>{{ o.get_sex_display|default:"—" }}</td>
+            <td><span class="tpf-badge {{ o.status_badge }}">{{ o.get_status_display }}</span></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <p class="tpf-empty">{% if litter.status == 'born' %}No offspring registered yet.{% else %}Offspring can be registered once the birth is recorded.{% endif %}</p>
+      {% endif %}
+    </div>
+
+    {% if can_register %}
+    <div class="glassmorphism rounded-2xl overflow-hidden">
+      <div class="tpf-panel-head">Register {% if litter.dam.species == 'horse' %}Foal{% else %}Puppy{% endif %}</div>
+      <form method="post" class="tpf-form p-5 grid grid-cols-1 sm:grid-cols-2 gap-3" novalidate>
+        {% csrf_token %}<input type="hidden" name="action" value="offspring">
+        {% include "core/deployments/_field.html" with field=offspring_form.name %}
+        {% include "core/deployments/_field.html" with field=offspring_form.force_number %}
+        {% include "core/deployments/_field.html" with field=offspring_form.sex %}
+        {% include "core/deployments/_field.html" with field=offspring_form.colour_markings %}
+        <p class="sm:col-span-2 text-xs text-slate-500">Created as <em>In Training</em> in {{ litter.dam.branch.name|title }}, born {{ litter.birth_date|date:"M d, Y" }}, with sire and dam linked.</p>
+        <div class="sm:col-span-2 flex justify-end"><button type="submit" class="btn-tpf btn-tpf-success">Register</button></div>
+      </form>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
