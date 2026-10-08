@@ -1,0 +1,56 @@
+{% extends base_template %}
+{% block page_title %}Reports & Exports — TPF Animal System{% endblock %}
+
+{% block content %}
+{% include "partials/flash_messages.html" %}
+
+<div class="glassmorphism rounded-2xl p-6 mb-6">
+  <h2 class="content-heading text-2xl">Reports &amp; Exports</h2>
+  <p class="content-text text-sm mt-1">Download as Excel, or open a print layout and use <strong>Save as PDF</strong>.</p>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-6">
+  {% for key, title, desc, dated in reports %}
+  <form method="get" action="{% url 'export_run' key=key %}" target="_blank" class="glassmorphism rounded-2xl overflow-hidden flex flex-col">
+    <div class="tpf-panel-head">{{ title }}</div>
+    <div class="p-5 flex-1 flex flex-col tpf-form">
+      <p class="text-sm content-text mb-4">{{ desc }}</p>
+      <div class="grid grid-cols-2 gap-3 mb-4">
+        {% if dated %}
+        <div><label>From</label><input type="date" name="date_from" value="{{ default_from }}"></div>
+        <div><label>To</label><input type="date" name="date_to" value="{{ default_to }}"></div>
+        {% endif %}
+        {% if branches %}
+        <div class="col-span-2"><label>Branch</label>
+          <select name="branch"><option value="">All branches</option>{% for b in branches %}<option value="{{ b.name }}">{{ b.name|title }}</option>{% endfor %}</select>
+        </div>
+        {% endif %}
+      </div>
+      <div class="mt-auto flex gap-2">
+        <button type="submit" name="format" value="xlsx" class="btn-tpf btn-tpf-success flex-1">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+          Excel
+        </button>
+        <button type="submit" name="format" value="print" class="btn-tpf flex-1">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+          Print / PDF
+        </button>
+      </div>
+    </div>
+  </form>
+  {% endfor %}
+</div>
+
+{% if can_cards %}
+<div class="glassmorphism rounded-2xl overflow-hidden">
+  <div class="tpf-panel-head">Animal ID Cards</div>
+  <div class="p-5 flex items-center justify-between flex-wrap gap-4">
+    <p class="text-sm content-text">Credit-card size with photo and a QR code that confirms the card is genuine. Print one from an animal's profile, or all active animals at once.</p>
+    <form method="get" action="{% url 'animal_cards_batch' %}" target="_blank" class="tpf-form flex items-center gap-2">
+      {% if branches %}<select name="branch" style="min-width: 11rem;"><option value="">All branches</option>{% for b in branches %}<option value="{{ b.name }}">{{ b.name|title }}</option>{% endfor %}</select>{% endif %}
+      <button type="submit" class="btn-tpf btn-tpf-gold">Print all cards</button>
+    </form>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

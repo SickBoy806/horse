@@ -1,0 +1,116 @@
+{% load static %}<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% if single %}ID Card — {{ single.name }}{% else %}ID Cards{% endif %} — TPF</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Barlow+Semi+Condensed:wght@600;700&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <style>
+    @page { size: A4; margin: 10mm; }
+    * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    body { font-family: 'Inter', sans-serif; margin: 0; background: #e8edf4; color: #0f172a; }
+    .toolbar { position: sticky; top: 0; z-index: 5; background: #0a1a33; padding: 10px; text-align: center; color: #c3cee0; font-size: 12px; }
+    .toolbar button { background: linear-gradient(135deg, #e3b93e, #b8860b); color: #1a1205; border: 0; border-radius: 8px; padding: 9px 18px; font-weight: 700; font-size: 13px; cursor: pointer; }
+    .toolbar .ghost { background: transparent; color: #f87171; border: 1px solid #7f1d1d; margin-left: 10px; }
+    .toolbar p { margin: 8px 0 0; }
+    .pairs { display: flex; flex-direction: column; align-items: center; gap: 6mm; padding: 8mm 0; }
+    .pair { display: flex; gap: 4mm; page-break-inside: avoid; }
+    .card { width: 85.6mm; height: 54mm; border-radius: 3.2mm; overflow: hidden; position: relative; box-shadow: 0 4px 14px rgba(0,0,0,.25); }
+
+    /* Front */
+    .front { background: linear-gradient(135deg, #0a1a33 0%, #173a6b 70%, #1e4fd6 140%); color: #fff; }
+    .front::before { content: ''; position: absolute; inset: 0 0 auto 0; height: 1.2mm; background: linear-gradient(90deg, #d4a72c, #f2cf63, #d4a72c); }
+    .front .crest-wm { position: absolute; right: -6mm; bottom: -8mm; width: 34mm; opacity: .08; filter: invert(1) grayscale(1); mix-blend-mode: screen; }
+    .front .top { display: flex; align-items: center; gap: 2mm; padding: 2.6mm 3mm 0; }
+    .front .top img { width: 8mm; height: 8mm; border-radius: 50%; background: #fff; padding: .3mm; }
+    .front .org { font-size: 1.9mm; letter-spacing: .14em; text-transform: uppercase; color: #e9c75a; font-weight: 700; line-height: 1.25; }
+    .front .unit { font-family: 'Barlow Semi Condensed', sans-serif; font-size: 3.4mm; font-weight: 700; line-height: 1.1; }
+    .front .body { display: flex; gap: 3mm; padding: 2.4mm 3mm 0; }
+    .front .photo { width: 22mm; height: 27mm; border-radius: 1.6mm; object-fit: cover; border: .5mm solid #d4a72c; background: #1e3a64; flex-shrink: 0;
+                    display: flex; align-items: center; justify-content: center; font-size: 2.2mm; color: #93a5c1; }
+    .front .name { font-family: 'Barlow Semi Condensed', sans-serif; font-size: 5mm; font-weight: 700; line-height: 1; color: #f2cf63; }
+    .front .fno { font-family: monospace; font-size: 2.6mm; margin-top: .6mm; letter-spacing: .05em; }
+    .front dl { margin: 1.4mm 0 0; display: grid; grid-template-columns: auto 1fr; gap: .3mm 1.6mm; font-size: 2.05mm; }
+    .front dt { color: #93a5c1; text-transform: uppercase; letter-spacing: .04em; }
+    .front dd { margin: 0; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 38mm; }
+    .front .foot { position: absolute; left: 0; right: 0; bottom: 0; padding: 1.2mm 3mm; background: rgba(0,0,0,.28); font-size: 1.9mm;
+                   display: flex; justify-content: space-between; color: #c3cee0; }
+
+    /* Back */
+    .back { background: #fff; border: .3mm solid #cbd5e1; display: flex; gap: 3mm; padding: 4mm 3.5mm; }
+    .back .qr { width: 30mm; height: 30mm; flex-shrink: 0; }
+    .back .qr img, .back .qr canvas { width: 30mm !important; height: 30mm !important; }
+    .back .txt { font-size: 2.15mm; line-height: 1.45; color: #334155; }
+    .back .txt b { color: #0a1a33; }
+    .back .scan { font-family: 'Barlow Semi Condensed', sans-serif; font-size: 3.2mm; font-weight: 700; color: #10284d; margin-bottom: 1mm; }
+    .back .band { position: absolute; left: 0; right: 0; bottom: 0; height: 6mm; background: #0a1a33; color: #e9c75a; font-size: 1.9mm;
+                  letter-spacing: .14em; text-transform: uppercase; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+    .warn { color: #b45309; font-weight: 700; }
+    @media print { body { background: #fff; } .toolbar { display: none; } .pairs { padding: 0; } .card { box-shadow: none; } }
+  </style>
+</head>
+<body>
+  <div class="toolbar">
+    <button onclick="window.print()">Print {{ cards|length }} card{{ cards|length|pluralize }}</button>
+    {% if single and can_reissue %}
+    <form method="post" action="{% url 'card_reissue' animal_id=single.id %}" style="display:inline" onsubmit="return confirm('Issue a new card? Previously printed cards will no longer verify.');">
+      {% csrf_token %}<button type="submit" class="ghost">Reissue (lost / stolen card)</button>
+    </form>
+    {% endif %}
+    {% for m in messages %}<p>{{ m }}</p>{% endfor %}
+    <p>Print at 100% scale on card stock, then cut and fold or laminate front-to-back.</p>
+  </div>
+
+  <div class="pairs">
+    {% for c in cards %}{% with a=c.animal %}
+    <div class="pair">
+      <div class="card front">
+        <img class="crest-wm" src="{% static 'images/tanzania-police-logo.png' %}" alt="">
+        <div class="top">
+          <img src="{% static 'images/tanzania-police-logo.png' %}" alt="TPF crest">
+          <div><div class="org">Tanzania Police Force</div><div class="unit">K9 &amp; Mounted Unit</div></div>
+        </div>
+        <div class="body">
+          {% if a.photo %}<img class="photo" src="{{ a.photo.url }}" alt="{{ a.name }}">{% else %}<div class="photo">No photo</div>{% endif %}
+          <div style="min-width:0">
+            <div class="name">{{ a.name }}</div>
+            <div class="fno">{{ a.force_number }}</div>
+            <dl>
+              <dt>Type</dt><dd>{{ a.get_species_display }}{% if a.breed %} · {{ a.breed }}{% endif %}</dd>
+              <dt>Sex / DOB</dt><dd>{{ a.get_sex_display|default:"—" }} · {{ a.date_of_birth|date:"d M Y"|default:"—" }}</dd>
+              <dt>Role</dt><dd>{{ a.get_specialisation_display }}</dd>
+              <dt>Handler</dt><dd>{% if c.handler %}{{ c.handler.get_full_name|default:c.handler.username }}{% else %}<span class="warn">Unassigned</span>{% endif %}</dd>
+              <dt>Chip</dt><dd>{{ a.microchip_number|default:"—" }}</dd>
+            </dl>
+          </div>
+        </div>
+        <div class="foot"><span>{{ a.branch.name|upper }}</span><span>Card {{ c.serial }}</span></div>
+      </div>
+
+      <div class="card back">
+        <div class="qr" data-url="{{ c.verify_url }}"></div>
+        <div class="txt">
+          <div class="scan">Scan to verify</div>
+          This animal is property of the <b>Tanzania Police Force</b>. Scan the code to confirm this card is genuine and current.
+          <br><br>If found, contact the nearest police station.
+          <br><br><b>Issued</b> {{ a.card_issued|default:a.created_at|date:"d M Y" }}
+          {% if c.cert %}<br><b>{{ c.cert.get_cert_type_display }}</b> to {{ c.cert.expiry_date|date:"M Y" }}{% endif %}
+        </div>
+        <div class="band">Authorised · Official use</div>
+      </div>
+    </div>
+    {% endwith %}{% empty %}
+    <p style="font-size:14px;color:#475569">No active animals to print.</p>
+    {% endfor %}
+  </div>
+
+  <script>
+    document.querySelectorAll('.qr[data-url]').forEach(el => {
+      if (typeof QRCode === 'undefined') { el.textContent = el.dataset.url; el.style.fontSize = '1.6mm'; return; }
+      new QRCode(el, { text: el.dataset.url, width: 256, height: 256, colorDark: '#0a1a33', colorLight: '#ffffff',
+                       correctLevel: QRCode.CorrectLevel.M });
+    });
+  </script>
+</body>
+</html>

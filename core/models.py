@@ -1,3 +1,4 @@
+import uuid
 from datetime import timedelta
 
 from django.db import models
@@ -98,6 +99,10 @@ class Animal(models.Model):
     dam = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='mothered',
                             limit_choices_to={'sex': 'female'})
     litter = models.ForeignKey('Litter', on_delete=models.SET_NULL, null=True, blank=True, related_name='offspring')
+
+    # Printed in the ID-card QR code; regenerate to invalidate a lost card.
+    card_token = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    card_issued = models.DateField(null=True, blank=True, editable=False)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

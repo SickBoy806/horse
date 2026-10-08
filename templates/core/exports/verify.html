@@ -1,0 +1,55 @@
+{% load static %}<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Card Verification — Tanzania Police Force</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Barlow+Semi+Condensed:wght@700&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; font-family: 'Inter', sans-serif; display: flex; align-items: center; justify-content: center; padding: 16px;
+           background: radial-gradient(900px 500px at 85% -10%, rgba(212,167,44,.18), transparent 60%), linear-gradient(160deg, #060f1f, #0a1a33 45%, #0e2344); color: #0f172a; }
+    .card { width: 100%; max-width: 380px; background: #fff; border-radius: 18px; overflow: hidden; box-shadow: 0 30px 80px rgba(0,0,0,.45); }
+    .head { background: linear-gradient(135deg, #0a1a33, #173a6b); color: #fff; padding: 18px; display: flex; gap: 12px; align-items: center; border-bottom: 3px solid #d4a72c; }
+    .head img { width: 44px; height: 44px; border-radius: 50%; background: #fff; padding: 2px; }
+    .org { font-size: 10px; letter-spacing: .16em; text-transform: uppercase; color: #e9c75a; font-weight: 700; }
+    .unit { font-family: 'Barlow Semi Condensed', sans-serif; font-size: 20px; font-weight: 700; }
+    .verdict { padding: 18px; text-align: center; }
+    .badge { display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; border-radius: 999px; font-weight: 700; font-size: 15px; }
+    .ok { background: #dcfce7; color: #166534; } .warn { background: #fef3c7; color: #92400e; } .bad { background: #fee2e2; color: #991b1b; }
+    .animal { display: flex; gap: 14px; padding: 0 18px 18px; align-items: center; }
+    .animal img, .animal .nophoto { width: 84px; height: 84px; border-radius: 12px; object-fit: cover; border: 2px solid #d4a72c; flex-shrink: 0; background: #e2e8f0; }
+    .name { font-family: 'Barlow Semi Condensed', sans-serif; font-size: 24px; font-weight: 700; color: #0a1a33; }
+    .meta { font-size: 13px; color: #475569; line-height: 1.6; }
+    .foot { font-size: 11px; color: #94a3b8; text-align: center; padding: 12px 18px 16px; border-top: 1px solid #f1f5f9; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="head">
+      <img src="{% static 'images/tanzania-police-logo.png' %}" alt="TPF crest">
+      <div><div class="org">Tanzania Police Force</div><div class="unit">K9 &amp; Mounted Unit</div></div>
+    </div>
+    {% if animal %}
+    <div class="verdict">
+      {% if active %}<span class="badge ok">✓ Genuine — in service</span>
+      {% else %}<span class="badge warn">Genuine card — animal {{ animal.get_status_display|lower }}</span>{% endif %}
+    </div>
+    <div class="animal">
+      {% if animal.photo %}<img src="{{ animal.photo.url }}" alt="{{ animal.name }}">{% else %}<div class="nophoto"></div>{% endif %}
+      <div>
+        <div class="name">{{ animal.name }}</div>
+        <div class="meta">{{ animal.force_number }}<br>{{ animal.get_species_display }}{% if animal.breed %} · {{ animal.breed }}{% endif %}<br>{{ animal.branch.name|title }}</div>
+      </div>
+    </div>
+    {% else %}
+    <div class="verdict" style="padding-bottom: 24px">
+      <span class="badge bad">✕ Not a valid card</span>
+      <p class="meta" style="margin-top:14px">This code is not recognised or the card has been cancelled. Treat the card as invalid and contact the nearest police station.</p>
+    </div>
+    {% endif %}
+    <div class="foot">Checked {{ checked_at|date:"d M Y, H:i" }} · TPF Animal Management System</div>
+  </div>
+</body>
+</html>

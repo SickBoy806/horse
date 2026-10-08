@@ -1,6 +1,6 @@
 from django.urls import path
 from . import (views, deployment_views, team_views, health_views, horse_views, stock_views,
-               transfer_views, breeding_views)
+               transfer_views, breeding_views, export_views)
 
 urlpatterns = [
     # Dashboard redirect
@@ -11,6 +11,15 @@ urlpatterns = [
     path('animals/add/', views.add_animal, name='add_animal'),
     path('animals/<int:animal_id>/', views.view_animal_detail, name='view_animal_detail'),
     path('animals/<int:animal_id>/edit/', views.edit_animal, name='edit_animal'),
+
+    # Exports, ID cards & public card verification
+    path('exports/', export_views.exports_hub, name='exports_hub'),
+    path('exports/<slug:key>/', export_views.export_run, name='export_run'),
+    path('animals/<int:animal_id>/dossier/', export_views.animal_dossier_export, name='animal_dossier'),
+    path('animals/<int:animal_id>/card/', export_views.animal_card, name='animal_card'),
+    path('animals/<int:animal_id>/card/reissue/', export_views.card_reissue, name='card_reissue'),
+    path('cards/', export_views.animal_cards_batch, name='animal_cards_batch'),
+    path('verify/<uuid:token>/', export_views.verify_animal, name='verify_animal'),
 
     # Transfers & breeding
     path('transfers/', transfer_views.transfer_list, name='transfer_list'),

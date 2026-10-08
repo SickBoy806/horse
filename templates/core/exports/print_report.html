@@ -1,0 +1,73 @@
+{% load static %}<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ report.title }} — TPF K9 &amp; Mounted Unit</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Barlow+Semi+Condensed:wght@600;700&display=swap" rel="stylesheet">
+  <style>
+    @page { size: A4{% if landscape %} landscape{% endif %}; margin: 12mm 10mm; }
+    * { box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; color: #0f172a; margin: 0; background: #e8edf4; font-size: 11px; }
+    .sheet { max-width: {% if landscape %}297mm{% else %}210mm{% endif %}; margin: 16px auto; background: #fff; padding: 14mm 12mm; box-shadow: 0 10px 40px rgba(0,0,0,.15); }
+    header { display: flex; align-items: center; gap: 14px; border-bottom: 3px solid #d4a72c; padding-bottom: 10px; margin-bottom: 14px; }
+    header img { width: 54px; height: 54px; object-fit: contain; }
+    .org { font-size: 9px; letter-spacing: .18em; text-transform: uppercase; color: #8a6410; font-weight: 700; }
+    h1 { font-family: 'Barlow Semi Condensed', sans-serif; font-size: 24px; margin: 2px 0 0; color: #0a1a33; }
+    .meta { margin-left: auto; text-align: right; font-size: 9px; color: #64748b; line-height: 1.5; }
+    .sub { color: #475569; font-size: 11px; margin: 2px 0 0; }
+    .summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px; margin-bottom: 16px; }
+    .stat { border: 1px solid #e2e8f0; border-radius: 6px; padding: 7px 9px; }
+    .stat b { display: block; font-size: 16px; color: #0a1a33; }
+    .stat span { font-size: 8.5px; text-transform: uppercase; letter-spacing: .06em; color: #64748b; }
+    h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: #10284d; margin: 18px 0 6px;
+         border-left: 3px solid #d4a72c; padding-left: 7px; }
+    table { width: 100%; border-collapse: collapse; page-break-inside: auto; table-layout: auto; }
+    td, th { overflow-wrap: break-word; }
+    thead { display: table-header-group; }
+    tr { page-break-inside: avoid; }
+    th { background: #10284d; color: #fff; text-align: left; font-size: 9px; text-transform: uppercase; letter-spacing: .04em; padding: 5px 6px; }
+    td { border-bottom: 1px solid #e2e8f0; padding: 4px 6px; vertical-align: top; }
+    tbody tr:nth-child(even) td { background: #f8fafc; }
+    .empty { color: #94a3b8; font-style: italic; padding: 6px 0; }
+    footer { margin-top: 18px; border-top: 1px solid #e2e8f0; padding-top: 6px; font-size: 8.5px; color: #94a3b8; display: flex; justify-content: space-between; }
+    .toolbar { position: sticky; top: 0; z-index: 5; background: #0a1a33; padding: 10px; text-align: center; }
+    .toolbar button { background: linear-gradient(135deg, #e3b93e, #b8860b); color: #1a1205; border: 0; border-radius: 8px; padding: 9px 18px;
+                      font-weight: 700; font-size: 13px; cursor: pointer; }
+    .toolbar a { color: #c3cee0; font-size: 12px; margin-left: 14px; }
+    @media print { body { background: #fff; } .sheet { box-shadow: none; margin: 0; padding: 0; max-width: none; } .toolbar { display: none; } }
+  </style>
+</head>
+<body>
+  <div class="toolbar"><button onclick="window.print()">Print / Save as PDF</button><a href="javascript:window.close()">Close</a></div>
+  <div class="sheet">
+    <header>
+      <img src="{% static 'images/tanzania-police-logo.png' %}" alt="Tanzania Police Force crest">
+      <div>
+        <div class="org">Tanzania Police Force · K9 &amp; Mounted Unit</div>
+        <h1>{{ report.title }}</h1>
+        {% if report.subtitle %}<p class="sub">{{ report.subtitle }}</p>{% endif %}
+      </div>
+      <div class="meta">Generated {{ generated_at|date:"d M Y, H:i" }}<br>by {{ request.user.get_full_name|default:request.user.username }}<br>RESTRICTED</div>
+    </header>
+
+    {% if report.summary %}
+    <div class="summary">{% for label, value in report.summary %}<div class="stat"><b>{{ value }}</b><span>{{ label }}</span></div>{% endfor %}</div>
+    {% endif %}
+
+    {% for table in tables %}
+    <h2>{{ table.name }}</h2>
+    {% if table.rows %}
+    <table>
+      <thead><tr>{% for h in table.headers %}<th>{{ h }}</th>{% endfor %}</tr></thead>
+      <tbody>{% for row in table.rows %}<tr>{% for cell in row %}<td>{{ cell }}</td>{% endfor %}</tr>{% endfor %}</tbody>
+    </table>
+    {% else %}
+    <p class="empty">Nothing to report.</p>
+    {% endif %}
+    {% endfor %}
+
+    <footer><span>TPF Animal Management System</span><span>RESTRICTED — for official use only</span></footer>
+  </div>
+</body>
+</html>
