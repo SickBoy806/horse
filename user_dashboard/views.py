@@ -159,8 +159,8 @@ def notifications_view(request, branch):
 
 
 @login_required
-def api_unread_notifications_count(request):
-    count = request.user.notifications.filter(is_read=False).count()
+def api_unread_notifications_count(request, branch=None):
+    count = Notification.objects.filter(user=request.user, is_read=False).count()
     return JsonResponse({'count': count})
 
 @login_required

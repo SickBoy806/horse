@@ -88,13 +88,9 @@ def veterinarian_dashboard_data(request, branch):
 
 
 @login_required
-def unread_message_count(request, branch):
-    branch_obj = get_object_or_404(Branch, name__iexact=branch)
-    count = Message.objects.filter(
-        receiver=request.user,
-        is_read=False,
-        receiver__branch=branch_obj
-    ).count()
+def unread_message_count(request, branch=None):
+    # The URL carries no branch; count the vet's own unread messages.
+    count = Message.objects.filter(receiver=request.user, is_read=False, is_deleted=False).count()
     return JsonResponse({'unread_count': count})
 
 
