@@ -3,13 +3,35 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-71)*!4ndu$!+3f4#i%55fnr$t)6e@cl0f@-pteo=o8w+qr$=a9'
+# Configuration comes from environment variables so the same code runs locally and in production.
+# Local development needs nothing set. For production set at least:
+#   TPF_DEBUG=0   TPF_SECRET_KEY=<long random string>   TPF_ALLOWED_HOSTS=animals.example.go.tz
+def _env_bool(name, default):
+    return os.environ.get(name, str(default)).strip().lower() in ('1', 'true', 'yes', 'on')
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
 
-ALLOWED_HOSTS = ['*']
+DEBUG = _env_bool('TPF_DEBUG', True)
+
+_DEV_SECRET_KEY = 'django-insecure-71)*!4ndu$!+3f4#i%55fnr$t)6e@cl0f@-pteo=o8w+qr$=a9'
+SECRET_KEY = os.environ.get('TPF_SECRET_KEY') or (_DEV_SECRET_KEY if DEBUG else None)
+if not SECRET_KEY:
+    raise RuntimeError('Set TPF_SECRET_KEY when TPF_DEBUG is off (generate one with '
+                       '`python -c "from django.core.management.utils import get_random_secret_key as k; print(k())"`).')
+
+_hosts = [h.strip() for h in os.environ.get('TPF_ALLOWED_HOSTS', '').split(',') if h.strip()]
+ALLOWED_HOSTS = _hosts or (['*'] if DEBUG else [])
+CSRF_TRUSTED_ORIGINS = [o.strip() for o in os.environ.get('TPF_CSRF_TRUSTED_ORIGINS', '').split(',') if o.strip()]
+
+if not DEBUG:
+    # Behind HTTPS: cookies only over TLS, HSTS, and trust the proxy's X-Forwarded-Proto header if one is used.
+    SECURE_SSL_REDIRECT = _env_bool('TPF_SSL_REDIRECT', True)
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_HSTS_SECONDS = int(os.environ.get('TPF_HSTS_SECONDS', 31536000))
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    X_FRAME_OPTIONS = 'DENY'
+    if _env_bool('TPF_BEHIND_PROXY', False):
+        SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 
 # Application definition
@@ -120,6 +142,7 @@ USE_TZ = True
 
 # Static files
 STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')  # `manage.py collectstatic` target; serve via the web server
 
 # and your static files are collected into STATICFILES_DIRS or STATIC_ROOT
 
